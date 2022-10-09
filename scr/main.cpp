@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
 	std::vector<uint8_t> img(w * h * c); // 画像データ
 
 	// シーン
-	scene world("asset/envmap.hdr");
+	scene world("asset/test.hdr");
 	Camera cam;
 	makeScene_cornell(world, cam, aspect);
 	//makeScene_sphere(world, cam, aspect);

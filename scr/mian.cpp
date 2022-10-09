@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------------------------------------
 // testpt
-// yoyolon - September 2022
+// yoyolon - October 2022
 // 
 // Develop
 // C++17
@@ -15,7 +15,7 @@
 // [PJH16] M.Pharr, W.Jakob, G.Humphre. "Physically Based Rendering: From Theory To Implementation" 2016.
 // [Shi20] P.Shirley. "Raytracing in one weekend" 2020.
 // 
-// This soft is based on Raytracing in one weekend(https://raytracing.github.io/) and pbrt-v3(https://pbrt.org/).
+// This soft is based on Raytracing in one weekend(https://raytracing.github.io/).
 //--------------------------------------------------------------------------------------------------------------------
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -81,12 +81,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const scene& world, Vec3 contrib
 		}
 	}
 
-	// 交差なしの場合背景からサンプル
-	//if (bounces==0) return Vec3(0.0, 0.0, 1.0);
-	//else return Vec3(0.0, 0.0, 0.0);
-
-	auto t = 0.5f * (unit_vector(r.get_dir()).get_y() + 1.0f);
-	return contrib * ((1.0f - t) * Vec3(0.3f, 0.3f, 0.3f) + t * Vec3(0.5f, 0.5f, 0.7f));
+	return Vec3(0.0, 0.0, 0.0);
 }
 
 // 法線を表示
@@ -214,8 +209,7 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 	// マテリアル
 	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_GGX, fres_Schlick);
 
-	auto mat_diff = std::make_shared<Diffuse>(Vec3(0.50f,0.50f,0.50f));
-	auto mat_mirr = std::make_shared<Mirror>(Vec3(1.0f,0.2f,0.2f));
+	auto mat_diff = std::make_shared<Diffuse>(Vec3(1.00f,0.50f,0.50f));
 	auto mat_lightR = std::make_shared<Emitter>(Vec3(50.0f, 10.0f, 10.0f));
 	auto mat_lightG = std::make_shared<Emitter>(Vec3(10.0f, 50.0f, 10.0f));
 	auto mat_lightB = std::make_shared<Emitter>(Vec3(10.0f, 10.0f, 50.0f));
@@ -260,7 +254,7 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 			);
 
 	auto obj_sphere = std::make_shared<Sphere>(Vec3(-1.5f, 2.0f, 0.0f), 1.4f, mat_microfacet);
-	auto obj_sphere2 = std::make_shared<Sphere>(Vec3(1.5f, 2.0f, 0.0f), 1.4f, mat_mirr);
+	auto obj_sphere2 = std::make_shared<Sphere>(Vec3(1.5f, 2.0f, 0.0f), 1.4f, mat_diff);
 
 	// オブジェクトをシーンに追加
 	world.add(obj_sphere);
@@ -283,7 +277,7 @@ int main(int argc, char* argv[]) {
 	Random::init();
 
 	// 出力画像
-	const char* filename = "../out.png"; // パス
+	const char* filename = "image.png"; // パス
 	const auto aspect = 4.0f / 3.0f;     // アスペクト比
 	const int h = 600;                   // 高さ
 	const int w = int(h * aspect);       // 幅
@@ -293,8 +287,8 @@ int main(int argc, char* argv[]) {
 	// シーン
 	scene world;
 	Camera cam;
-	//makeScene_cornell(world, cam, aspect); // コーネルボックスシーンの作成
-	makeScene_sphere(world, cam, aspect);
+	makeScene_cornell(world, cam, aspect);
+	//makeScene_sphere(world, cam, aspect);
 
 	// その他パラメータ
 	int nsample = (argc == 2) ? atoi(argv[1]) : 128; // レイのサンプル数

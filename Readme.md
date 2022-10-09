@@ -1,8 +1,8 @@
 ## 概要
 
-オブジェクト指向プログラミングやCGの勉強のために[Raytracing in one weekend](https://raytracing.github.io/)のソースコードを参考に作成したC++によるナイーブなパストレーサーです．実行するとコーネルボックスのシーンをレンダリングします．
+オブジェクト指向プログラミングやCGの勉強のために[Raytracing in one weekend](https://raytracing.github.io/)のソースコードを参考に作成したC++によるナイーブなパストレーサーです．実行すると三角ポリゴンと球で構成されたシーン(コーネルボックス)をレンダリングします．
 
-### 動作環境 
+### 開発環境 
 
 Windows 10  
 Microsoft Visual Studio 2019  
@@ -16,14 +16,21 @@ testpt.exeを実行するかソースコードをビルドしてください．
 testpt.exe 100
 ```
 
-### その他の画像
+### 機能
 
-Raytracing in one weekendに無い機能として以下のものがあります．
+Raytracing in one weekendにない機能として以下のものがあります．
 
 - 三角ポリゴンとレイの交差判定，
 - Wavefront OBJ形式のモデルの読み込み
-- マイクロファセットモデルや薄膜干渉のマテリアルの実装．
+- マイクロファセットモデルや薄膜干渉のマテリアル．
 - 簡単なイメージベーストライティング
+
+これらを用いると下図のような画像を生成することも可能です(別途ポリゴンモデルと環境マップが必要です)．
+
+<p>
+  <img src="imgs/img2.png" width=40% />
+  <img src="imgs/img3.png" width=40%/>
+</p>
 
 ### 参考文献
 

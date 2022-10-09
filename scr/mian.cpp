@@ -2,9 +2,9 @@
 // testpt
 // yoyolon - October 2022
 // 
-// Develop
+// Development
 // C++17
-// MSVS 2019
+// Microsoft Visual Studio 2019
 // 
 // External Library
 // stb_image: https://github.com/nothings/stb

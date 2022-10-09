@@ -207,19 +207,13 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 	// フレネルの式
 	auto fres_Dielectric = std::make_shared<FresnelDielectric>(1.0f, 1.6f);
 	auto fres_Schlick = std::make_shared<FresnelSchlick>(1.0f, 1.6f);
-
 	// マテリアル
 	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_GGX, fres_Schlick);
-
 	auto mat_diff = std::make_shared<Diffuse>(Vec3(1.00f,0.50f,0.50f));
 	auto mat_lightR = std::make_shared<Emitter>(Vec3(50.0f, 10.0f, 10.0f));
 	auto mat_lightG = std::make_shared<Emitter>(Vec3(10.0f, 50.0f, 10.0f));
 	auto mat_lightB = std::make_shared<Emitter>(Vec3(10.0f, 10.0f, 50.0f));
-
-
-
-
-	// オブジェクト
+	// 光源
 	auto obj_light = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
 		Vec3(-1.0f,  5.0f, -1.0f),
@@ -230,8 +224,6 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 		mat_lightR,
 		Vec3(0.0f, 0.0f, -5.0f)
 	);
-
-	// オブジェクト2
 	auto obj_light2 = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
 		Vec3(-1.0f,  5.0f, -1.0f),
@@ -242,8 +234,6 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 		mat_lightG,
 		Vec3(5.0f, 0.0f, -5.0f)
 	);
-
-	// オブジェクト3
 	auto obj_light3 = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
 		Vec3(-1.0f, 5.0f, -1.0f),
@@ -253,8 +243,8 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
 			mat_lightB,
 			Vec3(-5.0f, 0.0f, -5.0f)
-			);
-
+	);
+	// 球
 	auto obj_sphere = std::make_shared<Sphere>(Vec3(-1.5f, 2.0f, 0.0f), 1.4f, mat_microfacet);
 	auto obj_sphere2 = std::make_shared<Sphere>(Vec3(1.5f, 2.0f, 0.0f), 1.4f, mat_diff);
 

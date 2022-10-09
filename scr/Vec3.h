@@ -56,6 +56,7 @@ public:
 		return Vec3(a.e[0] - b.e[0], a.e[1] - b.e[1], a.e[2] - b.e[2]);
 	}
 	friend inline Vec3 operator*(const Vec3& a, const Vec3& b) {
+		// “àÏ‚Æ‚µ‚ÄŒvZ
 		return Vec3(a.e[0] * b.e[0], a.e[1] * b.e[1], a.e[2] * b.e[2]);
 	}
 	friend inline Vec3 operator*(const Vec3& a, float t) {

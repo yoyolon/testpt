@@ -2,6 +2,7 @@
 
 #include "Microfacet.h"
 #include "Material.h"
+#include "Random.h"
 
 MicrofacetDistribution::~MicrofacetDistribution() {}
 
@@ -27,6 +28,14 @@ float BeckmannDistribution::Lambda(const Vec3& w) const {
 	return (1.0f - 1.259f * a + 0.396f * a * a) / (3.535f * a + 2.181f * a * a);
 }
 
+Vec3 BeckmannDistribution::sample_halfvector() const {
+	return Random::Beckmann_sample(alpha);
+}
+
+float BeckmannDistribution::sample_pdf(const Vec3& wi, const Vec3& h) const {
+	return D(h)* std::abs(CosTheta(wi));
+}
+
 
 // *** GGX•ª•z ***
 GGXDistribution::GGXDistribution(float _alpha)
@@ -44,4 +53,12 @@ float GGXDistribution::Lambda(const Vec3& w) const {
 	float tanTheta = std::abs(TanTheta(w));
 	if (std::isinf(tanTheta)) return 0;
 	return (-1.0f + std::sqrt(1.0f + alpha * alpha * tanTheta * tanTheta)) / 2;
+}
+
+Vec3 GGXDistribution::sample_halfvector() const {
+	return Random::GGX_sample(alpha);
+}
+
+float GGXDistribution::sample_pdf(const Vec3& wi, const Vec3& h) const {
+	return D(h) * std::abs(CosTheta(wi));
 }

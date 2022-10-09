@@ -1,5 +1,6 @@
-#pragma once
 // Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
+
+#pragma once
 
 #include "Vec3.h"
 
@@ -15,8 +16,8 @@ public:
 	float G(const Vec3& wi, const Vec3& wo) const {
 		return 1 / (1 + Lambda(wi) + Lambda(wo));
 	}
-	virtual Vec3 sample_direction() const = 0;
-	virtual Vec3 sample_pdf() const = 0;
+	virtual Vec3 sample_halfvector() const = 0;
+	virtual float sample_pdf(const Vec3& wi, const Vec3& h) const = 0;
 };
 
 
@@ -26,6 +27,9 @@ public:
 	BeckmannDistribution(float alpha);
 	float D(const Vec3& h) const override;
 	float Lambda(const Vec3& h) const override;
+	Vec3 sample_halfvector() const override;
+	float sample_pdf(const Vec3& wi, const Vec3& h) const override;
+
 private: 
 	float alpha;
 };
@@ -37,6 +41,8 @@ public:
 	GGXDistribution(float alpha);
 	float D(const Vec3& h) const override;
 	float Lambda(const Vec3& h) const override;
+	Vec3 sample_halfvector() const override;
+	float sample_pdf(const Vec3& wi, const Vec3& h) const override;
 
 private:
 	float alpha;

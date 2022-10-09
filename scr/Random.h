@@ -13,7 +13,8 @@ public:
 	static Vec3 uniform_sphere_sample();
 	static Vec3 uniform_hemisphere_sample();
 	static Vec3 cosine_hemisphere_sample();
-	static Vec3 GGX_sample(float roughness);
+	static Vec3 GGX_sample(float alpha);
+	static Vec3 Beckmann_sample(float alpha);
 };
 
 static std::mt19937 mt; // —”¶¬Ší

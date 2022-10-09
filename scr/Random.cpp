@@ -9,7 +9,7 @@ void Random::init() {
 
 // 一様乱数[0,1]を生成
 float Random::uniform_float() {
-	return uniform_float(1.0f, 0.0f);
+	return uniform_float(0.0f, 1.0f);
 }
 
 // 一様乱数[min,max]を生成
@@ -58,13 +58,31 @@ Vec3 Random::cosine_hemisphere_sample() {
 }
 
 // GGXの重点的サンプリング
-Vec3 Random::GGX_sample(float roughness) {
+Vec3 Random::GGX_sample(float alpha) {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
 	auto phi = 2 * pi * u;
-	auto theta = std::atan2(roughness * std::sqrt(v), std::sqrt(1-v));
+	auto theta = std::atan2(alpha * std::sqrt(v), std::sqrt(1-v));
 	auto x = std::cos(phi) * std::sin(theta);
 	auto y = std::sin(phi) * std::sin(theta);
 	auto z = std::cos(theta);
+	return Vec3(x, y, z);
+}
+
+// ベックマン分布の重点的サンプリング(ハーフベクトルhをサンプル)
+// Reference: https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Reflection_Functions
+Vec3 Random::Beckmann_sample(float alpha) {
+	auto u = Random::uniform_float();
+	auto v = Random::uniform_float();
+	auto logs = std::log(1.0f - u);
+	if (std::isinf(logs)) logs = 0.0f;
+	auto tan2Theta = -alpha * alpha * logs;
+	auto cos2Theta = 1 / (1 + tan2Theta);
+	auto sin2Theta = 1 - cos2Theta;
+	auto sinTheta = std::sqrt(std::max(sin2Theta, 0.0f));
+	auto z = std::sqrt(std::max(cos2Theta, 0.0f));
+	auto phi = 2 * pi * u;
+	auto x = std::cos(phi) * sinTheta;
+	auto y = std::sin(phi) * sinTheta;
 	return Vec3(x, y, z);
 }

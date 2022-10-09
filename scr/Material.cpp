@@ -14,15 +14,18 @@
 // *** ランバート反射 ***
 Diffuse::Diffuse(Vec3 _albedo) : albedo(_albedo) {}
 
-float Diffuse::f_pdf(const Vec3& wi, const intersection& p, const Vec3& wo) const {
-	//return std::max(unit_vector(wo).get_z() * invpi, 0.0f);
-	return 0.5f * invpi;
+void Diffuse::sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const {
+	// 余弦に従ったサンプリング
+	//wo = Random::cosine_hemisphere_sample();
+	wo = Random::uniform_hemisphere_sample();
+	pdf = sample_pdf(wi, wo);
 }
-
+float Diffuse::sample_pdf(const Vec3& wi, const Vec3& wo) const {
+	//return std::max(std::abs(CosTheta(wo)) * invpi, epsilon);
+	return 0.5 * invpi;
+}
 bool Diffuse::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-	//wo = Random::cosine_hemisphere_sample(); // cosに従ったサンプリング
-	wo = unit_vector(Random::uniform_hemisphere_sample()); // ランダムな反射方向をサンプル
-	pdf = f_pdf(wi, p, wo);
+	sample_dirction(wi, pdf, wo);
 	brdf = albedo * invpi;
 	return true;
 }
@@ -31,13 +34,16 @@ bool Diffuse::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, flo
 // *** 完全鏡面反射 ***
 Mirror::Mirror(Vec3 _albedo) : albedo(_albedo) {}
 
-float Mirror::f_pdf(const Vec3& wi, const intersection& p, const Vec3& wo) const {
-	return 1.0;
-}
-
-bool Mirror::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+void Mirror::sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const {
+	// デルタ分布
 	wo = unit_vector(Vec3(-wi.get_x(), -wi.get_y(), wi.get_z())); // 正反射方向
-	pdf = f_pdf(wi, p, wo);
+	pdf = sample_pdf(wi, wo);
+}
+float Mirror::sample_pdf(const Vec3& wi, const Vec3& wo) const {
+	return 1.0f;
+}
+bool Mirror::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+	sample_dirction(wi, pdf, wo);
 	float cos_term = dot(Vec3(0,0,1), unit_vector(wo));
 	brdf = albedo / cos_term;
 	return true;
@@ -48,16 +54,17 @@ bool Mirror::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, floa
 Phong::Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin) 
 	: albedo(_albedo), Kd(_Kd), Ks(_Ks), shin(_shin) {}
 
-float Phong::f_pdf(const Vec3& wi, const intersection& p, const Vec3& wo) const {
-	return 0.5f * invpi;
-	//return std::max(unit_vector(wo).get_z() * invpi, 0.0f);
+void Phong::sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const {
+	// 余弦に従ったサンプリング
+	wo = Random::cosine_hemisphere_sample();
+	pdf = sample_pdf(wi, wo);
 }
-
+float Phong::sample_pdf(const Vec3& wi, const Vec3& wo) const {
+	return std::max(std::abs(CosTheta(wo)) * invpi, epsilon);
+}
 bool Phong::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-	wo = unit_vector(Random::uniform_hemisphere_sample()); // ランダムな反射方向をサンプル
-	//wo = Random::cosine_hemisphere_sample(); // cosに従ったサンプリング
+	sample_dirction(wi, pdf, wo);
 	auto dir_spec = unit_vector(Vec3(-wi.get_x(), -wi.get_y(), wi.get_z())); // 正反射方向
-	pdf = f_pdf(wi, p, wo);
 	Vec3 diffuse = Kd * invpi;
 	float cos_term = dot(Vec3(0, 0, 1), unit_vector(wo));
 	float sp = std::pow(std::max(0.0f, dot(dir_spec, wo)), shin);
@@ -67,39 +74,47 @@ bool Phong::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float
 }
 
 
-// *** 発光 ***
-Emitter::Emitter(Vec3 _intensity) : intensity(_intensity) {}
-
-bool Emitter::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-	return false;
-}
-
-Vec3 Emitter::emitte() const {
-	return intensity;
-}
-
 // *** マイクロファセットモデル ***
 // Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 Microfacet::Microfacet(Vec3 _albedo, std::shared_ptr<MicrofacetDistribution> _distribution, 
 					   std::shared_ptr<Fresnel> _fresnel)
 	: albedo(_albedo), distribution(_distribution), fresnel(_fresnel) {}
 
+void Microfacet::sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const {
+	Vec3 h = distribution->sample_halfvector();
+	wo = unit_vector(reflect(wi, h)); // ハーフベクトルと入射方向から出社方向を計算
+	pdf = sample_pdf(wi, h);
+}
+
+float Microfacet::sample_pdf(const Vec3& wi, const Vec3& h) const {
+	// hのPDFをwoのPDFに
+	return distribution->sample_pdf(wi, h) / (4 * dot(wi, h));
+}
+
 bool Microfacet::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-	//wo = unit_vector(Random::uniform_hemisphere_sample()); // ランダムな反射方向をサンプル
-	wo = unit_vector(Random::GGX_sample(distribution.get_alpha())); // GGXサンプル
-	Vec3 h = wi + wo;
-	h = unit_vector(h);
+	Vec3 h = distribution->sample_halfvector();
+	sample_dirction(wi, pdf, wo);
 	float cosThetaI = std::abs(CosTheta(wi));
 	float cosThetaO = std::abs(CosTheta(wo));
 	if (cosThetaI == 0 || cosThetaO == 0) return false;
 	if (h.get_x() == 0 && h.get_y() == 0 && h.get_z() == 0) return false;
-	Vec3 numerator = distribution->D(h) * distribution->G(wi, wo) * fresnel->Evaluate(dot(wi, h));
-	float denominator = 4 * cosThetaI * cosThetaO;
-	brdf = albedo *  numerator / denominator;
-	pdf = f_pdf(wi, p, wo);
+	float D = distribution->D(h);
+	float G = distribution->G(wi, wo);
+	Vec3 F = fresnel->Evaluate(dot(wi, h));
+	brdf = albedo *  (D * G * F) / (4 * cosThetaI * cosThetaO);
 	return true;
 }
 
-float Microfacet::f_pdf(const Vec3& wi, const intersection& p, const Vec3& wo) const {
-	return 0.5f * invpi;
+
+// *** 発光 ***
+Emitter::Emitter(Vec3 _intensity) : intensity(_intensity) {}
+
+void Emitter::sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const {}
+float Emitter::sample_pdf(const Vec3& wi, const Vec3& wo) const { return 1.0; }
+bool Emitter::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+	return false;
+}
+
+Vec3 Emitter::emitte() const {
+	return intensity;
 }

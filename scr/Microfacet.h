@@ -1,9 +1,9 @@
 #pragma once
+// Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 
 #include "Vec3.h"
 
 // *** マイクロファセット分布クラス ***
-// Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 class MicrofacetDistribution {
 public:
 	virtual ~MicrofacetDistribution();

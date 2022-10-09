@@ -15,7 +15,9 @@
 // [PJH16] M.Pharr, W.Jakob, G.Humphre. "Physically Based Rendering: From Theory To Implementation" 2016.
 // [Shi20] P.Shirley. "Raytracing in one weekend" 2020.
 // 
-// This soft is based on Raytracing in one weekend(https://raytracing.github.io/).
+// This software is based on Raytracing in one weekend(https://raytracing.github.io/).
+// A part of this software is based on pbrt(https://pbrt.org/) and released BSD 2-Clause "Simplified" License
+// (https://github.com/mmp/pbrt-v3/blob/master/LICENSE.txt).
 //--------------------------------------------------------------------------------------------------------------------
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION

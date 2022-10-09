@@ -82,11 +82,11 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const scene& world, Vec3 contrib
 	}
 
 	// 交差なしの場合背景からサンプル
-	if (bounces==0) return Vec3(0.0, 0.0, 1.0);
-	else return Vec3(0.0, 0.0, 0.0);
-	// 
+	//if (bounces==0) return Vec3(0.0, 0.0, 1.0);
+	//else return Vec3(0.0, 0.0, 0.0);
+
 	auto t = 0.5f * (unit_vector(r.get_dir()).get_y() + 1.0f);
-	return contrib * (1.0f - t) * Vec3(0.5f, 0.5f, 0.5f) + t * Vec3(0.0f, 0.0f, 0.0f);
+	return contrib * ((1.0f - t) * Vec3(0.3f, 0.3f, 0.3f) + t * Vec3(0.5f, 0.5f, 0.7f));
 }
 
 // 法線を表示
@@ -205,18 +205,23 @@ void makeScene_cornell(scene& world, Camera& cam, float aspect) {
 void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 	world.clear();
 
-	// マテリアル
-	auto mat_diff = std::make_shared<Diffuse>(Vec3(0.50f,0.50f,0.50f));
-	auto mat_mirr = std::make_shared<Mirror>(Vec3(0.99f,0.99f,0.99f));
-	auto mat_phong1 = std::make_shared<Phong>(Vec3(1.0f,1.0f,1.0f),Vec3(0.5f,0.5f,0.5f), Vec3(0.5f,0.5f,0.5f), 20.0f);
-	auto mat_light = std::make_shared<Emitter>(Vec3(10.0f, 10.0f, 10.0f));
 	// マイクロファセット分布
 	auto dist_GGX = std::make_shared<GGXDistribution>(0.4f);
-	auto dist_Beckmann = std::make_shared<BeckmannDistribution>(0.1f);
 	// フレネルの式
 	auto fres_Dielectric = std::make_shared<FresnelDielectric>(1.0f, 1.6f);
 	auto fres_Schlick = std::make_shared<FresnelSchlick>(1.0f, 1.6f);
-	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_GGX, fres_Schlick);
+
+	// マテリアル
+	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_GGX, fres_Schlick);
+
+	auto mat_diff = std::make_shared<Diffuse>(Vec3(0.50f,0.50f,0.50f));
+	auto mat_mirr = std::make_shared<Mirror>(Vec3(1.0f,0.2f,0.2f));
+	auto mat_lightR = std::make_shared<Emitter>(Vec3(50.0f, 10.0f, 10.0f));
+	auto mat_lightG = std::make_shared<Emitter>(Vec3(10.0f, 50.0f, 10.0f));
+	auto mat_lightB = std::make_shared<Emitter>(Vec3(10.0f, 10.0f, 50.0f));
+
+
+
 
 	// オブジェクト
 	auto obj_light = std::make_shared<TriangleMesh>(
@@ -226,14 +231,43 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 		Vec3( 1.0f,  5.0f,  1.0f),
 		Vec3(-1.0f,  5.0f,  1.0f)},
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-		mat_light,
+		mat_lightR,
 		Vec3(0.0f, 0.0f, -5.0f)
 	);
-	auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 1.4f, mat_microfacet);
+
+	// オブジェクト2
+	auto obj_light2 = std::make_shared<TriangleMesh>(
+		std::vector<Vec3>{
+		Vec3(-1.0f,  5.0f, -1.0f),
+		Vec3( 1.0f,  5.0f, -1.0f),
+		Vec3( 1.0f,  5.0f,  1.0f),
+		Vec3(-1.0f,  5.0f,  1.0f)},
+		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+		mat_lightG,
+		Vec3(5.0f, 0.0f, -5.0f)
+	);
+
+	// オブジェクト3
+	auto obj_light3 = std::make_shared<TriangleMesh>(
+		std::vector<Vec3>{
+		Vec3(-1.0f, 5.0f, -1.0f),
+			Vec3(1.0f, 5.0f, -1.0f),
+			Vec3(1.0f, 5.0f, 1.0f),
+			Vec3(-1.0f, 5.0f, 1.0f)},
+		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+			mat_lightB,
+			Vec3(-5.0f, 0.0f, -5.0f)
+			);
+
+	auto obj_sphere = std::make_shared<Sphere>(Vec3(-1.5f, 2.0f, 0.0f), 1.4f, mat_microfacet);
+	auto obj_sphere2 = std::make_shared<Sphere>(Vec3(1.5f, 2.0f, 0.0f), 1.4f, mat_mirr);
 
 	// オブジェクトをシーンに追加
 	world.add(obj_sphere);
+	world.add(obj_sphere2);
 	world.add(obj_light);
+	world.add(obj_light2);
+	world.add(obj_light3);
 
 	// カメラの設定
 	auto fd = 1.5f; // 焦点距離

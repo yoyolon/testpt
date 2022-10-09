@@ -30,3 +30,16 @@ public:
 private:
 	float ni, no;
 };
+
+// *** ”––ŒŠ±Â ***
+class FresnelThinfilm : public Fresnel {
+public:
+	FresnelThinfilm(float d, float ni, float _nf, float _no);
+	Vec3 Evaluate(float cosTheta) const override;
+
+private:
+		float d;    // –ŒŒú
+		float ni;   // “üË”}¿‚Ì‹üÜ—¦
+		float nf;	// ”––Œ‚Ì‹üÜ—¦
+		float no;   // ƒx[ƒX”}¿‚Ì‹üÜ—¦
+};

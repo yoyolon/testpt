@@ -83,7 +83,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const scene& world, Vec3 contrib
 		}
 	}
 
-	return Vec3(0.0, 0.0, 0.0);
+	return contrib * Vec3(0.5, 0.5, 0.5);
 }
 
 // 法線を表示
@@ -100,7 +100,13 @@ Vec3 L_normal(const Ray& r, const scene& world) {
 void makeScene_cornell(scene& world, Camera& cam, float aspect) {
 	world.clear();
 
+	// マイクロファセット分布
+	auto dist_GGX = std::make_shared<GGXDistribution>(0.0f);
+	// フレネルの式
+	auto fres_thinfilm = std::make_shared<FresnelThinfilm>(500, 1.0f, 1.6f, 1.6);
+
 	// マテリアル
+	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_GGX, fres_thinfilm);
 	auto mat_red = std::make_shared<Diffuse>(Vec3(0.65f,0.05f,0.05f));
 	auto mat_green = std::make_shared<Diffuse>(Vec3(0.12f,0.45f,0.15f));
 	auto mat_white = std::make_shared<Diffuse>(Vec3(0.73f,0.73f,0.73f));
@@ -177,7 +183,7 @@ void makeScene_cornell(scene& world, Camera& cam, float aspect) {
 
 	// Spehre
 	auto obj_mirr = std::make_shared<Sphere>(Vec3(278.0f-110.0f, 75.0f, 227.0f), 75.0f, mat_mirr);
-	auto obj_diff = std::make_shared<Sphere>(Vec3(278.0f+110.0f, 75.0f, 227.0f), 75.0f, mat_phong);
+	auto obj_diff = std::make_shared<Sphere>(Vec3(278.0f+110.0f, 75.0f, 227.0f), 75.0f, mat_microfacet);
 
 	// オブジェクトをシーンに追加
 	world.add(left);
@@ -194,7 +200,6 @@ void makeScene_cornell(scene& world, Camera& cam, float aspect) {
 	Vec3 camPos(278.0f, 273.0f, -800.0f);
 	Vec3 camTarget(278.0f, 273.0f, 0.0f);
 	Vec3 camDir = -unit_vector(camTarget - camPos);
-	std::cout << camDir << '\n';
 	cam = Camera(2.0f, aspect, fd, camPos, camDir);
 }
 
@@ -270,7 +275,7 @@ int main(int argc, char* argv[]) {
 
 	// 出力画像
 	const char* filename = "image.png"; // パス
-	const auto aspect = 4.0f / 3.0f;     // アスペクト比
+	const auto aspect = 3.0f / 3.0f;     // アスペクト比
 	const int h = 600;                   // 高さ
 	const int w = int(h * aspect);       // 幅
 	const int c = 3;                     // チャンネル数
@@ -284,7 +289,7 @@ int main(int argc, char* argv[]) {
 
 	// その他パラメータ
 	int nsample = (argc == 2) ? atoi(argv[1]) : 128; // レイのサンプル数
-	constexpr auto max_depth = 100; // レイの最大追跡数
+	constexpr auto max_depth = 512; // レイの最大追跡数
 	constexpr auto gamma = 1/2.2f;	// ガンマ補正用
 
 	// レイトレーシング

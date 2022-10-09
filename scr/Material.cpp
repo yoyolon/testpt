@@ -85,7 +85,8 @@ Microfacet::Microfacet(Vec3 _albedo, std::shared_ptr<MicrofacetDistribution> _di
 	: albedo(_albedo), distribution(_distribution), fresnel(_fresnel) {}
 
 bool Microfacet::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-	wo = unit_vector(Random::uniform_hemisphere_sample()); // ランダムな反射方向をサンプル
+	//wo = unit_vector(Random::uniform_hemisphere_sample()); // ランダムな反射方向をサンプル
+	wo = unit_vector(Random::GGX_sample(distribution.get_alpha())); // GGXサンプル
 	Vec3 h = wi + wo;
 	h = unit_vector(h);
 	float cosThetaI = std::abs(CosTheta(wi));

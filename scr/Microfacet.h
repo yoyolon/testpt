@@ -15,6 +15,8 @@ public:
 	float G(const Vec3& wi, const Vec3& wo) const {
 		return 1 / (1 + Lambda(wi) + Lambda(wo));
 	}
+	virtual Vec3 sample_direction() const = 0;
+	virtual Vec3 sample_pdf() const = 0;
 };
 
 
@@ -24,7 +26,6 @@ public:
 	BeckmannDistribution(float alpha);
 	float D(const Vec3& h) const override;
 	float Lambda(const Vec3& h) const override;
-
 private: 
 	float alpha;
 };

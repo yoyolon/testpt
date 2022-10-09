@@ -36,23 +36,35 @@ Vec3 Random::uniform_sphere_sample() {
 
 // 一様な半球サンプル
 Vec3 Random::uniform_hemisphere_sample() {
-	auto r1 = Random::uniform_float();
-	auto r2 = Random::uniform_float();
-	auto r = std::sqrt(std::max(1.0f - r1*r1, 0.0f));
-	auto phi = 2 * pi * r2;
+	auto u = Random::uniform_float();
+	auto v = Random::uniform_float();
+	auto r = std::sqrt(std::max(1.0f - u*u, 0.0f));
+	auto phi = 2 * pi * v;
 	auto x = std::cos(phi) * r;
 	auto y = std::sin(phi) * r;
-	auto z = r1;
+	auto z = u;
 	return Vec3(x, y, z);
 }
 
 // 余弦に従った半球サンプル
 Vec3 Random::cosine_hemisphere_sample() {
-	auto r1 = Random::uniform_float();
-	auto r2 = Random::uniform_float();
-	auto z = std::sqrt(std::max(1.0f - r2, 0.0f));
-	auto phi = 2 * pi * r1;
-	auto x = std::cos(phi) * std::sqrt(r2);
-	auto y = std::sin(phi) * std::sqrt(r2);
+	auto u = Random::uniform_float();
+	auto v = Random::uniform_float();
+	auto z = std::sqrt(std::max(1.0f - v, 0.0f));
+	auto phi = 2 * pi * u;
+	auto x = std::cos(phi) * std::sqrt(v);
+	auto y = std::sin(phi) * std::sqrt(v);
+	return Vec3(x, y, z);
+}
+
+// GGXの重点的サンプリング
+Vec3 Random::GGX_sample(float roughness) {
+	auto u = Random::uniform_float();
+	auto v = Random::uniform_float();
+	auto phi = 2 * pi * u;
+	auto theta = std::atan2(roughness * std::sqrt(v), std::sqrt(1-v));
+	auto x = std::cos(phi) * std::sin(theta);
+	auto y = std::sin(phi) * std::sin(theta);
+	auto z = std::cos(theta);
 	return Vec3(x, y, z);
 }

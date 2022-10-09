@@ -38,10 +38,9 @@ public:
 		float u = std::atan2(w.get_z(), w.get_x()) + pi;
 		u *= invpi * 0.5;
 		float v = std::acos(std::clamp(w.get_y(), -1.0f, 1.0f)) * invpi;
-		// TODO: バイリニア補完
+		// テクスチャからサンプル
 		int x = std::clamp((int)(w_envmap * u), 0, w_envmap-1);
 		int y = std::clamp((int)(h_envmap * v), 0, h_envmap-1);
-
 		int index = y * w_envmap * 3 + x * 3;
 		float R = envmap[index++];
 		float G = envmap[index++];

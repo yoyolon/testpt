@@ -33,9 +33,8 @@ Vec3 BeckmannDistribution::sample_halfvector() const {
 }
 
 float BeckmannDistribution::sample_pdf(const Vec3& wi, const Vec3& h) const {
-	return D(h)* std::abs(CosTheta(wi));
+	return D(h) * std::abs(CosTheta(h));
 }
-
 
 // *** GGX•ª•z ***
 GGXDistribution::GGXDistribution(float _alpha)
@@ -60,5 +59,5 @@ Vec3 GGXDistribution::sample_halfvector() const {
 }
 
 float GGXDistribution::sample_pdf(const Vec3& wi, const Vec3& h) const {
-	return D(h) * std::abs(CosTheta(wi));
+	return D(h) * std::abs(CosTheta(h));
 }

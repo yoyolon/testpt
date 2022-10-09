@@ -19,7 +19,6 @@ public:
 	virtual ~Material() {};
 	virtual bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const = 0;
 	virtual Vec3 emitte() const { return Vec3(0.0f, 0.0f, 0.0f); }
-	virtual void sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const = 0;
 	virtual float sample_pdf(const Vec3& wi, const Vec3& wo) const = 0;
 };
 
@@ -29,7 +28,6 @@ class Diffuse : public Material {
 public:
 	Diffuse(Vec3 _albedo);
 	bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
-	void sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const override;
 	float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 private:
 	Vec3 albedo;
@@ -41,7 +39,6 @@ class Mirror : public Material {
 public:
 	Mirror(Vec3 _albedo);
 	bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
-	void sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const override;
 	float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 private:
 	Vec3 albedo;
@@ -53,7 +50,6 @@ class Phong : public Material {
 public:
 	Phong(Vec3 _albedo, Vec3 Kd, Vec3 Ks, float shin);
 	bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
-	void sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const override;
 	float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 private:
 	Vec3 albedo;
@@ -68,7 +64,6 @@ class Emitter : public Material {
 public:
 	Emitter(Vec3 _intensity);
 	bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
-	void sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const override;
 	float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 	Vec3 emitte() const;
 private:
@@ -83,7 +78,6 @@ public:
 	Microfacet(Vec3 _albedo, std::shared_ptr<class MicrofacetDistribution> _distribution, 
 		       std::shared_ptr<class Fresnel> _fresnel);
 	bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
-	void sample_dirction(const Vec3& wi, float& pdf, Vec3& wo) const override;
 	float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
 private:

@@ -305,9 +305,9 @@ int main(int argc, char* argv[]) {
 	// シーン
 	scene world("asset/envmap.hdr");
 	Camera cam;
-	//makeScene_cornell(world, cam, aspect);
+	makeScene_cornell(world, cam, aspect);
 	//makeScene_sphere(world, cam, aspect);
-	makeScene_vase(world, cam, aspect);
+	//makeScene_vase(world, cam, aspect);
 
 	// その他パラメータ
 	int nsample = (argc == 2) ? atoi(argv[1]) : 512; // レイのサンプル数

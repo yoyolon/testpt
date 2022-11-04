@@ -273,7 +273,7 @@ void makeScene_vase(scene& world, Camera& cam, float aspect) {
 	// マイクロファセット分布
 	auto dist_GGX = std::make_shared<GGXDistribution>(0.05f);
 	// フレネルの式
-	auto fres_Schlick = std::make_shared<FresnelSchlick>(1.0f, 1.6f);
+	auto fres_Schlick = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.86f, 0.57f));
 	// マテリアル
 	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_GGX, fres_Schlick);
 	// オブジェクト
@@ -303,14 +303,14 @@ int main(int argc, char* argv[]) {
 	std::vector<uint8_t> img(w * h * c); // 画像データ
 
 	// シーン
-	scene world("asset/envmap.hdr");
+	scene world("asset/envmap3.hdr");
 	Camera cam;
-	makeScene_cornell(world, cam, aspect);
+	//makeScene_cornell(world, cam, aspect);
 	//makeScene_sphere(world, cam, aspect);
-	//makeScene_vase(world, cam, aspect);
+	makeScene_vase(world, cam, aspect);
 
 	// その他パラメータ
-	int nsample = (argc == 2) ? atoi(argv[1]) : 512; // レイのサンプル数
+	int nsample = (argc == 2) ? atoi(argv[1]) : 32; // レイのサンプル数
 	constexpr auto max_depth = 100; // レイの最大追跡数
 	constexpr auto gamma = 1/2.2f;	// ガンマ補正用
 

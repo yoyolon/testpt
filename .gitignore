@@ -363,3 +363,9 @@ MigrationBackup/
 FodyWeavers.xsd
 /asset/envmap.hdr
 /asset/envmap2.hdr
+/asset
+/temp.png
+/spp8.png
+/spp32_2.png
+/spp32.png
+/spp16.png

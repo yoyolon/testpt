@@ -13,11 +13,10 @@ public:
 // *** Schlick‹ßŽ— ***
 class FresnelSchlick : public Fresnel {
 public:
-	FresnelSchlick(float _ni, float _no);
+	FresnelSchlick(Vec3 _F0);
 	Vec3 Evaluate(float cosTheta) const override;
 
 private:
-	float ni, no;
 	Vec3 F0;
 };
 

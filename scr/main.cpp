@@ -265,6 +265,34 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 	cam = Camera(2.0f, aspect, fd, camPos, camDir);
 }
 
+// 球シンプルシーン
+void makeScene_simple(scene& world, Camera& cam, float aspect) {
+	world.clear();
+
+	// マイクロファセット分布
+	auto dist_GGX = std::make_shared<GGXDistribution>(0.2f);
+	auto dist_Beckmann = std::make_shared<BeckmannDistribution>(0.2f);
+	// フレネルの式
+	auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(1.0, 0.9, 0.7));
+
+	// マテリアル
+	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_Beckmann, fres_schlick);
+
+	// 球
+	auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 3.0f, mat_microfacet);
+
+	// オブジェクトをシーンに追加
+	world.add(obj_sphere);
+
+	// カメラの設定
+	auto fd = 2.5f; // 焦点距離
+	Vec3 camPos(0.0f, 2.0f, -10.0f);
+	Vec3 camTarget(0.0f, 2.0f, 0.0f);
+	Vec3 camDir = -unit_vector(camTarget - camPos);
+	cam = Camera(2.0f, aspect, fd, camPos, camDir);
+}
+
+
 // 花瓶シーン
 // Model: https://polyhaven.com/a/ceramic_vase_01 (released under CC0 license)
 void makeScene_vase(scene& world, Camera& cam, float aspect) {
@@ -295,7 +323,7 @@ int main(int argc, char* argv[]) {
 	Random::init();
 
 	// 出力画像
-	const char* filename = "image.png"; // パス
+	const char* filename = "out/image.png"; // パス
 	const auto aspect = 3.0f / 3.0f;     // アスペクト比
 	const int h = 600;                   // 高さ
 	const int w = int(h * aspect);       // 幅
@@ -306,11 +334,12 @@ int main(int argc, char* argv[]) {
 	scene world("asset/envmap3.hdr");
 	Camera cam;
 	//makeScene_cornell(world, cam, aspect);
+	makeScene_simple(world, cam, aspect);
 	//makeScene_sphere(world, cam, aspect);
-	makeScene_vase(world, cam, aspect);
+	//makeScene_vase(world, cam, aspect);
 
 	// その他パラメータ
-	int nsample = (argc == 2) ? atoi(argv[1]) : 32; // レイのサンプル数
+	int nsample = (argc == 2) ? atoi(argv[1]) : 1024; // レイのサンプル数
 	constexpr auto max_depth = 100; // レイの最大追跡数
 	constexpr auto gamma = 1/2.2f;	// ガンマ補正用
 

@@ -207,6 +207,7 @@ void makeScene_cornell(scene& world, Camera& cam, float aspect) {
 	cam = Camera(2.0f, aspect, fd, camPos, camDir);
 }
 
+
 // 球シーン
 void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 	world.clear();
@@ -265,18 +266,19 @@ void makeScene_sphere(scene& world, Camera& cam, float aspect) {
 	cam = Camera(2.0f, aspect, fd, camPos, camDir);
 }
 
+
 // 球シンプルシーン
 void makeScene_simple(scene& world, Camera& cam, float aspect) {
 	world.clear();
 
 	// マイクロファセット分布
-	auto dist_GGX = std::make_shared<GGXDistribution>(0.2f);
-	auto dist_Beckmann = std::make_shared<BeckmannDistribution>(0.2f);
+	auto dist_GGX = std::make_shared<GGXDistribution>(0.05f);
+	//auto dist_Beckmann = std::make_shared<BeckmannDistribution>(0.2f);
 	// フレネルの式
-	auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(1.0, 0.9, 0.7));
+	auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9, 0.9, 0.9));
 
 	// マテリアル
-	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_Beckmann, fres_schlick);
+	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_GGX, fres_schlick);
 
 	// 球
 	auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 3.0f, mat_microfacet);
@@ -317,6 +319,7 @@ void makeScene_vase(scene& world, Camera& cam, float aspect) {
 	cam = Camera(2.0f, aspect, fd, camPos, camDir);
 }
 
+
 // main関数
 int main(int argc, char* argv[]) {
 	// 初期化
@@ -331,15 +334,16 @@ int main(int argc, char* argv[]) {
 	std::vector<uint8_t> img(w * h * c); // 画像データ
 
 	// シーン
-	scene world("asset/envmap3.hdr");
+	//scene world("asset/envmap3.hdr");
+	scene world;
 	Camera cam;
-	//makeScene_cornell(world, cam, aspect);
-	makeScene_simple(world, cam, aspect);
+	makeScene_cornell(world, cam, aspect);
+	//makeScene_simple(world, cam, aspect);
 	//makeScene_sphere(world, cam, aspect);
 	//makeScene_vase(world, cam, aspect);
 
 	// その他パラメータ
-	int nsample = (argc == 2) ? atoi(argv[1]) : 1024; // レイのサンプル数
+	int nsample = (argc == 2) ? atoi(argv[1]) : 128; // レイのサンプル数
 	constexpr auto max_depth = 100; // レイの最大追跡数
 	constexpr auto gamma = 1/2.2f;	// ガンマ補正用
 

@@ -262,7 +262,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 	if (bounces >= MaxDepth) return Vec3(0.0f, 0.0f, 0.0f);
 
 	// 交差判定
-	// NOTE: 光源からレイを追跡するため,入射をwoで出射をwiで考える
+	// NOTE: カメラ方向をwi，光源方向をwoにしている(後で修正)
 	intersection isect;
 	if (world.intersect(r, 0.001f, inf, isect)) {
 		// シェーディング座標の構築
@@ -273,28 +273,35 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 		Vec3 brdf;
 		float pdf;
 		// 散乱マテリアルの場合
-		// TODO: isect.matでなくisect.type == MATERIALを使う
-		if (isect.mat->f(wi_local, isect, brdf, wo_local, pdf)) {
-			auto wo = shadingCoord.local2world(wo_local);
-			float cos_term = dot(isect.normal, unit_vector(wo));
-			contrib = contrib * brdf * cos_term / pdf;
-			// ロシアンルーレット
-			if (bounces >= 3) {
-				float p_rr = std::max(0.5f, contrib.average()); // レイ追跡の継続確率
-				if (p_rr < Random::uniform_float()) {
-					raydeath++;
-					return Vec3(0.0f, 0.0f, 0.0f);
+		if (isect.type == IsectType::Material) {
+			if (isect.mat->f(wi_local, isect, brdf, wo_local, pdf)) {
+				auto wo = shadingCoord.local2world(wo_local);
+				float cos_term = dot(isect.normal, unit_vector(wo));
+				contrib = contrib * brdf * cos_term / pdf;
+				// ロシアンルーレット
+				// TODO: あとでPBRTを確認
+				if (bounces >= 3) {
+					float p_rr = std::max(0.5f, contrib.average()); // レイ追跡の継続確率
+					if (p_rr < Random::uniform_float()) {
+						raydeath++;
+						return Vec3(0.0f, 0.0f, 0.0f);
+					}
+					else {
+						contrib /= p_rr;
+					}
 				}
-				else {
-					contrib /= p_rr;
-				}
+				return L(Ray(isect.pos, wo), ++bounces, MaxDepth, world, contrib);
 			}
-			return L(Ray(isect.pos, wo), ++bounces, MaxDepth, world, contrib);
+			else {
+				return contrib * isect.mat->emitte();
+			}
 		}
-		// 発光マテリアルの場合
-		else {
+		// 発光の場合
+		else if (isect.type == IsectType::Light) {
+			// TODO: 光源サンプリング
 			raycontrib++;
-			return contrib * isect.mat->emitte();
+			std::cout << "contrib" << '\n';
+			return contrib * isect.light->emitte();
 		}
 	}
 	raybg++;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Shape.h"
+#include "Light.h"
 
 // *** シーンクラス ***
 class Scene : Shape {
@@ -13,8 +14,9 @@ public:
 		//envmap = stbi_loadf(filename, &w_envmap, &h_envmap, &c_envmap, 0);
 	}
 
-	// シーンにオブジェクトを追加
+	// シーンにオブジェクト/ライトを追加
 	void add(std::shared_ptr<Shape> object) { object_list.push_back(object); }
+	void add(std::shared_ptr<Light> light) { light_list.push_back(light); }
 	void clear() { object_list.clear(); }
 
 	// レイとシーンの交差判定
@@ -24,14 +26,26 @@ public:
 		intersection isect;
 		bool is_isect = false;
 		auto t_first = t_max;
+		isect.type = IsectType::None;
+		// オブジェクトとの交差判定
 		for (const auto& object : object_list) {
 			if (object->intersect(r, t_min, t_first, isect)) {
 				is_isect = true;
 				t_first = isect.t;
+				isect.type = IsectType::Material;
 				p = isect;
 			}
 		}
-		// TODO: 光源との交差判定
+		// 光源との交差判定
+		for (const auto& light : light_list) {
+			if (light->intersect(r, t_min, t_first, isect)) {
+				is_isect = true;
+				t_first = isect.t;
+				isect.light = light;
+				isect.type = IsectType::Light;
+				p = isect;
+			}
+		}
 		return is_isect;
 	}
 
@@ -53,8 +67,8 @@ public:
 	}
 
 private:
-	std::vector<std::shared_ptr<Shape>> object_list; // シーン中のオブジェクト
-	//std::vector<std::shared_ptr<Light>> object_light; // シーン中の光源
+	std::vector<std::shared_ptr<Shape>> object_list; // オブジェクト
+	std::vector<std::shared_ptr<Light>> light_list; // シーン中の光源
 	float* envmap;
 	int w_envmap, h_envmap, c_envmap;
 };

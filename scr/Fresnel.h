@@ -30,7 +30,7 @@ private:
 	float ni, no;
 };
 
-// *** ”––ŒŠ±Â ***
+// *** ’P‘w”––ŒŠ±Â ***
 class FresnelThinfilm : public Fresnel {
 public:
 	FresnelThinfilm(float d, float ni, float _nf, float _no);

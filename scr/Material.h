@@ -72,7 +72,7 @@ private:
 
 
 // *** マイクロファセットBRDF ***
-// Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
+// 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 class Microfacet : public Material {
 public:
 	Microfacet(Vec3 _albedo, std::shared_ptr<class MicrofacetDistribution> _distribution, 
@@ -83,5 +83,5 @@ public:
 private:
 	Vec3 albedo;
 	std::shared_ptr<class MicrofacetDistribution> distribution; // マイクロファセット分布
-	std::shared_ptr<class Fresnel> fresnel;  // フレネル項
+	std::shared_ptr<class Fresnel> fresnel; // フレネル項
 };

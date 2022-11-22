@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="scr\Camera.h" />
     <ClInclude Include="scr\Fresnel.h" />
+    <ClInclude Include="scr\Light.h" />
     <ClInclude Include="scr\Material.h" />
     <ClInclude Include="scr\Microfacet.h" />
     <ClInclude Include="scr\ONB.h" />
@@ -35,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scr\Fresnel.cpp" />
+    <ClCompile Include="scr\Light.cpp" />
     <ClCompile Include="scr\Material.cpp" />
     <ClCompile Include="scr\main.cpp" />
     <ClCompile Include="scr\Microfacet.cpp" />

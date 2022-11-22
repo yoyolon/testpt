@@ -3,12 +3,14 @@
 #include "Shape.h"
 
 // *** シーンクラス ***
-class scene : Shape {
+class Scene : Shape {
 public:
-	scene() : envmap(nullptr) {}
-	scene(std::shared_ptr<Shape> _object) : envmap(nullptr) { add(_object); }
-	scene(const char* filename) { 
-		envmap = stbi_loadf(filename, &w_envmap, &h_envmap, &c_envmap, 0);
+	Scene() : envmap(nullptr) {}
+	Scene(std::shared_ptr<Shape> _object) : envmap(nullptr) { add(_object); }
+	Scene(const char* filename) { 
+		envmap = nullptr;
+		// TODO: ファイル読み込みをmain関数で実行
+		//envmap = stbi_loadf(filename, &w_envmap, &h_envmap, &c_envmap, 0);
 	}
 
 	// シーンにオブジェクトを追加
@@ -16,6 +18,7 @@ public:
 	void clear() { object_list.clear(); }
 
 	// レイとシーンの交差判定
+	// TODO: isectを光源対応
 	// TODO: VBHによる高速化
 	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
 		intersection isect;
@@ -28,6 +31,7 @@ public:
 				p = isect;
 			}
 		}
+		// TODO: 光源との交差判定
 		return is_isect;
 	}
 
@@ -50,6 +54,7 @@ public:
 
 private:
 	std::vector<std::shared_ptr<Shape>> object_list; // シーン中のオブジェクト
+	//std::vector<std::shared_ptr<Light>> object_light; // シーン中の光源
 	float* envmap;
 	int w_envmap, h_envmap, c_envmap;
 };

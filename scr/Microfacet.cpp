@@ -36,7 +36,7 @@ float BeckmannDistribution::sample_pdf(const Vec3& wi, const Vec3& h) const {
 	return D(h) * std::abs(CosTheta(h));
 }
 
-// *** GGX•ª•z ***
+// *** Trowbridge-Reitz(GGX)•ª•z ***
 GGXDistribution::GGXDistribution(float _alpha)
 	: alpha(_alpha) {}
 

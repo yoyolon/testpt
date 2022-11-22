@@ -262,6 +262,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 	if (bounces >= MaxDepth) return Vec3(0.0f, 0.0f, 0.0f);
 
 	// 交差判定
+	// NOTE: 光源からレイを追跡するため,入射をwoで出射をwiで考える
 	intersection isect;
 	if (world.intersect(r, 0.001f, inf, isect)) {
 		// シェーディング座標の構築
@@ -272,6 +273,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 		Vec3 brdf;
 		float pdf;
 		// 散乱マテリアルの場合
+		// TODO: isect.matでなくisect.type == MATERIALを使う
 		if (isect.mat->f(wi_local, isect, brdf, wo_local, pdf)) {
 			auto wo = shadingCoord.local2world(wo_local);
 			float cos_term = dot(isect.normal, unit_vector(wo));

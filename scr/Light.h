@@ -14,7 +14,7 @@ class Light {
 public:
 	virtual ~Light() {};
 	Light(int _type) : type(_type) {};
-	virtual Vec3 emitte(const Vec3& wi, const intersection& p, float& pdf) const = 0;
+	virtual Vec3 emitte(const Vec3& wi, const intersection& p, float& pdf) = 0;
 	virtual Vec3 power() const = 0;
 	virtual float sample_pdf(const Vec3& wi, const intersection& p) const = 0;
 	bool IsVisible(const intersection& p1, const intersection& p2, const class Scene& world);
@@ -27,7 +27,8 @@ public:
 class AreaLight : public Light {
 public:
 	AreaLight(Vec3 _intensity, std::shared_ptr<class Shape> _shape, int type);
-	Vec3 emitte(const Vec3& wi, const intersection& p, float& pdf);
+	Vec3 emitte(const Vec3& wi, const intersection& p, float& pdf) override;
+	float sample_pdf(const Vec3& wi, const intersection& p) const override;
 
 private:
 	Vec3 intensity;

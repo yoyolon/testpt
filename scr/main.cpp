@@ -37,6 +37,7 @@
 #include "ONB.h"
 #include "Microfacet.h"
 #include "Fresnel.h"
+#include "Light.h"
 
 #include <sstream>
 #include<iostream>
@@ -58,7 +59,7 @@ void makeScene_simple(Scene& world, Camera& cam, float aspect) {
 	// マテリアル
 	auto dist_GGX = std::make_shared<GGXDistribution>(0.05f);
 	//auto dist_Beckmann = std::make_shared<BeckmannDistribution>(0.2f);
-	auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9, 0.9, 0.9));
+	auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
 	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_GGX, fres_schlick);
 	// オブジェクト
 	auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 3.0f, mat_microfacet);
@@ -85,75 +86,70 @@ void makeScene_cornell(Scene& world, Camera& cam, float aspect) {
 	// floor
 	auto floor = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
-		Vec3(552.8f, 0.0f, 0.0f),
+			Vec3(552.8f, 0.0f, 0.0f),
 			Vec3(0.0f, 0.0f, 0.0f),
 			Vec3(0.0f, 0.0f, 559.2f),
 			Vec3(549.6f, 0.0f, 559.2f)},
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-			mat_white,
-			Vec3(0.0f, 0.0f, 0.0f)
-			);
+		mat_white,
+		Vec3(0.0f, 0.0f, 0.0f));
 	// light sorce
-	auto light = std::make_shared<TriangleMesh>(
+	auto light_shape = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
-		Vec3(343.0f, 548.7f, 227.0f),
+			Vec3(343.0f, 548.7f, 227.0f),
 			Vec3(343.0f, 548.7f, 332.0f),
 			Vec3(213.0f, 548.7f, 332.0f),
 			Vec3(213.0f, 548.7f, 227.0f)},
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-			mat_light,
-			Vec3(0.0f, 0.0f, 0.0f)
-			);
+		mat_light,
+		Vec3(0.0f, 0.0f, 0.0f));
+	auto light = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape, LightType::Area);
 	// ceiling
 	auto ceiling = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
-		Vec3(556.0f, 548.8f, 0.0f),
+			Vec3(556.0f, 548.8f, 0.0f),
 			Vec3(556.0f, 548.8f, 559.2f),
 			Vec3(0.0f, 548.8f, 559.2f),
 			Vec3(0.0f, 548.8f, 0.0f)},
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-			mat_white,
-			Vec3(0.0f, 0.0f, 0.0f)
-			);
+		mat_white,
+		Vec3(0.0f, 0.0f, 0.0f));
 	// back wall
 	auto back = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
-		Vec3(549.6f, 0.0f, 559.2f),
+			Vec3(549.6f, 0.0f, 559.2f),
 			Vec3(0.0f, 0.0f, 559.2f),
 			Vec3(0.0f, 548.8f, 559.2f),
 			Vec3(556.0f, 548.8f, 559.2f)},
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-			mat_white,
-			Vec3(0.0f, 0.0f, 0.0f)
-			);
+		mat_white,
+		Vec3(0.0f, 0.0f, 0.0f));
 	// right wall
 	auto right = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
-		Vec3(0.0f, 0.0f, 559.2f),
+			Vec3(0.0f, 0.0f, 559.2f),
 			Vec3(0.0f, 0.0f, 0.0f),
 			Vec3(0.0f, 548.8f, 0.0f),
 			Vec3(0.0f, 548.8f, 559.2f)},
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-			mat_green,
-			Vec3(0.0f, 0.0f, 0.0f)
-			);
+		mat_green,
+		Vec3(0.0f, 0.0f, 0.0f));
 	// left wall
 	auto left = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
-		Vec3(552.8f, 0.0f, 0.0f),
+			Vec3(552.8f, 0.0f, 0.0f),
 			Vec3(549.6f, 0.0f, 559.2f),
 			Vec3(556.0f, 548.8f, 559.2f),
 			Vec3(556.0f, 548.8f, 0.0f)},
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-			mat_red,
-			Vec3(0.0f, 0.0f, 0.0f)
-			);
+		mat_red,
+		Vec3(0.0f, 0.0f, 0.0f));
 
 	// Spehre
 	auto obj_mirr = std::make_shared<Sphere>(Vec3(278.0f - 110.0f, 75.0f, 227.0f), 75.0f, mat_mirr);
 	auto obj_diff = std::make_shared<Sphere>(Vec3(278.0f + 110.0f, 75.0f, 227.0f), 75.0f, mat_phong);
 
-	// オブジェクトをシーンに追加
+	// オブジェクトと光源をシーンに追加
 	world.add(left);
 	world.add(right);
 	world.add(back);
@@ -262,7 +258,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 	if (bounces >= MaxDepth) return Vec3(0.0f, 0.0f, 0.0f);
 
 	// 交差判定
-	// NOTE: カメラ方向をwi，光源方向をwoにしている(後で修正)
+	// NOTE: カメラ方向をwi，光源方向をwoにしている(あとで修正)
 	intersection isect;
 	if (world.intersect(r, 0.001f, inf, isect)) {
 		// シェーディング座標の構築
@@ -272,8 +268,9 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 		Vec3 wo_local;
 		Vec3 brdf;
 		float pdf;
-		// 散乱マテリアルの場合
+		// マテリアルの場合
 		if (isect.type == IsectType::Material) {
+			// 散乱マテリアル
 			if (isect.mat->f(wi_local, isect, brdf, wo_local, pdf)) {
 				auto wo = shadingCoord.local2world(wo_local);
 				float cos_term = dot(isect.normal, unit_vector(wo));
@@ -292,15 +289,15 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 				}
 				return L(Ray(isect.pos, wo), ++bounces, MaxDepth, world, contrib);
 			}
+			// 発光マテリアル
+			// TODO: 削除するか検討
 			else {
 				return contrib * isect.mat->emitte();
 			}
 		}
-		// 発光の場合
+		// 光源の場合
 		else if (isect.type == IsectType::Light) {
-			// TODO: 光源サンプリング
 			raycontrib++;
-			std::cout << "contrib" << '\n';
 			return contrib * isect.light->emitte();
 		}
 	}

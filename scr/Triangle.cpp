@@ -96,6 +96,11 @@ bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p
 	return true;
 }
 
+float Triangle::area() const {
+	return 0.5f * cross(V1 - V0, V2 - V0).length();
+}
+
+
 
 // *** OŠpƒƒbƒVƒ… ***
 TriangleMesh::TriangleMesh() {}
@@ -182,4 +187,13 @@ bool TriangleMesh::intersect(const Ray& r, float t_min, float t_max, intersectio
 		}
 	}
 	return first_isect;
+}
+
+// OŠpƒ|ƒŠƒSƒ“‚Ì–ÊÏ
+float TriangleMesh::area() const {
+	float a = 0.0f;
+	for (const auto& tri : Triangles) {
+		a += tri.area();
+	}
+	return a;
 }

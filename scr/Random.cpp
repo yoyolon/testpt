@@ -79,7 +79,7 @@ Vec3 Random::Beckmann_sample(float alpha) {
 	auto logs = std::log(1.0f - u);
 	if (std::isinf(logs)) logs = 0.0f;
 	auto tan2Theta = -alpha * alpha * logs; // atan2は遅いので回避
-	auto cos2Theta = 1 / (1 + tan2Theta); 
+	auto cos2Theta = 1 / (1 + tan2Theta);
 	auto sin2Theta = 1 - cos2Theta;
 	auto sinTheta = std::sqrt(std::max(sin2Theta, 0.0f));
 	auto phi = 2 * pi * v;
@@ -87,4 +87,17 @@ Vec3 Random::Beckmann_sample(float alpha) {
 	auto x = std::cos(phi) * sinTheta;
 	auto y = std::sin(phi) * sinTheta;
 	return Vec3(x, y, z);
+}
+
+// 多重重点的サンプリング
+float Random::BalanceHeuristic(int n1, float pdf1, int n2, float pdf2) {
+	return (n1 * pdf1) / (n1 * pdf1 + n2 * pdf2);
+}
+
+
+float Random::PowerHeuristic(int n1, float pdf1, int n2, float pdf2, int beta = 2) {
+	float e1 = std::pow((n1 * pdf1) * (n1 * pdf1), beta);
+	float e2 = std::pow((n1 * pdf1) * (n1 * pdf1), beta);
+	return e1 / (e1 + e2);
+
 }

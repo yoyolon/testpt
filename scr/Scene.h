@@ -4,7 +4,7 @@
 #include "Light.h"
 
 // *** シーンクラス ***
-class Scene : Shape {
+class Scene {
 public:
 	Scene() : envmap(nullptr) {}
 	Scene(std::shared_ptr<Shape> _object) : envmap(nullptr) { add(_object); }

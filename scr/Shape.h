@@ -24,4 +24,6 @@ public:
 	virtual ~Shape() {};
 	// レイとシェイプの交差判定
 	virtual bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const = 0;
+	// 面積
+	virtual float area() const = 0;
 };

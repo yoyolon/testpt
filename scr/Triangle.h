@@ -18,6 +18,7 @@ public:
 
 	void move(Vec3 pos);
 	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
+	float area() const override;
 
 private:
 	Vec3 V0, V1, V2; // 頂点
@@ -36,6 +37,7 @@ public:
 
 	void move(Vec3 pos);
 	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
+	float area() const override;
 
 private:
 	std::vector<Triangle> Triangles; // 三角形配列

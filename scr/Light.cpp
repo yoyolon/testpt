@@ -12,10 +12,17 @@ bool Light::IsVisible(const intersection& p1, const intersection& p2, const Scen
 
 // *** 面光源 ***
 AreaLight::AreaLight(Vec3 _intensity, std::shared_ptr<class Shape> _shape, LightType _type) 
-	: Light(_type), intensity(_intensity), shape(_shape) {}
+	: Light(_type), intensity(_intensity), shape(_shape)
+{
+	area = shape->area();
+}
 
-Vec3 AreaLight::emitte() {
+Vec3 AreaLight::emitte() const {
 	return intensity;
+}
+
+Vec3 AreaLight::power() const {
+	return intensity * area;
 }
 
 bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
@@ -30,4 +37,5 @@ float AreaLight::sample_pdf(const Vec3& wi, const intersection& p) const {
 	// 交差点とサンプル点の可視判定(TODO: 可視じゃなかったらどうする?)
 	// pdfを計算: pdf=1/shape.area()になる(一様サンプリングのため)
 	// wiをグローバル座標系に変換
+	return 1.0;
 }

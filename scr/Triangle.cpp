@@ -59,6 +59,7 @@ Triangle::Triangle(Vec3 v0, Vec3 v1, Vec3 v2, Vec3 n0, Vec3 n1, Vec3 n2, std::sh
 	: V0(v0), V1(v1), V2(v2), N0(n0), N1(n1), N2(n2), mat(m) {};
 
 // OŠpŒ`‚ÌˆÚ“®
+// TODO: •ÏŠ·s—ñ‚Æ‚µ‚ÄÀ‘•
 void Triangle::move(Vec3 pos) {
 	V0 -= pos;
 	V1 -= pos;

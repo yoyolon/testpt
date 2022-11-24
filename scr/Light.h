@@ -34,6 +34,7 @@ public:
 	Vec3 emitte() const override;
 	Vec3 power() const override;
 	float sample_pdf(const Vec3& wi, const intersection& p) const override;
+	Vec3 sample_Li(Vec3& wo, float& pdf) override;
 	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
 private:

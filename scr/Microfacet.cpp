@@ -1,4 +1,4 @@
-// Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
+// éQçl: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 
 #include "Microfacet.h"
 #include "Material.h"

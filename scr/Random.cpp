@@ -89,15 +89,14 @@ Vec3 Random::Beckmann_sample(float alpha) {
 	return Vec3(x, y, z);
 }
 
-// 多重重点的サンプリング
+// 多重重点的サンプリングの重み計算
+// 参考: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
 float Random::BalanceHeuristic(int n1, float pdf1, int n2, float pdf2) {
 	return (n1 * pdf1) / (n1 * pdf1 + n2 * pdf2);
 }
-
-
-float Random::PowerHeuristic(int n1, float pdf1, int n2, float pdf2, int beta = 2) {
-	float e1 = std::pow((n1 * pdf1) * (n1 * pdf1), beta);
-	float e2 = std::pow((n1 * pdf1) * (n1 * pdf1), beta);
+float Random::PowerHeuristic(int n1, float pdf1, int n2, float pdf2, int beta) {
+	float e1 = std::pow(n1 * pdf1, beta);
+	float e2 = std::pow(n2 * pdf2, beta);
 	return e1 / (e1 + e2);
 
 }

@@ -22,7 +22,7 @@ Vec3 AreaLight::emitte() const {
 }
 
 Vec3 AreaLight::power() const {
-	return intensity * area;
+	return intensity * area * 4 * pi;
 }
 
 bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
@@ -30,12 +30,15 @@ bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& 
 }
 
 float AreaLight::sample_pdf(const Vec3& wi, const intersection& p) const {
+	return 1 / area; // 面光源を一様サンプリング
+}
+
+Vec3 AreaLight::sample_Li(Vec3& wo, float& pdf) {
 	// NOTE: 実装手順
 	// wiをローカル座標系に変換
 	// 面光源の点をランダムにサンプル
 	// pdfを計算
 	// 交差点とサンプル点の可視判定(TODO: 可視じゃなかったらどうする?)
-	// pdfを計算: pdf=1/shape.area()になる(一様サンプリングのため)
 	// wiをグローバル座標系に変換
-	return 1.0;
+	return Vec3(0.0f, 0.0f, 0.0f);
 }

@@ -361,6 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/asset/envmap.hdr
-/asset/envmap2.hdr
-/asset/envmap3.hdr
+/asset

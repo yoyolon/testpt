@@ -15,6 +15,8 @@ public:
 	static Vec3 cosine_hemisphere_sample();
 	static Vec3 GGX_sample(float alpha);
 	static Vec3 Beckmann_sample(float alpha);
+	static float BalanceHeuristic(int n1, float pdf1, int n2, float pdf2);
+	static float PowerHeuristic(int n1, float pdf1, int n2, float pdf2, int beta=2);
 };
 
 static std::mt19937 mt; // —”¶¬Ší

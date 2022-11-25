@@ -59,6 +59,7 @@ Triangle::Triangle(Vec3 v0, Vec3 v1, Vec3 v2, Vec3 n0, Vec3 n1, Vec3 n2, std::sh
 	: V0(v0), V1(v1), V2(v2), N0(n0), N1(n1), N2(n2), mat(m) {};
 
 // 三角形の移動
+// TODO: 変換行列として実装
 void Triangle::move(Vec3 pos) {
 	V0 -= pos;
 	V1 -= pos;
@@ -95,6 +96,11 @@ bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p
 	p.mat = mat;
 	return true;
 }
+
+float Triangle::area() const {
+	return 0.5f * cross(V1 - V0, V2 - V0).length();
+}
+
 
 
 // *** 三角メッシュ ***
@@ -182,4 +188,13 @@ bool TriangleMesh::intersect(const Ray& r, float t_min, float t_max, intersectio
 		}
 	}
 	return first_isect;
+}
+
+// 三角ポリゴンの面積
+float TriangleMesh::area() const {
+	float a = 0.0f;
+	for (const auto& tri : Triangles) {
+		a += tri.area();
+	}
+	return a;
 }

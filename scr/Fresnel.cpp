@@ -61,13 +61,8 @@ Fresnel::~Fresnel() {}
 
 
 // *** Schlick‹ßŽ— ***
-FresnelSchlick::FresnelSchlick(float _ni, float _no)
-	: ni(_ni), no(_no) 
-{
-	float f0 = (ni - no) / (ni + no);
-	f0 *= f0;
-	F0 = Vec3(f0, f0, f0);
-}
+FresnelSchlick::FresnelSchlick(Vec3 _F0)
+	: F0(_F0) {}
 
 Vec3 FresnelSchlick::Evaluate(float cosTheta) const {
 	return F0 + (Vec3(1.0f,1.0f,1.0f) - F0) * (float)std::pow(1.0f - cosTheta, 5);

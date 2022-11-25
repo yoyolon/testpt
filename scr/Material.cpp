@@ -2,7 +2,6 @@
 #include "Material.h"
 #include "Shape.h"
 #include "Random.h"
-#include "Vec3.h"
 #include "Microfacet.h"
 #include "Fresnel.h"
 
@@ -49,6 +48,7 @@ Phong::Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin)
 float Phong::sample_pdf(const Vec3& wi, const Vec3& wo) const {
 	return std::max(std::abs(CosTheta(wo)) * invpi, epsilon);
 }
+
 bool Phong::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
 	// 余弦に従ったサンプリング
 	wo = Random::cosine_hemisphere_sample();
@@ -70,7 +70,7 @@ Microfacet::Microfacet(Vec3 _albedo, std::shared_ptr<MicrofacetDistribution> _di
 	: albedo(_albedo), distribution(_distribution), fresnel(_fresnel) {}
 
 float Microfacet::sample_pdf(const Vec3& wi, const Vec3& h) const {
-	// hのPDFをwoのPDFに
+	// hのPDFをwoのPDFに変換
 	return distribution->sample_pdf(wi, h) / (4 * dot(wi, h));
 }
 

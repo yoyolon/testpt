@@ -25,3 +25,7 @@ bool Sphere::intersect(const Ray& r, float t_min, float t_max, intersection& p) 
 	p.mat = mat;
 	return true;
 };
+
+float Sphere::area() const {
+	return 4 * pi * radius;
+}

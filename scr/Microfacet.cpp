@@ -1,4 +1,4 @@
-// Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
+// 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 
 #include "Microfacet.h"
 #include "Material.h"
@@ -36,7 +36,7 @@ float BeckmannDistribution::sample_pdf(const Vec3& wi, const Vec3& h) const {
 	return D(h) * std::abs(CosTheta(h));
 }
 
-// *** GGX分布 ***
+// *** Trowbridge-Reitz(GGX)分布 ***
 GGXDistribution::GGXDistribution(float _alpha)
 	: alpha(_alpha) {}
 

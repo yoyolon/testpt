@@ -1,30 +1,48 @@
 #pragma once
 
 #include "Shape.h"
+#include "Light.h"
 
 // *** シーンクラス ***
-class scene : Shape {
+class Scene {
 public:
-	scene() : envmap(nullptr) {}
-	scene(std::shared_ptr<Shape> _object) : envmap(nullptr) { add(_object); }
-	scene(const char* filename) { 
-		envmap = stbi_loadf(filename, &w_envmap, &h_envmap, &c_envmap, 0);
+	Scene() : envmap(nullptr) {}
+	Scene(std::shared_ptr<Shape> _object) : envmap(nullptr) { add(_object); }
+	Scene(const char* filename) { 
+		envmap = nullptr;
+		// TODO: ファイル読み込みをmain関数で実行
+		//envmap = stbi_loadf(filename, &w_envmap, &h_envmap, &c_envmap, 0);
 	}
 
-	// シーンにオブジェクトを追加
+	// シーンにオブジェクト/ライトを追加
 	void add(std::shared_ptr<Shape> object) { object_list.push_back(object); }
+	void add(std::shared_ptr<Light> light) { light_list.push_back(light); }
 	void clear() { object_list.clear(); }
 
 	// レイとシーンの交差判定
+	// TODO: isectを光源対応
 	// TODO: VBHによる高速化
 	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
 		intersection isect;
 		bool is_isect = false;
 		auto t_first = t_max;
+		isect.type = IsectType::None;
+		// オブジェクトとの交差判定
 		for (const auto& object : object_list) {
 			if (object->intersect(r, t_min, t_first, isect)) {
 				is_isect = true;
 				t_first = isect.t;
+				isect.type = IsectType::Material;
+				p = isect;
+			}
+		}
+		// 光源との交差判定
+		for (const auto& light : light_list) {
+			if (light->intersect(r, t_min, t_first, isect)) {
+				is_isect = true;
+				t_first = isect.t;
+				isect.light = light;
+				isect.type = IsectType::Light;
 				p = isect;
 			}
 		}
@@ -49,7 +67,8 @@ public:
 	}
 
 private:
-	std::vector<std::shared_ptr<Shape>> object_list; // シーン中のオブジェクト
+	std::vector<std::shared_ptr<Shape>> object_list; // オブジェクト
+	std::vector<std::shared_ptr<Light>> light_list; // シーン中の光源
 	float* envmap;
 	int w_envmap, h_envmap, c_envmap;
 };

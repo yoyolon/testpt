@@ -277,16 +277,16 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 				contrib = contrib * brdf * cos_term / pdf;
 				// ロシアンルーレット
 				// TODO: あとでPBRTを確認
-				if (bounces >= 3) {
-					float p_rr = std::max(0.5f, contrib.average()); // レイ追跡の継続確率
-					if (p_rr < Random::uniform_float()) {
-						raydeath++;
-						return Vec3(0.0f, 0.0f, 0.0f);
-					}
-					else {
-						contrib /= p_rr;
-					}
-				}
+				//if (bounces >= 5) {
+				//	float p_rr = std::max(0.5f, contrib.average()); // レイ追跡の継続確率
+				//	if (p_rr < Random::uniform_float()) {
+				//		raydeath++;
+				//		return Vec3(0.0f, 0.0f, 0.0f);
+				//	}
+				//	else {
+				//		contrib /= p_rr;
+				//	}
+				//}
 				return L(Ray(isect.pos, wo), ++bounces, MaxDepth, world, contrib);
 			}
 			// 発光マテリアル
@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
 	Random::init();
 
 	// 出力画像
-	const char* filename = "out/image.png"; // パス
+	const char* filename = "image.png"; // パス
 	const auto aspect = 3.0f / 3.0f;     // アスペクト比
 	const int h = 600;                   // 高さ
 	const int w = int(h * aspect);       // 幅

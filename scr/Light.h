@@ -18,9 +18,9 @@ public:
 	virtual Vec3 emitte() const = 0;
 	virtual Vec3 power() const = 0;
 	virtual float sample_pdf(const Vec3& wi, const intersection& p) const = 0;
-	virtual Vec3 sample_Li(Vec3& wo, float& pdf) = 0; // 光源方向をサンプルし放射輝度を返す
+	virtual Vec3 sample_light(Vec3& wo, float& pdf) = 0; // 光源方向をサンプルし放射輝度を返す
 	virtual bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const = 0;
-	bool IsVisible(const intersection& p1, const intersection& p2, const class Scene& world);
+	bool is_visible(const intersection& p1, const intersection& p2, const class Scene& world);
 
 private:
 	const LightType type;
@@ -34,7 +34,7 @@ public:
 	Vec3 emitte() const override;
 	Vec3 power() const override;
 	float sample_pdf(const Vec3& wi, const intersection& p) const override;
-	Vec3 sample_Li(Vec3& wo, float& pdf) override;
+	Vec3 sample_light(Vec3& wo, float& pdf) override;
 	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
 private:

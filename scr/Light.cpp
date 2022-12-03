@@ -4,7 +4,7 @@
 #include "Scene.h"
 
 // *** 光源 ***
-bool Light::IsVisible(const intersection& p1, const intersection& p2, const Scene& world) {
+bool Light::is_visible(const intersection& p1, const intersection& p2, const Scene& world) {
 	Ray r = Ray(p1.pos, unit_vector(p2.pos - p1.pos));
 	intersection isect;
 	return !world.intersect(r, 0.001f, inf, isect);
@@ -33,7 +33,7 @@ float AreaLight::sample_pdf(const Vec3& wi, const intersection& p) const {
 	return 1 / area; // 面光源を一様サンプリング
 }
 
-Vec3 AreaLight::sample_Li(Vec3& wo, float& pdf) {
+Vec3 AreaLight::sample_light(Vec3& wo, float& pdf) {
 	// NOTE: 実装手順
 	// wiをローカル座標系に変換
 	// 面光源の点をランダムにサンプル

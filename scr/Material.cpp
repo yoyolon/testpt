@@ -1,24 +1,18 @@
-#include <complex>
 #include "Material.h"
+#include <complex>
+#include "Microfacet.h"
 #include "Shape.h"
 #include "Random.h"
-#include "Microfacet.h"
 #include "Fresnel.h"
-
-// *** シェーディング規則 ***
-// 1. 法線をz軸としたシェーディング座標系で行う
-// 2. 入射・出射方向は物体表面から離れる方向を正とする
-
 
 // *** ランバート反射 ***
 Diffuse::Diffuse(Vec3 _albedo) : albedo(_albedo) {}
 
 float Diffuse::sample_pdf(const Vec3& wi, const Vec3& wo) const {
-	//return std::max(std::abs(CosTheta(wo)) * invpi, epsilon);
-	return 0.5 * invpi;
+	return std::max(std::abs(get_cos(wo)) * invpi, epsilon);
 }
 bool Diffuse::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-	wo = Random::uniform_hemisphere_sample();
+	wo = Random::cosine_hemisphere_sample();
 	pdf = sample_pdf(wi, wo);
 	brdf = albedo * invpi;
 	return true;
@@ -32,7 +26,6 @@ float Mirror::sample_pdf(const Vec3& wi, const Vec3& wo) const {
 	return 1.0f;
 }
 bool Mirror::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-	// デルタ分布
 	wo = unit_vector(Vec3(-wi.get_x(), -wi.get_y(), wi.get_z())); // 正反射方向
 	pdf = sample_pdf(wi, wo);
 	float cos_term = dot(Vec3(0,0,1), unit_vector(wo));
@@ -46,7 +39,7 @@ Phong::Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin)
 	: albedo(_albedo), Kd(_Kd), Ks(_Ks), shin(_shin) {}
 
 float Phong::sample_pdf(const Vec3& wi, const Vec3& wo) const {
-	return std::max(std::abs(CosTheta(wo)) * invpi, epsilon);
+	return std::max(std::abs(get_cos(wo)) * invpi, epsilon);
 }
 
 bool Phong::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
@@ -64,28 +57,27 @@ bool Phong::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float
 
 
 // *** マイクロファセットモデル ***
-// Reference: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
+// 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 Microfacet::Microfacet(Vec3 _albedo, std::shared_ptr<MicrofacetDistribution> _distribution, 
 					   std::shared_ptr<Fresnel> _fresnel)
 	: albedo(_albedo), distribution(_distribution), fresnel(_fresnel) {}
 
 float Microfacet::sample_pdf(const Vec3& wi, const Vec3& h) const {
-	// hのPDFをwoのPDFに変換
-	return distribution->sample_pdf(wi, h) / (4 * dot(wi, h));
+	return distribution->sample_pdf(wi, h) / (4 * dot(wi, h)); // 確率密度の変換
 }
 
 bool Microfacet::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
 	Vec3 h = distribution->sample_halfvector();
 	wo = unit_vector(reflect(wi, h)); // ハーフベクトルと入射方向から出射方向を計算
 	pdf = sample_pdf(wi, h);
-	float cos_thetaI = std::abs(CosTheta(wi));
-	float cos_thetaO = std::abs(CosTheta(wo));
-	if (cos_thetaI == 0 || cos_thetaO == 0) return false;
+	float cos_wi = std::abs(get_cos(wi));
+	float cos_wo = std::abs(get_cos(wo));
+	if (cos_wi == 0 || cos_wo == 0) return false;
 	if (h.get_x() == 0 && h.get_y() == 0 && h.get_z() == 0) return false;
 	float D = distribution->D(h);
 	float G = distribution->G(wi, wo);
 	Vec3 F = fresnel->evaluate(dot(wi, h));
-	brdf = albedo *  (D * G * F) / (4 * cos_thetaI * cos_thetaO);
+	brdf = albedo *  (D * G * F) / (4 * cos_wi * cos_wo);
 	return true;
 }
 

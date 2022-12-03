@@ -16,15 +16,16 @@ inline float fresnel_tp(float ni, float nj, float cosi, float cosj) {
 	return (ni * cosi + ni * cosi) / (ni * cosj + nj * cosi);
 }
 // ”½ËŒW”
-static std::complex<float> composit_r(float r, float R, float Phi) {
+static std::complex<float> composit_r(float r, float R, float phi) {
 	std::complex<float>i(0.f, 1.f);
-	return (r + R * exp(i * 2.0f * Phi)) / (1.0f + r * R * exp(i * 2.0f * Phi));
+	return (r + R * exp(i * 2.0f * phi)) / (1.0f + r * R * exp(i * 2.0f * phi));
 }
 // “§‰ßŒW”
-static std::complex<float> composit_t(float r, float R, float t, float T, float Phi) {
+static std::complex<float> composit_t(float r, float R, float t, float T, float phi) {
 	std::complex<float>i(0.f, 1.f);
-	return (t * T * exp(i * Phi)) / (1.0f + r * R * exp(i * 2.0f * Phi));
+	return (t * T * exp(i * phi)) / (1.0f + r * R * exp(i * 2.0f * phi));
 }
+
 // ”––ŒŠ±Â”½Ë—¦
 Vec3 iridterm(float cos0, float d, float n0, float n1, float n2) {
 	// “§‰ßŠpŒvZ

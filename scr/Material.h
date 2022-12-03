@@ -2,15 +2,20 @@
 
 #include "Ray.h"
 
+// *** シェーディング規則 ***
+// 1. 法線をz軸正の方向としたシェーディング座標系で行う
+// 2. 入射/出射方向は物体表面から離れる方向を正とする
+// 3. z軸とベクトルがなす角をthetaとする．
+
 struct intersection;
 
 // *** ユーティリティ関数 ***
-inline float CosTheta(const Vec3& w) { return w.get_z(); }
-inline float Cos2Theta(const Vec3& w) { return w.get_z() * w.get_z(); }
-inline float Sin2Theta(const Vec3& w) { return std::max(0.0f, 1.0f - Cos2Theta(w)); }
-inline float SinTheta(const Vec3& w) { return std::sqrt(Sin2Theta(w)); }
-inline float TanTheta(const Vec3& w) { return SinTheta(w) / CosTheta(w); }
-inline float Tan2Theta(const Vec3& w) { return Sin2Theta(w) / Cos2Theta(w); }
+inline float get_cos(const Vec3& w) { return w.get_z(); }
+inline float get_cos2(const Vec3& w) { return w.get_z() * w.get_z(); }
+inline float get_sin2(const Vec3& w) { return std::max(0.0f, 1.0f - get_cos2(w)); }
+inline float get_sin(const Vec3& w) { return std::sqrt(get_sin2(w)); }
+inline float get_tan(const Vec3& w) { return get_sin(w) / get_cos(w); }
+inline float get_tan2(const Vec3& w) { return get_sin2(w) / get_cos2(w); }
 
 
 // *** マテリアルクラス ***

@@ -58,6 +58,7 @@ void make_scene_simple(Scene& world, Camera& cam, float aspect) {
 	// マテリアル
 	auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
 	auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
+	//auto fres_thinfilm = std::make_shared<FresnelThinfilm>(500.0f, 1.0f, 1.3f, 1.0f);
 	auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_schlick);
 	auto mat_light = std::make_shared<Emitter>(Vec3(25.00f, 25.00f, 25.00f));
 	// オブジェクト

@@ -58,43 +58,43 @@ Vec3 Random::cosine_hemisphere_sample() {
 }
 
 // GGXの重点的サンプリング[WMLT07]
-Vec3 Random::GGX_sample(float alpha) {
+Vec3 Random::ggx_sample(float alpha) {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
-	auto tan2Theta = alpha * alpha * u / (1.0f - u); // atan2は遅いので回避
-	auto cos2Theta = 1 / (1 + tan2Theta);
-	auto sin2Theta = 1 - cos2Theta;
-	auto sinTheta = std::sqrt(std::max(sin2Theta, 0.0f));
+	auto tan2_theta = alpha * alpha * u / (1.0f - u); // atan2は遅いので回避
+	auto cos2theta = 1 / (1 + tan2_theta);
+	auto sin2theta = 1 - cos2theta;
+	auto sin_theta = std::sqrt(std::max(sin2theta, 0.0f));
 	auto phi = 2 * pi * v;
-	auto z = std::sqrt(std::max(cos2Theta, 0.0f));
-	auto x = std::cos(phi) * sinTheta;
-	auto y = std::sin(phi) * sinTheta;
+	auto z = std::sqrt(std::max(cos2theta, 0.0f));
+	auto x = std::cos(phi) * sin_theta;
+	auto y = std::sin(phi) * sin_theta;
 	return Vec3(x, y, z);
 }
 
 // ベックマン分布の重点的サンプリング[WMLT07]
-Vec3 Random::Beckmann_sample(float alpha) {
+Vec3 Random::beckmann_sample(float alpha) {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
 	auto logs = std::log(1.0f - u);
 	if (std::isinf(logs)) logs = 0.0f;
-	auto tan2Theta = -alpha * alpha * logs; // atan2は遅いので回避
-	auto cos2Theta = 1 / (1 + tan2Theta);
-	auto sin2Theta = 1 - cos2Theta;
-	auto sinTheta = std::sqrt(std::max(sin2Theta, 0.0f));
+	auto tan2_theta = -alpha * alpha * logs; // atan2は遅いので回避
+	auto cos2theta = 1 / (1 + tan2_theta);
+	auto sin2theta = 1 - cos2theta;
+	auto sin_theta = std::sqrt(std::max(sin2theta, 0.0f));
 	auto phi = 2 * pi * v;
-	auto z = std::sqrt(std::max(cos2Theta, 0.0f));
-	auto x = std::cos(phi) * sinTheta;
-	auto y = std::sin(phi) * sinTheta;
+	auto z = std::sqrt(std::max(cos2theta, 0.0f));
+	auto x = std::cos(phi) * sin_theta;
+	auto y = std::sin(phi) * sin_theta;
 	return Vec3(x, y, z);
 }
 
 // 多重重点的サンプリングの重み計算
 // 参考: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
-float Random::BalanceHeuristic(int n1, float pdf1, int n2, float pdf2) {
+float Random::balance_heuristic(int n1, float pdf1, int n2, float pdf2) {
 	return (n1 * pdf1) / (n1 * pdf1 + n2 * pdf2);
 }
-float Random::PowerHeuristic(int n1, float pdf1, int n2, float pdf2, int beta) {
+float Random::power_heuristic(int n1, float pdf1, int n2, float pdf2, int beta) {
 	float e1 = std::pow(n1 * pdf1, beta);
 	float e2 = std::pow(n2 * pdf2, beta);
 	return e1 / (e1 + e2);

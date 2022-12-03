@@ -3,16 +3,16 @@
 
 // *** UtilityŠÖ” ***
 // ƒtƒŒƒlƒ‹‚ÌŽ®
-inline float rs(float ni, float nj, float cosi, float cosj) {
+inline float fresnel_rs(float ni, float nj, float cosi, float cosj) {
 	return (ni * cosi - nj * cosj) / (ni * cosi + nj * cosj);
 }
-inline float ts(float ni, float nj, float cosi, float cosj) {
+inline float fresnel_ts(float ni, float nj, float cosi, float cosj) {
 	return (ni * cosi + ni * cosi) / (ni * cosi + nj * cosj);
 }
-inline float rp(float ni, float nj, float cosi, float cosj) {
+inline float fresnel_rp(float ni, float nj, float cosi, float cosj) {
 	return (nj * cosi - ni * cosj) / (ni * cosj + nj * cosi);
 }
-inline float tp(float ni, float nj, float cosi, float cosj) {
+inline float fresnel_tp(float ni, float nj, float cosi, float cosj) {
 	return (ni * cosi + ni * cosi) / (ni * cosj + nj * cosi);
 }
 // ”½ŽËŒW”
@@ -36,10 +36,10 @@ Vec3 iridterm(float cos0, float d, float n0, float n1, float n2) {
 	if (sin2 >= 1.0) return Vec3(1.0f, 1.0f, 1.0f);  // ‘S”½ŽË
 	float cos2 = std::sqrt(std::max(0.0f, 1 - sin2 * sin2));
 	// ƒtƒŒƒlƒ‹”½ŽËŒW”ŒvŽZ
-	float r01s = rs(n0, n1, cos0, cos1);
-	float r12s = rs(n1, n2, cos1, cos2);
-	float r01p = rp(n0, n1, cos0, cos1);
-	float r12p = rp(n1, n2, cos1, cos2);
+	float r01s = fresnel_rs(n0, n1, cos0, cos1);
+	float r12s = fresnel_rs(n1, n2, cos1, cos2);
+	float r01p = fresnel_rp(n0, n1, cos0, cos1);
+	float r12p = fresnel_rp(n1, n2, cos1, cos2);
 	// ‡¬”½ŽË—¦ŒvŽZ
 	float lambda[3] = { 640.0, 540.0, 450.0 };
 	float rgb[3] = { 0.0 };
@@ -64,8 +64,8 @@ Fresnel::~Fresnel() {}
 FresnelSchlick::FresnelSchlick(Vec3 _F0)
 	: F0(_F0) {}
 
-Vec3 FresnelSchlick::Evaluate(float cosTheta) const {
-	return F0 + (Vec3(1.0f,1.0f,1.0f) - F0) * (float)std::pow(1.0f - cosTheta, 5);
+Vec3 FresnelSchlick::evaluate(float cos_theta) const {
+	return F0 + (Vec3(1.0f,1.0f,1.0f) - F0) * (float)std::pow(1.0f - cos_theta, 5);
 }
 
 
@@ -73,13 +73,13 @@ Vec3 FresnelSchlick::Evaluate(float cosTheta) const {
 FresnelDielectric::FresnelDielectric(float _ni, float _no) 
 	: ni(_ni), no(_no) {}
 
-Vec3 FresnelDielectric::Evaluate(float cosTheta) const {
-	float sinTheta = std::sqrt(std::max(0.0f, 1.0f - cosTheta * cosTheta));
-	float sinO = no / ni * sinTheta;
+Vec3 FresnelDielectric::evaluate(float cos_theta) const {
+	float sin_theta = std::sqrt(std::max(0.0f, 1.0f - cos_theta * cos_theta));
+	float sinO = no / ni * sin_theta;
 	if (sinO >= 1.0f) return Vec3(0.0f, 0.0f, 0.0f);
 	float cosO = std::sqrt(std::max(0.0f, 1.0f - sinO * sinO));
-	float Rs = rs(ni, no, cosTheta, cosO);
-	float Rp = rp(ni, no, cosTheta, cosO);
+	float Rs = fresnel_rs(ni, no, cos_theta, cosO);
+	float Rp = fresnel_rp(ni, no, cos_theta, cosO);
 	float R =  (Rs * Rs + Rp * Rp) / 2;
 	return Vec3(R, R, R);
 }
@@ -89,6 +89,6 @@ Vec3 FresnelDielectric::Evaluate(float cosTheta) const {
 FresnelThinfilm::FresnelThinfilm(float _d, float _ni, float _nf, float _no)
 	: d(_d), ni(_ni), nf(_nf), no(_no) {}
 
-Vec3 FresnelThinfilm::Evaluate(float cosTheta) const {
-	return iridterm(cosTheta, d, ni, nf, no);
+Vec3 FresnelThinfilm::evaluate(float cos_theta) const {
+	return iridterm(cos_theta, d, ni, nf, no);
 }

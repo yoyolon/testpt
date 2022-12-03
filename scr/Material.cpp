@@ -78,14 +78,14 @@ bool Microfacet::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, 
 	Vec3 h = distribution->sample_halfvector();
 	wo = unit_vector(reflect(wi, h)); // ハーフベクトルと入射方向から出射方向を計算
 	pdf = sample_pdf(wi, h);
-	float cosThetaI = std::abs(CosTheta(wi));
-	float cosThetaO = std::abs(CosTheta(wo));
-	if (cosThetaI == 0 || cosThetaO == 0) return false;
+	float cos_thetaI = std::abs(CosTheta(wi));
+	float cos_thetaO = std::abs(CosTheta(wo));
+	if (cos_thetaI == 0 || cos_thetaO == 0) return false;
 	if (h.get_x() == 0 && h.get_y() == 0 && h.get_z() == 0) return false;
 	float D = distribution->D(h);
 	float G = distribution->G(wi, wo);
-	Vec3 F = fresnel->Evaluate(dot(wi, h));
-	brdf = albedo *  (D * G * F) / (4 * cosThetaI * cosThetaO);
+	Vec3 F = fresnel->evaluate(dot(wi, h));
+	brdf = albedo *  (D * G * F) / (4 * cos_thetaI * cos_thetaO);
 	return true;
 }
 

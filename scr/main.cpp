@@ -277,7 +277,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 		// シェーディング座標の構築
 		ONB shadingCoord;
 		shadingCoord.build_ONB(isect.normal);
-		Vec3 wi_local = -shadingCoord.world2local(r.get_dir());
+		Vec3 wi_local = -shadingCoord.to_local(r.get_dir());
 		Vec3 wo_local;
 		Vec3 brdf;
 		float pdf;
@@ -285,7 +285,7 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 		if (isect.type == IsectType::Material) {
 			// 散乱マテリアル
 			if (isect.mat->f(wi_local, isect, brdf, wo_local, pdf)) {
-				auto wo = shadingCoord.local2world(wo_local);
+				auto wo = shadingCoord.to_world(wo_local);
 				float cos_term = dot(isect.normal, unit_vector(wo));
 				contrib = contrib * brdf * cos_term / pdf;
 				// ロシアンルーレット

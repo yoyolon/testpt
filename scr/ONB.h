@@ -18,8 +18,8 @@ public:
 	void build_ONB(const Vec3& normal);
 
 	// 座標変換
-	Vec3 world2local(const Vec3& a) const;
-	Vec3 local2world(const Vec3& a) const;
+	Vec3 to_local(const Vec3& a) const;
+	Vec3 to_world(const Vec3& a) const;
 
 private:
 	Vec3 s, t, n; // 正規直交ベクトル

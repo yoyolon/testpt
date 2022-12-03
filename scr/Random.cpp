@@ -2,9 +2,9 @@
 
 // 乱数の初期化
 void Random::init() {
-	//std::random_device rd; // シード用乱数を生成
+	//std::random_device rd;
 	//mt.seed(rd()); 
-	mt.seed(1);
+	mt.seed(1); // シードを固定
 }
 
 // 一様乱数[0,1]を生成

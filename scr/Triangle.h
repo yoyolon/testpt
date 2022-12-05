@@ -5,9 +5,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "Shape.h"
-#include "Ray.h"
 #include "Material.h"
+#include "Ray.h"
+#include "Shape.h"
 
 // *** OŠpƒ|ƒŠƒSƒ“ ***
 class Triangle : public Shape {

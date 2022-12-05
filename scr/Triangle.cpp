@@ -3,7 +3,7 @@
 // *** Utility関数 ***
 // 文字列を指定した文字で区切る
 std::vector<std::string> split_string(const std::string& line, char delimiter = ' ') {
-	std::stringstream ss(line); // 入力ストリーム
+	std::stringstream ss(line);
 	std::string temp;
 	std::vector<std::string> ret;
 	while (std::getline(ss, temp, delimiter)) {
@@ -15,7 +15,7 @@ std::vector<std::string> split_string(const std::string& line, char delimiter = 
 // データ構造: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 void load_obj(std::vector<Vec3>& vertex, std::vector<Vec3>& index, const std::string& filename) {
 	std::ifstream ifs;
-	ifs.open(filename, std::ios::in); // filenameを読み込み専用で開く
+	ifs.open(filename, std::ios::in); // 読み込み専用でファイルを開く
 	if (!ifs) {
 		std::cerr << "Can't open " << filename << '\n';
 		exit(1);
@@ -59,7 +59,7 @@ Triangle::Triangle(Vec3 v0, Vec3 v1, Vec3 v2, Vec3 n0, Vec3 n1, Vec3 n2, std::sh
 	: V0(v0), V1(v1), V2(v2), N0(n0), N1(n1), N2(n2), mat(m) {};
 
 // 三角形の移動
-// TODO: 変換行列として実装
+// TODO: 変換行列で実装
 void Triangle::move(Vec3 pos) {
 	V0 -= pos;
 	V1 -= pos;
@@ -70,7 +70,7 @@ void Triangle::move(Vec3 pos) {
 }
 
 // レイと三角形の交差判定
-// Reference: http://www.graphics.cornell.edu/pubs/1997/MT97.html
+// 参考: http://www.graphics.cornell.edu/pubs/1997/MT97.html
 bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
 	Vec3 T = r.get_origin() - V0;
 	Vec3 E1 = V1 - V0;
@@ -90,7 +90,7 @@ bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p
 	}
 	// 交差点情報の更新
 	p.t = t;
-	Vec3 N_lerp = (1.0f - u - v) * N0 + u * N1 + v * N2; // 法線を補完
+	Vec3 N_lerp = (1.0f - u - v) * N0 + u * N1 + v * N2; // 法線補間
 	p.normal = N_lerp;
 	p.pos = r.at(t);
 	p.mat = mat;

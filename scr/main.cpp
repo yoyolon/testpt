@@ -3,8 +3,8 @@
 // yoyolon - October 2022
 // 
 // Development
-// C++17
 // Microsoft Visual Studio 2019
+// C++17
 // 
 // External Library
 // stb_image: https://github.com/nothings/stb

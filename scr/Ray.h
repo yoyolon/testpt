@@ -6,15 +6,15 @@
 class Ray {
 public:
 	Ray() {}
-	Ray(Vec3 _orig, Vec3 _dir) : orig(_orig), dir(_dir) {};
+	Ray(Vec3 _origin, Vec3 _dir) : origin(_origin), dir(_dir) {};
 
 	// ƒQƒbƒ^
 	Vec3 get_dir() const { return dir; }
-	Vec3 get_orig() const { return orig; }
+	Vec3 get_origin() const { return origin; }
 
 	// ˆÊ’u‚ÌŽæ“¾
-	inline Vec3 at(float t) const { return orig + t * dir; }
+	inline Vec3 at(float t) const { return origin + t * dir; }
 
 private:
-	Vec3 orig, dir;
+	Vec3 origin, dir;
 };

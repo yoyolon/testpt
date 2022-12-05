@@ -7,14 +7,13 @@ enum class IsectType {
 };
 
 // *** 交差点情報 ***
-// TODO: 面光源への対応
 struct intersection {
 	Vec3 pos;    // 交差点
 	Vec3 normal; // 法線
-	float t;     // レイのパラメータ
+	float t;     // レイ係数
 	std::shared_ptr<class Material> mat; // マテリアル
-	std::shared_ptr<class Light> light; // 光源
-	IsectType type; // 交差点の種類(光源orマテリアル)
+	std::shared_ptr<class Light> light;  // 光源
+	IsectType type; // 交差点の種類
 };
 
 

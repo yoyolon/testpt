@@ -3,7 +3,6 @@
 // ƒŒƒC‚Æ‹…‚ÌŒğ·”»’è
 bool Sphere::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
 	// “ñŸ•û’ö®‚Ì”»•Ê®D = (b/2)^2 - ac‚ğ—˜—p(b‚Í‹ô”)
-	// TODO: ”®‚ÌŠÈ’P‰»
 	auto temp = r.get_origin() - center;
 	auto a = r.get_dir().length2();
 	auto b_half = dot(r.get_dir(), temp);

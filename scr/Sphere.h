@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Shape.h"
 #include "Material.h"
+#include "Shape.h"
 
 // *** ‹… ***
 class Sphere : public Shape {

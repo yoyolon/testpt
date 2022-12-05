@@ -72,7 +72,7 @@ void Triangle::move(Vec3 pos) {
 // ƒŒƒC‚ÆOŠpŒ`‚ÌŒğ·”»’è
 // Reference: http://www.graphics.cornell.edu/pubs/1997/MT97.html
 bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
-	Vec3 T = r.get_orig() - V0;
+	Vec3 T = r.get_origin() - V0;
 	Vec3 E1 = V1 - V0;
 	Vec3 E2 = V2 - V0;
 	Vec3 D = r.get_dir();

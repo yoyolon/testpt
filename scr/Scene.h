@@ -6,6 +6,7 @@
 // *** シーンクラス ***
 class Scene {
 public:
+	// TODO: 環境マップはLightクラスで実装する
 	Scene() : envmap(nullptr) {}
 	Scene(std::shared_ptr<Shape> _object) : envmap(nullptr) { add(_object); }
 	Scene(const char* filename) { 

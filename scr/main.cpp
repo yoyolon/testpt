@@ -9,12 +9,6 @@
 // External Library
 // stb_image: https://github.com/nothings/stb
 //
-// Reference
-// [MT97]  T.Moller, B.Trumbore. "Fast, minimum storage ray-triangle intersection" 1997.
-// [PR08]  P.Shirley, R.K.Morley. "Realistic Ray Tracing" 2008.
-// [PJH16] M.Pharr, W.Jakob, G.Humphre. "Physically Based Rendering: From Theory To Implementation" 2016.
-// [Shi20] P.Shirley. "Raytracing in one weekend" 2020.
-// 
 // This software is based on Raytracing in one weekend(https://raytracing.github.io/).
 // Part of this software is based on pbrt(https://pbrt.org/) licensed under the BSD 2-Clause "Simplified" License
 // (https://github.com/mmp/pbrt-v3/blob/master/LICENSE.txt).

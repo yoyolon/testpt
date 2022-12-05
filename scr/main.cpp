@@ -345,8 +345,8 @@ int main(int argc, char* argv[]) {
 	// ÉVÅ[Éì
 	Scene world("asset/envmap3.hdr");
 	Camera cam;
-	//make_scene_cornell(world, cam, aspect);
-	make_scene_simple(world, cam, aspect);
+	make_scene_cornell(world, cam, aspect);
+	//make_scene_simple(world, cam, aspect);
 	//make_scene_sphere(world, cam, aspect);
 	//make_scene_vase(world, cam, aspect);
 

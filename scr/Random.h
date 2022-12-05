@@ -16,7 +16,7 @@ public:
 	static Vec3 ggx_sample(float alpha);
 	static Vec3 beckmann_sample(float alpha);
 	static float balance_heuristic(int n1, float pdf1, int n2, float pdf2);
-	static float power_heuristic(int n1, float pdf1, int n2, float pdf2, int beta=2);
+	static float power_heuristic(int n1, float pdf1, int n2, float pdf2, float beta=2.0f);
 };
 
 static std::mt19937 mt; // —”¶¬Ší

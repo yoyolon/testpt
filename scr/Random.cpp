@@ -94,9 +94,9 @@ Vec3 Random::beckmann_sample(float alpha) {
 float Random::balance_heuristic(int n1, float pdf1, int n2, float pdf2) {
 	return (n1 * pdf1) / (n1 * pdf1 + n2 * pdf2);
 }
-float Random::power_heuristic(int n1, float pdf1, int n2, float pdf2, int beta) {
-	float e1 = std::pow(n1 * pdf1, beta);
-	float e2 = std::pow(n2 * pdf2, beta);
+float Random::power_heuristic(int n1, float pdf1, int n2, float pdf2, float beta) {
+	float e1 = std::powf(n1 * pdf1, beta);
+	float e2 = std::powf(n2 * pdf2, beta);
 	return e1 / (e1 + e2);
 
 }

@@ -95,12 +95,10 @@ inline std::ostream& operator<<(std::ostream& s, const Vec3& a) {
 
 
 // *** Utility関数 ***
-// 単位ベクトル
-inline bool IsZero(const Vec3& a) { return a.length2() > 0 ? false : true; }
+inline bool is_zero(const Vec3& a) { return a.length2() > 0 ? false : true; }
 
 inline Vec3 unit_vector(const Vec3& a) { return a / a.length(); }
 
-// 正反射方向ベクトル(入射角が外向きを過程)
-inline Vec3 reflect(const Vec3& wo, const Vec3& n) {
-	return -wo + 2 * dot(wo, n) * n;
+inline Vec3 reflect(const Vec3& w, const Vec3& n) {
+	return -w + 2 * dot(w, n) * n; // 正反射方向
 }

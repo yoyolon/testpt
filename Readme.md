@@ -42,8 +42,8 @@ Raytracing in one weekendにない機能として以下のものがあります�
 
 ## 参考文献
 
-T.Moller, B.Trumbore. "Fast, minimum storage ray-triangle intersection" 1997.  
-B.Walter, S.R.Marschner, H.Li, K.E.Torrance. "Microfacet Models for Refraction through Rough Surfaces" 2007.  
-P.Shirley, R.K.Morley. "Realistic Ray Tracing" 2008.  
-M.Pharr, W.Jakob, G.Humphre. "Physically Based Rendering: From Theory To Implementation" 2016.  
-P.Shirley. "Raytracing in one weekend" 2020.  
+T. Moller, B. Trumbore. "Fast, minimum storage ray-triangle intersection" 1997.  
+B. Walter, S. R. Marschner, H. Li, K. E. Torrance. "Microfacet Models for Refraction through Rough Surfaces" 2007.  
+P. Shirley, R. K. Morley. "Realistic Ray Tracing" 2008.  
+M. Pharr, W. Jakob, G. Humphre. "Physically Based Rendering: From Theory To Implementation" 2016.  
+P. Shirley. "Raytracing in one weekend" 2020.  

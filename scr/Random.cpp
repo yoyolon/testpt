@@ -29,7 +29,7 @@ Vec3 Random::uniform_sphere_sample() {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
 	auto z = 1 - 2 * u;
-	auto r = std::sqrt(std::max(1.0f - u*u, 0.0f));
+	auto r = std::sqrt(std::max(1.0f - z*z, 0.0f));
 	auto phi = 2 * pi * v;
 	auto x = std::cos(phi) * r;
 	auto y = std::sin(phi) * r;

@@ -24,29 +24,31 @@ int Random::uniform_int(int min, int max) {
 	return dist(mt);
 }
 
-// 一様な単位球サンプル
+// 全球からの一様な方向サンプリング
 Vec3 Random::uniform_sphere_sample() {
-	float theta = 2 * pi * Random::uniform_float();
-	float phi = 2 * pi * Random::uniform_float();
-	float x = std::cos(phi) * std::cos(theta);
-	float y = std::cos(phi) * std::sin(theta);
-	float z = std::sin(phi);
-	return Vec3(x, y, z);
-}
-
-// 一様な半球サンプル
-Vec3 Random::uniform_hemisphere_sample() {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
+	auto z = 1 - 2 * u;
 	auto r = std::sqrt(std::max(1.0f - u*u, 0.0f));
 	auto phi = 2 * pi * v;
 	auto x = std::cos(phi) * r;
 	auto y = std::sin(phi) * r;
-	auto z = u;
 	return Vec3(x, y, z);
 }
 
-// 余弦に従った半球サンプル
+// 半球からの一様な方向サンプリング
+Vec3 Random::uniform_hemisphere_sample() {
+	auto u = Random::uniform_float();
+	auto v = Random::uniform_float();
+	auto z = u;
+	auto r = std::sqrt(std::max(1.0f - z*z, 0.0f));
+	auto phi = 2 * pi * v;
+	auto x = std::cos(phi) * r;
+	auto y = std::sin(phi) * r;
+	return Vec3(x, y, z);
+}
+
+// 半球からの余弦に従ったサンプリング
 Vec3 Random::cosine_hemisphere_sample() {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
@@ -57,7 +59,7 @@ Vec3 Random::cosine_hemisphere_sample() {
 	return Vec3(x, y, z);
 }
 
-// GGXの重点的サンプリング[WMLT07]
+// GGX分布のハーフベクトル重点的サンプリング
 Vec3 Random::ggx_sample(float alpha) {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
@@ -72,7 +74,7 @@ Vec3 Random::ggx_sample(float alpha) {
 	return Vec3(x, y, z);
 }
 
-// ベックマン分布の重点的サンプリング[WMLT07]
+// ベックマン分布のハーフベクトル重点的サンプリング
 Vec3 Random::beckmann_sample(float alpha) {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();

@@ -24,6 +24,39 @@ int Random::uniform_int(int min, int max) {
 	return dist(mt);
 }
 
+// 円からの一様なサンプリング
+Vec3 Random::uniform_disk_sample() {
+	auto u = Random::uniform_float();
+	auto v = Random::uniform_float();
+	auto r = std::sqrt(u);
+	auto phi = 2 * pi * v;
+	auto x = std::cos(phi) * r;
+	auto y = std::cos(phi) * r;
+	return Vec3(x, y, 0.0f);
+}
+
+// 円からの一様なサンプリング(歪みが小さい)
+// 参考: https://psgraphics.blogspot.com/2011/01/
+Vec3 Random::concentric_disk_sample() {
+	float r, phi;
+	auto u = 2 * Random::uniform_float() -1.0f;
+	auto v = 2 * Random::uniform_float() -1.0f;
+	if (u == 0 && v == 0) {
+		return Vec3(0.0f, 0.0f, 0.0f);
+	}
+	if (u * u > v * v) {
+		r = u;
+		phi = (pi / 4) * (v / u);
+	}
+	else {
+		r = v;
+		phi = pi / 2 - (pi / 4) * (u / v);
+	}
+	auto x = std::cos(phi) * r;
+	auto y = std::sin(phi) * r;
+	return Vec3(x, y, 0.0f);
+}
+
 // 全球からの一様な方向サンプリング
 Vec3 Random::uniform_sphere_sample() {
 	auto u = Random::uniform_float();
@@ -48,14 +81,12 @@ Vec3 Random::uniform_hemisphere_sample() {
 	return Vec3(x, y, z);
 }
 
-// 半球からの余弦に従ったサンプリング
+// 半球からの余弦に従ったサンプリング(Malleyの手法を利用)
 Vec3 Random::cosine_hemisphere_sample() {
-	auto u = Random::uniform_float();
-	auto v = Random::uniform_float();
-	auto z = std::sqrt(std::max(1.0f - v, 0.0f));
-	auto phi = 2 * pi * u;
-	auto x = std::cos(phi) * std::sqrt(v);
-	auto y = std::sin(phi) * std::sqrt(v);
+	auto d = Random::concentric_disk_sample();
+	auto x = d.get_x();
+	auto y = d.get_y();
+	auto z = std::sqrt(std::max(1.0f - x * x - y * y, 0.0f));
 	return Vec3(x, y, z);
 }
 
@@ -64,11 +95,11 @@ Vec3 Random::ggx_sample(float alpha) {
 	auto u = Random::uniform_float();
 	auto v = Random::uniform_float();
 	auto tan2_theta = alpha * alpha * u / (1.0f - u); // atan2は遅いので回避
-	auto cos2theta = 1 / (1 + tan2_theta);
-	auto sin2theta = 1 - cos2theta;
-	auto sin_theta = std::sqrt(std::max(sin2theta, 0.0f));
+	auto cos2_theta = 1 / (1 + tan2_theta);
+	auto sin2_theta = 1 - cos2_theta;
+	auto sin_theta = std::sqrt(std::max(sin2_theta, 0.0f));
 	auto phi = 2 * pi * v;
-	auto z = std::sqrt(std::max(cos2theta, 0.0f));
+	auto z = std::sqrt(std::max(cos2_theta, 0.0f));
 	auto x = std::cos(phi) * sin_theta;
 	auto y = std::sin(phi) * sin_theta;
 	return Vec3(x, y, z);
@@ -81,11 +112,11 @@ Vec3 Random::beckmann_sample(float alpha) {
 	auto logs = std::log(1.0f - u);
 	if (std::isinf(logs)) logs = 0.0f;
 	auto tan2_theta = -alpha * alpha * logs; // atan2は遅いので回避
-	auto cos2theta = 1 / (1 + tan2_theta);
-	auto sin2theta = 1 - cos2theta;
-	auto sin_theta = std::sqrt(std::max(sin2theta, 0.0f));
+	auto cos2_theta = 1 / (1 + tan2_theta);
+	auto sin2_theta = 1 - cos2_theta;
+	auto sin_theta = std::sqrt(std::max(sin2_theta, 0.0f));
 	auto phi = 2 * pi * v;
-	auto z = std::sqrt(std::max(cos2theta, 0.0f));
+	auto z = std::sqrt(std::max(cos2_theta, 0.0f));
 	auto x = std::cos(phi) * sin_theta;
 	auto y = std::sin(phi) * sin_theta;
 	return Vec3(x, y, z);

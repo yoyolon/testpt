@@ -67,7 +67,7 @@ void make_scene_simple(Scene& world, Camera& cam, float aspect) {
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
 			mat_light,
 			Vec3(0.0f, 0.0f, 0.0f));
-	auto light = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape, LightType::Area);
+	auto light = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape);
 	world.add(obj_sphere);
 	world.add(light);
 
@@ -87,7 +87,7 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
 	auto mat_green = std::make_shared<Diffuse>(Vec3(0.12f, 0.45f, 0.15f));
 	auto mat_white = std::make_shared<Diffuse>(Vec3(0.73f, 0.73f, 0.73f));
 	auto mat_mirr = std::make_shared<Mirror>(Vec3(0.99f, 0.99f, 0.99f));
-	auto mat_light = std::make_shared<Emitter>(Vec3(25.00f, 25.00f, 25.00f));
+	auto mat_light = std::make_shared<Emitter>(Vec3(5.00f, 5.00f, 5.00f));
 	auto mat_phong = std::make_shared<Phong>(Vec3(1.0, 1.0, 1.0), Vec3(0.5f, 0.5f, 0.5f), Vec3(0.5f, 0.5f, 0.5f), 20.0f);
 
 	// floor
@@ -110,7 +110,10 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
 		std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
 		mat_light,
 		Vec3(0.0f, 0.0f, 0.0f));
-	auto light = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape, LightType::Area);
+	auto light = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape);
+	// light sorce2
+	auto light_shape_disk = std::make_shared<Disk>(Vec3(278.0f, 548.7f, 279.6f), 10, mat_light);
+	auto light_disk = std::make_shared<AreaLight>(Vec3(1.0f, 1.0f, 1.0f), light_shape_disk);
 	// ceiling
 	auto ceiling = std::make_shared<TriangleMesh>(
 		std::vector<Vec3>{
@@ -153,7 +156,7 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
 		Vec3(0.0f, 0.0f, 0.0f));
 
 	// Spehre
-	auto obj_mirr = std::make_shared<Sphere>(Vec3(278.0f - 110.0f, 75.0f, 227.0f), 75.0f, mat_mirr);
+	auto obj_mirr = std::make_shared<Sphere>(Vec3(278.0f - 110.0f, 75.0f, 227.0f), 75.0f, mat_phong);
 	auto obj_diff = std::make_shared<Sphere>(Vec3(278.0f + 110.0f, 75.0f, 227.0f), 75.0f, mat_phong);
 
 	// オブジェクトと光源をシーンに追加
@@ -164,7 +167,8 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
 	world.add(floor);
 	world.add(obj_mirr);
 	world.add(obj_diff);
-	world.add(light);
+	//world.add(light);
+	world.add(light_disk);
 
 	// カメラの設定
 	auto fd = 3.5f; // 焦点距離
@@ -294,6 +298,23 @@ Vec3 L(const Ray& r, int bounces, int MaxDepth, const Scene& world, Vec3 contrib
 				//		contrib /= p_rr;
 				//	}
 				//}
+				// 明示的な光源のサンプリング
+				for (const auto& light : world.get_light()) {
+					Vec3 wl;
+					float pdf_l;
+					Vec3 L = light->sample_light(isect, wl, pdf);
+					// 可視判定
+					Ray r_l(isect.pos, wl);
+					intersection null_p;
+					if (world.intersect_object(r_l, 0.001f, inf, null_p)) {
+						return Vec3(0.0f, 0.0f, 0.0f);
+					}
+					Vec3 brdf_l;
+					auto wl_local = -shadingCoord.to_local(wl);
+					isect.mat->f(wl_local, isect, brdf_l, wl_local, pdf_l);
+					auto cos_term_l = dot(isect.normal, unit_vector(wl));
+					return brdf_l * L * cos_term_l;
+				}
 				return L(Ray(isect.pos, wo), ++bounces, MaxDepth, world, contrib);
 			}
 			// 発光マテリアル

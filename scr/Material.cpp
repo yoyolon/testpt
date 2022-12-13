@@ -6,7 +6,7 @@
 #include "Fresnel.h"
 
 // *** ランバート反射 ***
-Diffuse::Diffuse(Vec3 _albedo) : albedo(_albedo) {}
+Diffuse::Diffuse(Vec3 _albedo) : Material(MaterialType::Diffuse), albedo(_albedo) {}
 
 float Diffuse::sample_pdf(const Vec3& wi, const Vec3& wo) const {
 	return std::max(std::abs(get_cos(wo)) * invpi, epsilon);
@@ -20,7 +20,7 @@ bool Diffuse::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, flo
 
 
 // *** 完全鏡面反射 ***
-Mirror::Mirror(Vec3 _albedo) : albedo(_albedo) {}
+Mirror::Mirror(Vec3 _albedo) : Material(MaterialType::Specular), albedo(_albedo) {}
 
 float Mirror::sample_pdf(const Vec3& wi, const Vec3& wo) const {
 	return 1.0f;
@@ -36,7 +36,7 @@ bool Mirror::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, floa
 
 // *** Phongモデル ***
 Phong::Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin) 
-	: albedo(_albedo), Kd(_Kd), Ks(_Ks), shin(_shin) {}
+	: Material(MaterialType::Glossy), albedo(_albedo), Kd(_Kd), Ks(_Ks), shin(_shin) {}
 
 float Phong::sample_pdf(const Vec3& wi, const Vec3& wo) const {
 	return std::max(std::abs(get_cos(wo)) * invpi, epsilon);
@@ -60,7 +60,7 @@ bool Phong::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float
 // 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
 Microfacet::Microfacet(Vec3 _albedo, std::shared_ptr<MicrofacetDistribution> _distribution, 
 					   std::shared_ptr<Fresnel> _fresnel)
-	: albedo(_albedo), distribution(_distribution), fresnel(_fresnel) {}
+	: Material(MaterialType::Glossy), albedo(_albedo), distribution(_distribution), fresnel(_fresnel) {}
 
 float Microfacet::sample_pdf(const Vec3& wi, const Vec3& h) const {
 	return distribution->sample_pdf(wi, h) / (4 * dot(wi, h)); // 確率密度の変換
@@ -83,7 +83,7 @@ bool Microfacet::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, 
 
 
 // *** 発光 ***
-Emitter::Emitter(Vec3 _intensity) : intensity(_intensity) {}
+Emitter::Emitter(Vec3 _intensity) : Material(MaterialType::Emitter), intensity(_intensity) {}
 
 float Emitter::sample_pdf(const Vec3& wi, const Vec3& wo) const { return 1.0; }
 bool Emitter::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {

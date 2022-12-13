@@ -9,6 +9,10 @@
 
 struct intersection;
 
+enum class MaterialType {
+	Diffuse = 1, Specular = 2, Glossy = 4, Emitter = 8
+};
+
 // *** ユーティリティ関数 ***
 inline float get_cos(const Vec3& w) { return w.get_z(); }
 inline float get_cos2(const Vec3& w) { return w.get_z() * w.get_z(); }
@@ -17,14 +21,22 @@ inline float get_sin(const Vec3& w) { return std::sqrt(get_sin2(w)); }
 inline float get_tan(const Vec3& w) { return get_sin(w) / get_cos(w); }
 inline float get_tan2(const Vec3& w) { return get_sin2(w) / get_cos2(w); }
 
-
 // *** マテリアルクラス ***
 class Material {
 public:
 	virtual ~Material() {};
+	Material(MaterialType _type) : type(_type) {};
+	// f   : 入射方向に対して反射方向をサンプリングしてBRDFを評価する
+	// wi  : 入射方向
+	// p   : 交差点
+	// brdf: 評価するBRDF
+	// wo  : 反射方向
+	// pdf : 立体角に関するサンプリング確率密度
 	virtual bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const = 0;
 	virtual Vec3 emitte() const { return Vec3(0.0f, 0.0f, 0.0f); }
 	virtual float sample_pdf(const Vec3& wi, const Vec3& wo) const = 0;
+
+	MaterialType type;
 };
 
 

@@ -15,10 +15,10 @@ public:
 		//envmap = stbi_loadf(filename, &w_envmap, &h_envmap, &c_envmap, 0);
 	}
 
-	// シーンにオブジェクト/ライトを追加
 	void add(std::shared_ptr<Shape> object) { object_list.push_back(object); }
 	void add(std::shared_ptr<Light> light) { light_list.push_back(light); }
 	void clear() { object_list.clear(); }
+	std::vector<std::shared_ptr<Light>> get_light() const { return light_list; }
 
 	// レイとシーンの交差判定
 	// TODO: isectを光源対応
@@ -44,6 +44,23 @@ public:
 				t_first = isect.t;
 				isect.light = light;
 				isect.type = IsectType::Light;
+				p = isect;
+			}
+		}
+		return is_isect;
+	}
+
+	bool intersect_object(const Ray& r, float t_min, float t_max, intersection& p) const {
+		intersection isect;
+		bool is_isect = false;
+		auto t_first = t_max;
+		isect.type = IsectType::None;
+		// オブジェクトとの交差判定
+		for (const auto& object : object_list) {
+			if (object->intersect(r, t_min, t_first, isect)) {
+				is_isect = true;
+				t_first = isect.t;
+				isect.type = IsectType::Material;
 				p = isect;
 			}
 		}

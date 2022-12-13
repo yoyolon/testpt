@@ -101,6 +101,10 @@ float Triangle::area() const {
 	return 0.5f * cross(V1 - V0, V2 - V0).length();
 }
 
+intersection Triangle::sample(const intersection& p, float& pdf) const {
+	intersection isect;
+	return isect;
+}
 
 
 // *** OŠpƒƒbƒVƒ… ***
@@ -197,4 +201,9 @@ float TriangleMesh::area() const {
 		a += tri.area();
 	}
 	return a;
+}
+
+intersection TriangleMesh::sample(const intersection& p, float& pdf) const {
+	intersection isect;
+	return isect;
 }

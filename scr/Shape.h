@@ -25,4 +25,6 @@ public:
 	virtual bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const = 0;
 	// –ÊÏ
 	virtual float area() const = 0;
+	// ƒTƒ“ƒvƒŠƒ“ƒO
+	virtual intersection sample(const intersection& p, float& pdf) const = 0;
 };

@@ -11,8 +11,8 @@ bool Light::is_visible(const intersection& p1, const intersection& p2, const Sce
 }
 
 // *** 面光源 ***
-AreaLight::AreaLight(Vec3 _intensity, std::shared_ptr<class Shape> _shape, LightType _type) 
-	: Light(_type), intensity(_intensity), shape(_shape)
+AreaLight::AreaLight(Vec3 _intensity, std::shared_ptr<class Shape> _shape)
+	: Light(LightType::Area), intensity(_intensity), shape(_shape)
 {
 	area = shape->area();
 }
@@ -29,16 +29,12 @@ bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& 
 	return shape->intersect(r, t_min, t_max, p);
 }
 
-float AreaLight::sample_pdf(const Vec3& wi, const intersection& p) const {
-	return 1 / area; // 面光源を一様サンプリング
-}
-
-Vec3 AreaLight::sample_light(Vec3& wo, float& pdf) {
+Vec3 AreaLight::sample_light(const intersection& p, Vec3& wo, float& pdf) {
 	// NOTE: 実装手順
-	// wiをローカル座標系に変換
-	// 面光源の点をランダムにサンプル
-	// pdfを計算
-	// 交差点とサンプル点の可視判定(TODO: 可視じゃなかったらどうする?)
-	// wiをグローバル座標系に変換
-	return Vec3(0.0f, 0.0f, 0.0f);
+	// 1. 面光源の点をランダムにサンプル
+	// 2. 交差点とサンプル点の可視判定
+	// 3. 光源の放射輝度を返す
+	auto pl = shape->sample(p, pdf);
+	wo = unit_vector(pl.pos - p.pos);
+	return emitte();
 }

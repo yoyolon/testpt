@@ -35,6 +35,7 @@
     <ClInclude Include="scr\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="scr\Camera.cpp" />
     <ClCompile Include="scr\Fresnel.cpp" />
     <ClCompile Include="scr\Light.cpp" />
     <ClCompile Include="scr\Material.cpp" />

@@ -1,3 +1,8 @@
+/**
+* @file  Triangle.h
+* @brief 三角形クラスと三角形メッシュクラス
+*/
+
 #pragma once
 
 #include <iostream>
@@ -9,40 +14,85 @@
 #include "Ray.h"
 #include "Shape.h"
 
-// *** 三角ポリゴン ***
+/** 三角形クラス */
 class Triangle : public Shape {
 public:
-	Triangle();
-	Triangle(Vec3 v0, Vec3 v1, Vec3 v2, std::shared_ptr<Material> m);
-	Triangle(Vec3 v0, Vec3 v1, Vec3 v2, Vec3 n0, Vec3 n1, Vec3 n2, std::shared_ptr<Material> m);
+    Triangle();
 
-	void move(Vec3 pos);
-	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
-	float area() const override;
-	intersection sample(const intersection& p, float& pdf) const override;
+    /**
+    * @brief 頂点から三角形オブジェクトを初期化
+    * @param[in] v0 :三角形の頂点
+    * @param[in] v1 :三角形の頂点
+    * @param[in] v2 :三角形の頂点
+    * @param[in] m  :マテリアル
+    */
+    Triangle(Vec3 v0, Vec3 v1, Vec3 v2, std::shared_ptr<Material> m);
+
+    /**
+    * @brief 頂点とその法線から三角形オブジェクトを初期化
+    * @param[in] v0 :三角形の頂点
+    * @param[in] v1 :三角形の頂点
+    * @param[in] v2 :三角形の頂点
+    * @param[in] n0 :頂点v0の法線
+    * @param[in] n1 :頂点v1の法線
+    * @param[in] n2 :頂点v2の法線
+    * @param[in] m  :マテリアル
+    */
+    Triangle(Vec3 v0, Vec3 v1, Vec3 v2, Vec3 n0, Vec3 n1, Vec3 n2, std::shared_ptr<Material> m);
+
+    void move(Vec3 pos);
+
+    bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
+
+    float area() const override;
+
+    float sample_pdf(const intersection& ref, const Vec3& w) const override;
+
+    intersection sample(const intersection& ref) const override;
 
 private:
-	Vec3 V0, V1, V2; // 頂点
-	Vec3 N0, N1, N2; // 各頂点の法線
-	std::shared_ptr<Material> mat;
+    Vec3 V0, V1, V2;               /**< 頂点       */
+    Vec3 N0, N1, N2;               /**< 法線       */
+    std::shared_ptr<Material> mat; /**< マテリアル */
 
 };
 
 
-// *** 三角メッシュ ***
+/** 三角形メッシュクラス */
 class TriangleMesh : public Shape {
 public:
-	TriangleMesh();
-	TriangleMesh(std::vector<Vec3> vertices, std::vector<Vec3>indices, std::shared_ptr<Material> m, Vec3 p);
-	TriangleMesh(std::string filename, std::shared_ptr<Material> m, Vec3 p, bool smooth=true);
+    TriangleMesh();
 
-	void move(Vec3 pos);
-	bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
-	float area() const override;
-	intersection sample(const intersection& p, float& pdf) const override;
+    /**
+    * @brief 頂点配列とインデックス配列から三角形メッシュオブジェクトを初期化
+    * @param[in] vertices :三角形の頂点配列
+    * @param[in] indices  :三角形のインデックス配列
+    * @param[in] m        :マテリアル
+    * @param[in] p        :位置オフセット
+    */
+    TriangleMesh(std::vector<Vec3> vertices, std::vector<Vec3>indices, std::shared_ptr<Material> m, Vec3 p);
+
+    /**
+    * @brief objファイルから三角形メッシュオブジェクトを初期化
+    * @param[in] filenames :三角形の頂点配列
+    * @param[in] m         :マテリアル
+    * @param[in] p         :位置オフセット
+    * @param[in] is_smooth :スムーズシェーディングの設定 
+    */
+    TriangleMesh(std::string filename, std::shared_ptr<Material> m, Vec3 p, bool is_smooth=true);
+
+    void move(Vec3 pos);
+
+    bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
+
+    float area() const override;
+
+    float sample_pdf(const intersection& ref, const Vec3& w) const override;
+
+    intersection sample(const intersection& ref) const override;
 
 private:
-	std::vector<Triangle> Triangles; // 三角形配列
-	std::shared_ptr<Material> mat;
-	Vec3 pos; // 位置
+    std::vector<Triangle> Triangles; /**< 三角形配列     */
+    std::shared_ptr<Material> mat;   /**< マテリアル     */
+    Vec3 pos;                        /**< 位置オフセット */
 };

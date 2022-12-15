@@ -18,7 +18,7 @@ enum class IsectType {
 struct intersection {
     Vec3 pos;                            /**< 座標             */
     Vec3 normal;                         /**< 法線             */
-    float t;                             /**> レイのパラメータ */
+    float t;                             /**< レイのパラメータ */
     IsectType type;                      /**< 交差点の種類     */
     std::shared_ptr<class Material> mat; /**< 材質の種類       */
     std::shared_ptr<class Light> light;  /**< 光源の種類       */

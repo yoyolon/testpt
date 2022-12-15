@@ -18,7 +18,10 @@ public:
 
     /**
     * @brief デフォルトコンストラクタ
-    * @param[in]  filename : 環境マップのパス
+    * @param[in]  map : 環境マップ
+    * @param[in]  w   : 環境マップの幅
+    * @param[in]  h   : 環境マップの高さ
+    * @param[in]  c   : 環境マップのチャンネル数
     */
     Scene(float* map, int w, int h, int c) {
         envmap = map;
@@ -130,7 +133,7 @@ public:
         float u = std::atan2(w.get_z(), w.get_x()) + pi;
         u *= invpi * 0.5;
         float v = std::acos(std::clamp(w.get_y(), -1.0f, 1.0f)) * invpi;
-        // 環境マップからサンプル
+        // 環境マップから放射輝度をサンプリング
         int x = std::clamp((int)(w_envmap * u), 0, w_envmap-1);
         int y = std::clamp((int)(h_envmap * v), 0, h_envmap-1);
         int index = y * w_envmap * 3 + x * 3;

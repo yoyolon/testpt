@@ -1,7 +1,6 @@
 #include "Camera.h"
 
-Camera::Camera(float h = 2.0, float _aspect = 1.0, float _fd = 1.0,
-    Vec3 _pos = Vec3(0.0, 0.0, 0.0), Vec3 _forward = Vec3(0.0, 0.0, 1.0))
+Camera::Camera(float h, float _aspect, float _fd, Vec3 _pos, Vec3 _forward)
     : film_h(h), aspect(_aspect), fd(_fd), pos(_pos), forward_vector(_forward)
 {
     film_w = film_h * aspect;

@@ -60,10 +60,14 @@ bool Disk::intersect(const Ray& r, float t_min, float t_max, intersection& p) co
     if (t < t_min || t > t_max) {
         return false;
     }
-    auto pos = r.at(t);
-    auto dist2 = (pos.get_x() - center.get_x()) * (pos.get_x() - center.get_x())
-               + (pos.get_z() - center.get_z()) * (pos.get_z() - center.get_z());
-    if (dist2 > radius * radius) return false;
+    auto pos = r.at(t); // xz平面との交差点
+    // 円との交差判定
+    auto dx = pos.get_x() - center.get_x();
+    auto dz = pos.get_z() - center.get_z();
+    auto dist2 = dx * dx + dz * dz;
+    if (dist2 > radius * radius) {
+        return false;
+    }
     // 交差点情報の更新
     p.t = t;
     p.pos = pos;
@@ -113,9 +117,9 @@ bool Cylinder::intersect(const Ray& r, float t_min, float t_max, intersection& p
     }
     auto b = b_half * 2;
     auto d = 2 * std::sqrt(D);
-    auto t = (-b - D) / (2 * a);
+    auto t = (-b - d) / (2 * a);
     if (t < t_min || t > t_max) {
-        t = (-b + D) / (2 * a);
+        t = (-b + d) / (2 * a);
         if (t < t_min || t > t_max) {
             return false;
         }
@@ -126,11 +130,17 @@ bool Cylinder::intersect(const Ray& r, float t_min, float t_max, intersection& p
     auto y_max = y_min + height;
     if (y <= y_min || y >= y_max) {
         return false;
+        t = (-b + d) / (2 * a); // 円柱の内側
+        auto y = r.at(t).get_y();
+        if (y <= y_min || y >= y_max) {
+            return false;
+        }
     }
      // 交差点情報の更新
     p.t = t;
     p.pos = r.at(t);
-    p.normal = unit_vector(p.pos - center);
+    auto diff = p.pos - center;
+    p.normal = unit_vector(Vec3(diff.get_x(), 0.0f, diff.get_z()));
     p.mat = mat;
     return true;
 }

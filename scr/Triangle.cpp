@@ -118,9 +118,13 @@ float Triangle::sample_pdf(const intersection& p, const Vec3& w) const {
 }
 
 intersection Triangle::sample(const intersection& ref) const {
-    // TODO: ŽÀ‘•
-    Vec3 barycenter = 
+    auto barycenter = Random::uniform_triangle_sample();
+    auto s = barycenter.get_x();
+    auto t = barycenter.get_y();
+    auto u = 1.0f - s - t;
     intersection isect;
+    isect.pos = s * V0 + t * V1 + u * V2;
+    isect.normal = s * N0 + t * N1 + u * N2;
     return isect;
 }
 

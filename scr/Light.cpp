@@ -7,7 +7,7 @@
 bool Light::is_visible(const intersection& p1, const intersection& p2, const Scene& world) {
     Ray r = Ray(p1.pos, unit_vector(p2.pos - p1.pos));
     intersection isect;
-    return !world.intersect(r, epsilon, inf, isect);
+    return !world.intersect(r, eps_isect, inf, isect);
 }
 
 

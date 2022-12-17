@@ -17,7 +17,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define __STDC_LIB_EXT1__
-#define DEBUG
 
 #include "external/stb_image_write.h"
 #include "external/stb_image.h"
@@ -41,6 +40,8 @@
 #include <string>
 #include <vector>
 
+constexpr bool DEBUG_MODE = false;
+constexpr bool IMAGE_BASED_LIGHTING = true;
 
 // デバッグ用
 int raycontrib = 0; // 光源からの寄与
@@ -59,17 +60,18 @@ void make_scene_simple(Scene& world, Camera& cam, float aspect) {
     auto dist_ggx = std::make_shared<GGXDistribution>(0.25f);
     auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
     auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_schlick);
+    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
     auto mat_light = std::make_shared<Emitter>(Vec3(10.00f, 10.00f, 10.00f));
     // オブジェクト
-    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 3.0f, mat_microfacet);
+    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 3.0f, mat_mirr);
     auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f, 20.0f, 0.0f), 50.0f, mat_light);
-    auto light_disk = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape_disk);
+    auto light_disk = std::make_shared<AreaLight>(Vec3(1.0f, 1.0f, 1.0f), light_shape_disk);
     world.add(obj_sphere);
-    world.add(light_disk);
+    //world.add(light_disk);
 
     // カメラの設定
     auto fd = 2.5f; // 焦点距離
-    Vec3 cam_pos(0.0f, 2.0f, 5.0f);
+    Vec3 cam_pos(0.0f, 2.0f, 15.0f);
     Vec3 cam_target(0.0f, 2.0f, 0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
@@ -81,24 +83,25 @@ void make_scene_simple(Scene& world, Camera& cam, float aspect) {
 * @param[out] cam   :カメラデータ
 * @param[in]  float :カメラのアスペクト比
 */
-void make_scene_shape_test(Scene& world, Camera& cam, float aspect) {
+void make_scene_cylinder(Scene& world, Camera& cam, float aspect) {
     world.clear();
     // マテリアル
     auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
     auto mat_light = std::make_shared<Emitter>(Vec3(10.00f, 10.00f, 10.00f));
     // オブジェクト
-    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 0.0f, 0.0f), 2.0f, mat_mirr);
     auto obj_disk_top = std::make_shared<Disk>(Vec3(0.0f, 8.0f, 0.0f), 4.0f, mat_mirr);
     auto obj_disk_btm = std::make_shared<Disk>(Vec3(0.0f, 0.0f, 0.0f), 4.0f, mat_mirr);
     auto obj_cylinder = std::make_shared<Cylinder>(Vec3(0.0f, 0.0f, 0.0f), 4.0f, 8.0f, mat_mirr);
+    auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f, 20.0f, 0.0f), 50.0f, mat_light);
+    auto light_disk = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape_disk);
     world.add(obj_disk_top);
     world.add(obj_disk_btm);
-    world.add(obj_sphere);
     world.add(obj_cylinder);
+    //world.add(light_shape_disk);
 
     // カメラの設定
     auto fd = 1.5f; // 焦点距離
-    Vec3 cam_pos(0.0f, 2.0f, 20.0f);
+    Vec3 cam_pos(0.0f, 10.0f, 20.0f);
     Vec3 cam_target(0.0f, 2.0f, 0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
@@ -408,7 +411,7 @@ Vec3 L(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contri
     // 交差判定
     // NOTE: カメラ方向をwi，光源方向をwoにしている(あとで修正)
     intersection isect;
-    if (world.intersect(r, epsilon, inf, isect)) {
+    if (world.intersect(r, eps_isect, inf, isect)) {
         // シェーディング座標の構築
         ONB shadingCoord;
         shadingCoord.build_ONB(isect.normal);
@@ -422,7 +425,6 @@ Vec3 L(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contri
             isect.mat->f(wi_local, isect, brdf, wo_local, pdf);
             // 発光
             if (isect.mat->get_type() == MaterialType::Emitter) {
-                std::cout << "emitter\n";
                 return contrib * isect.mat->emitte();
             }
             // 完全鏡面反射
@@ -444,7 +446,7 @@ Vec3 L(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contri
                     //    // 可視判定
                     //    Ray r_l(isect.pos, wl);
                     //    intersection null_p;
-                    //    if (world.intersect_object(r_l, epsilon, inf, null_p)) {
+                    //    if (world.intersect_object(r_l, eps_isect, inf, null_p)) {
                     //        pdfl = 0.0f;
                     //    }
                     //    Vec3 brdfl;
@@ -489,7 +491,7 @@ Vec3 L(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contri
 */
 Vec3 L_normal(const Ray& r, const Scene& world) {
     intersection isect;
-    if (world.intersect(r, epsilon, inf, isect)) {
+    if (world.intersect(r, eps_isect, inf, isect)) {
         return 0.5f * (isect.normal + Vec3(1.0f, 1.0f, 1.0f));
     }
     return Vec3(1.0f, 1.0f, 1.0f);
@@ -509,17 +511,19 @@ int main(int argc, char* argv[]) {
     constexpr int c = 3;                     // チャンネル数
     std::vector<uint8_t> img(w * h * c); // 画像データ
     // パラメータ
-    const int nsample = (argc == 2) ? atoi(argv[1]) : 1; // レイのサンプル数
+    const int nsample = (argc == 2) ? atoi(argv[1]) : 128; // レイのサンプル数
     constexpr auto max_depth = 100; // レイの最大追跡数
     constexpr auto gamma = 1 / 2.2f;    // ガンマ補正用
     // シーン
-    //int w_envmap, h_envmap, c_envmap;
-    //float* envmap = stbi_loadf("asset/envmap3.hdr", &w_envmap, &h_envmap, &c_envmap, 0);
-    //Scene world(envmap, w_envmap, h_envmap, c_envmap);
-    auto world = Scene();
+    Scene world;
+    if (IMAGE_BASED_LIGHTING) {
+        int w_envmap, h_envmap, c_envmap;
+        float* envmap = stbi_loadf("asset/envmap3.hdr", &w_envmap, &h_envmap, &c_envmap, 0);
+        world = Scene(envmap, w_envmap, h_envmap, c_envmap);
+    }
     Camera cam;
     //make_scene_simple(world, cam, aspect);
-    make_scene_shape_test(world, cam, aspect);
+    make_scene_cylinder(world, cam, aspect);
     //make_scene_cornell(world, cam, aspect);
     //make_scene_sphere(world, cam, aspect);
     //make_scene_vase(world, cam, aspect);
@@ -537,11 +541,12 @@ int main(int argc, char* argv[]) {
                 auto v = (i + Random::uniform_float()) / (h - 1);
                 auto u = (j + Random::uniform_float()) / (w - 1);
                 Ray r = cam.generate_ray(u, v);
-                #ifndef DEGUB
-                I += L_normal(r, world);
-                #else
-                I += L(r, 0, max_depth, world, Vec3(1.0f,1.0f,1.0f));
-                #endif
+                if (DEBUG_MODE) {
+                    I += L_normal(r, world);
+                }
+                else {
+                    I += L(r, 0, max_depth, world, Vec3(1.0f, 1.0f, 1.0f));
+                }
             }
             I *= 1.0f / nsample;
             float r = std::pow(I.get_x(), gamma);

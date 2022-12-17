@@ -80,8 +80,8 @@ float Disk::area() const {
     return 2 * pi * radius;
 }
 
-float Disk::sample_pdf(const intersection& ref, const Vec3& w) const {
-    return w.length2() / (std::abs(dot(ref.normal, unit_vector(-w))) * area());
+float Disk::sample_pdf(const intersection& p, const Vec3& w) const {
+    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
 }
 
 intersection Disk::sample(const intersection& ref) const {
@@ -149,12 +149,20 @@ float Cylinder::area() const {
     return 2 * pi * radius * height;
 }
 
-float Cylinder::sample_pdf(const intersection& ref, const Vec3& w) const {
-    // TODO: À‘•
-    return 0.0f;
+float Cylinder::sample_pdf(const intersection& p, const Vec3& w) const {
+    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
 }
+
 intersection Cylinder::sample(const intersection& p) const {
-    // TODO: À‘•
+    // NOTE: y²³‚Ì•ûŒü‚ªãŒü‚«
+    float u = Random::uniform_float();
+    float v = Random::uniform_float();
+    float y = center.get_y() + u * height;
+    float phi = 2 * pi * v;
+    float x = center.get_x() + std::sin(phi);
+    float z = center.get_y() + std::cos(phi);
     intersection isect;
+    isect.pos = Vec3(x, y, z);
+    isect.normal = unit_vector(Vec3(x, 0, z));
     return isect;
 }

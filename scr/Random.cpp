@@ -30,7 +30,6 @@ Vec3 Random::uniform_disk_sample() {
     return Vec3(x, y, 0.0f);
 }
 
-
 Vec3 Random::concentric_disk_sample() {
     float r, phi;
     auto u = 2 * Random::uniform_float() -1.0f;

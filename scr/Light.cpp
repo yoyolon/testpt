@@ -7,7 +7,7 @@
 bool Light::is_visible(const intersection& p1, const intersection& p2, const Scene& world) {
     Ray r = Ray(p1.pos, unit_vector(p2.pos - p1.pos));
     intersection isect;
-    return !world.intersect(r, 0.001f, inf, isect);
+    return !world.intersect(r, epsilon, inf, isect);
 }
 
 
@@ -27,13 +27,10 @@ Vec3 AreaLight::power() const {
 }
 
 Vec3 AreaLight::sample_light(const intersection& ref, Vec3& w, float& pdf) {
-    // NOTE: 実装手順
-    // 1. 面光源の点をランダムにサンプル
-    // 2. 交差点とサンプル点の可視判定
-    // 3. 光源の放射輝度を返す
     auto isect = shape->sample(ref);
-    w = unit_vector(ref.pos - isect.pos);
-    pdf = shape->sample_pdf(ref, w);
+    auto d = ref.pos - isect.pos;
+    pdf = shape->sample_pdf(isect, d);
+    w = unit_vector(d);
     return emitte();
 }
 

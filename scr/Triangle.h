@@ -46,7 +46,7 @@ public:
 
     float area() const override;
 
-    float sample_pdf(const intersection& ref, const Vec3& w) const override;
+    float sample_pdf(const intersection& p, const Vec3& w) const override;
 
     intersection sample(const intersection& ref) const override;
 
@@ -87,7 +87,7 @@ public:
 
     float area() const override;
 
-    float sample_pdf(const intersection& ref, const Vec3& w) const override;
+    float sample_pdf(const intersection& p, const Vec3& w) const override;
 
     intersection sample(const intersection& ref) const override;
 

@@ -1,4 +1,5 @@
 #include "Triangle.h"
+#include "Random.h"
 
 /**
 * @brief •¶š—ñ‚ğw’è‚µ‚½•¶š‚Å‹æØ‚é
@@ -112,13 +113,13 @@ float Triangle::area() const {
     return 0.5f * cross(V1 - V0, V2 - V0).length();
 }
 
-float Triangle::sample_pdf(const intersection& ref, const Vec3& w) const {
-    // TODO: À‘•
-    return 0.0f;
+float Triangle::sample_pdf(const intersection& p, const Vec3& w) const {
+    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
 }
 
 intersection Triangle::sample(const intersection& ref) const {
     // TODO: À‘•
+    Vec3 barycenter = 
     intersection isect;
     return isect;
 }
@@ -218,7 +219,8 @@ float TriangleMesh::area() const {
 }
 
 float TriangleMesh::sample_pdf(const intersection& p, const Vec3& w) const {
-    return 1.0f;
+    // TODO: ‰Â‹«‚Íl—¶‚·‚é‚×‚«?
+    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
 }
 
 intersection TriangleMesh::sample(const intersection& p) const {

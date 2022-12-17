@@ -48,12 +48,12 @@ public:
 
     /**
     * @brief ジオメトリサンプリングの確率密度を計算する関数
-    * @param[in] ref :サンプリング元の交差点情報
-    * @param[in] w   :サンプリング方向
-    * @return float  :確率密度
+    * @param[in] p  :サンプリングした交差点情報
+    * @param[in] w  :サンプリング方向
+    * @return float :確率密度
     * @detail サンプリングは立体角に関して行う
     */
-    virtual float sample_pdf(const intersection& ref, const Vec3& w) const = 0;
+    virtual float sample_pdf(const intersection& p, const Vec3& w) const = 0;
 
     /**
     * @brief ジオメトリサンプリングの確率密度を計算する関数

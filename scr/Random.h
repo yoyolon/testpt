@@ -39,17 +39,23 @@ public:
     static int uniform_int(int min, int max);
 
     /**
-    * @brief 単位円からの一様な方向サンプリング
+    * @brief 単位円からの一様なサンプリング
     * @return Vec3 :サンプリング値
     */
     static Vec3 uniform_disk_sample();
 
     /**
-    * @brief 単位円からの一様な方向ベクトルをサンプリング(歪みが小さい)
+    * @brief 単位円からの一様なサンプリング(歪みが小さい)
     * @return Vec3 :サンプリング値
     * @note: 参考: https://psgraphics.blogspot.com/2011/01/
     */
     static Vec3 concentric_disk_sample();
+
+    /**
+    * @brief 三角形からの一様なサンプリング(重心座標)
+    * @return Vec3 :サンプリング値
+    */
+    static Vec3 uniform_triangle_sample();
 
     /**
     * @brief 単位球からの一様な方向ベクトルをサンプリング

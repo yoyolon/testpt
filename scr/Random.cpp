@@ -50,6 +50,15 @@ Vec3 Random::concentric_disk_sample() {
     return Vec3(x, y, 0.0f);
 }
 
+Vec3 Random::uniform_triangle_sample() {
+    auto u = Random::uniform_float();
+    auto v = Random::uniform_float();
+    auto sqrt_u = std::sqrt(u);
+    auto x = 1 - sqrt_u;
+    auto y = v * sqrt_u;
+    return Vec3(x, y, 0.0f);
+}
+
 Vec3 Random::uniform_sphere_sample() {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();

@@ -228,6 +228,8 @@ float TriangleMesh::sample_pdf(const intersection& p, const Vec3& w) const {
 }
 
 intersection TriangleMesh::sample(const intersection& p) const {
-    intersection isect;
-    return isect;
+    // 面積に無関係に一つのシェイプからサンプリング
+    auto index = Random::uniform_int(0, Triangles.size() - 1);
+    auto t = Triangles[index];
+    return t.sample(p);
 }

@@ -36,13 +36,15 @@ float Sphere::area() const {
     return 4 * pi * radius;
 }
 
-float Sphere::sample_pdf(const intersection& ref, const Vec3& w) const {
-    // TODO: 実装
-    return 0.0f;
+float Sphere::sample_pdf(const intersection& p, const Vec3& w) const {
+    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
 }
 intersection Sphere::sample(const intersection& ref) const {
-    // TODO: 実装
+    // 一様サンプリング(TODO: 可視性を考慮)
     intersection isect;
+    Vec3 normal = Random::uniform_sphere_sample();
+    isect.normal = normal;
+    isect.pos = radius * normal + center;
     return isect;
 }
 

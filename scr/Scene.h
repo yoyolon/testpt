@@ -100,10 +100,9 @@ public:
     * @param[in]  r     :入射レイ
     * @param[in]  t_min :入射レイのパラメータ制限
     * @param[in]  t_max :入射レイのパラメータ制限
-    * @param[out] p     :交差点情報
     * @return bool      :交差判定の結果
     */
-    bool intersect_object(const Ray& r, float t_min, float t_max, intersection& p) const {
+    bool intersect_object(const Ray& r, float t_min, float t_max) const {
         intersection isect;
         bool is_isect = false;
         auto t_first = t_max;
@@ -114,7 +113,6 @@ public:
                 is_isect = true;
                 t_first = isect.t;
                 isect.type = IsectType::Material;
-                p = isect;
             }
         }
         return is_isect;

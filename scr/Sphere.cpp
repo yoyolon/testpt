@@ -33,7 +33,7 @@ bool Sphere::intersect(const Ray& r, float t_min, float t_max, intersection& p) 
 };
 
 float Sphere::area() const {
-    return 4 * pi * radius;
+    return 4 * pi * radius * radius;
 }
 
 intersection Sphere::sample(const intersection& ref) const {

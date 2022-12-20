@@ -40,12 +40,21 @@ public:
     /**
     * @brief 光源からの入射方向をサンプルして放射輝度を返す関数
     * @param[in]  ref :サンプリング元の交差点情報
-    * @param[out] wo  :光源からの入射方向
+    * @param[out] w   :光源からの入射方向
     * @param[out] pdf :立体角に関するサンプリング確率密度
     * @return Vec3    :光源からの入射方向
     * @note: 実際は光源からの入射方向は反転する(視線方向から追跡するため)
     */
     virtual Vec3 sample_light(const intersection& ref, Vec3& w, float& pdf) = 0;
+
+    /**
+    * @brief 入射方向から光源サンプリングの確率密度を返す関数
+    * @param[in]  ref :サンプリング元の交差点情報
+    * @param[out] w   :光源への入射方向
+    * @return float   :確率密度
+    * @note 光源に到達しない場合は確率密度はゼロになる
+    */
+    virtual float sample_pdf(const intersection& ref, const Vec3& w) const = 0;
 
     /**
     * @brief レイと光源の交差判定を行う関数
@@ -85,7 +94,10 @@ public:
 
     Vec3 power() const override;
 
-    Vec3 sample_light(const intersection& p, Vec3& wo, float& pdf) override;
+
+    Vec3 sample_light(const intersection& ref, Vec3& wo, float& pdf) override;
+
+    float sample_pdf(const intersection& ref, const Vec3& w) const override;
 
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 

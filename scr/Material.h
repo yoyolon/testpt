@@ -84,7 +84,15 @@ public:
     * @return bool     :反射材質ならTrue
     * @note: 実際は入射方向をサンプリングするがBRDF相反性により反射方向のサンプリングとして実装した
     */
-    virtual bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const = 0;
+    virtual bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const = 0;
+
+    /**
+    * @brief 入射方向と反射方向に対してBRDFを評価する関数
+    * @param[in]  wi :入射方向ベクトル
+    * @param[out] wo :出射方向ベクトル
+    * @return Vec3   :BRDFの値
+    */
+    virtual Vec3 f(const Vec3& wi, const Vec3& wo) const { return Vec3(0.0f, 0.0f, 0.0f); }
 
     /**
     * @brief 自己発光を評価する関数
@@ -120,7 +128,9 @@ public:
     */
     Diffuse(Vec3 _albedo);
 
-    bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 f(const Vec3& wi, const Vec3& wo) const override;
+
+    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -138,7 +148,9 @@ public:
     */
     Mirror(Vec3 _albedo);
 
-    bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 f(const Vec3& wi, const Vec3& wo) const override;
+
+    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -159,7 +171,9 @@ public:
     */
     Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin);
 
-    bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 f(const Vec3& wi, const Vec3& wo) const override;
+
+    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -184,7 +198,9 @@ public:
     Microfacet(Vec3 _albedo, std::shared_ptr<class MicrofacetDistribution> _distribution, 
                std::shared_ptr<class Fresnel> _fresnel);
 
-    bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 f(const Vec3& wi, const Vec3& wo) const override;
+
+    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -204,7 +220,7 @@ public:
     */
     Emitter(Vec3 _intensity);
 
-    bool f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 

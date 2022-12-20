@@ -12,10 +12,14 @@ float Diffuse::sample_pdf(const Vec3& wi, const Vec3& wo) const {
     return std::max(std::abs(get_cos(wo)) * invpi, epsilon);
 }
 
-bool Diffuse::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+Vec3 Diffuse::f(const Vec3& wi, const Vec3& wo) const {
+    return albedo * invpi;
+}
+
+bool Diffuse::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
     wo = Random::cosine_hemisphere_sample();
     pdf = sample_pdf(wi, wo);
-    brdf = albedo * invpi;
+    brdf = f(wi, wo);
     return true;
 }
 
@@ -23,15 +27,19 @@ bool Diffuse::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, flo
 // *** 完全鏡面反射 ***
 Mirror::Mirror(Vec3 _albedo) : Material(MaterialType::Specular), albedo(_albedo) {}
 
+
 float Mirror::sample_pdf(const Vec3& wi, const Vec3& wo) const {
     return 1.0f;
 }
 
-bool Mirror::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+Vec3 Mirror::f(const Vec3& wi, const Vec3& wo) const {
+    return albedo / dot(Vec3(0, 0, 1), unit_vector(wo));
+}
+
+bool Mirror::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
     wo = unit_vector(Vec3(-wi.get_x(), -wi.get_y(), wi.get_z())); // 正反射方向
     pdf = sample_pdf(wi, wo);
-    float cos_term = dot(Vec3(0,0,1), unit_vector(wo));
-    brdf = albedo / cos_term;
+    brdf = f(wi, wo);
     return true;
 }
 
@@ -44,15 +52,19 @@ float Phong::sample_pdf(const Vec3& wi, const Vec3& wo) const {
     return std::max(std::abs(get_cos(wo)) * invpi, epsilon);
 }
 
-bool Phong::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-    wo = Random::cosine_hemisphere_sample();
-    pdf = sample_pdf(wi, wo);
+Vec3 Phong::f(const Vec3& wi, const Vec3& wo) const {
     auto dir_spec = unit_vector(Vec3(-wi.get_x(), -wi.get_y(), wi.get_z())); // 正反射方向
     Vec3 diffuse = Kd * invpi;
     float cos_term = dot(Vec3(0, 0, 1), unit_vector(wo));
     float sp = std::pow(std::max(0.0f, dot(dir_spec, wo)), shin);
-    Vec3 specular = Ks / cos_term  * sp * invpi;
-    brdf = albedo * (diffuse + specular);
+    Vec3 specular = Ks / cos_term * sp * invpi;
+    return albedo * (diffuse + specular);
+}
+
+bool Phong::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+    wo = Random::cosine_hemisphere_sample();
+    pdf = sample_pdf(wi, wo);
+    brdf = f(wi, wo);
     return true;
 }
 
@@ -66,18 +78,28 @@ float Microfacet::sample_pdf(const Vec3& wi, const Vec3& h) const {
     return distribution->sample_pdf(wi, h) / (4 * dot(wi, h)); // 確率密度の変換
 }
 
-bool Microfacet::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-    Vec3 h = distribution->sample_halfvector();
-    wo = unit_vector(reflect(wi, h)); // ハーフベクトルと入射方向から出射方向を計算
-    pdf = sample_pdf(wi, h);
+Vec3 Microfacet::f(const Vec3& wi, const Vec3& h) const {
+    // NOTE: hでなくwoを渡してhを計算すると上手くいかない(なぜ?)
+    auto wo = unit_vector(reflect(wi, h));
     float cos_wi = std::abs(get_cos(wi));
     float cos_wo = std::abs(get_cos(wo));
-    if (cos_wi == 0 || cos_wo == 0) return false;
-    if (h.get_x() == 0 && h.get_y() == 0 && h.get_z() == 0) return false;
+    if (cos_wi == 0 || cos_wo == 0) {
+        return Vec3(0.0f, 0.0f, 0.0f);
+    }
+    if (is_zero(h)) {
+        return Vec3(0.0f, 0.0f, 0.0f);
+    }
     float D = distribution->D(h);
     float G = distribution->G(wi, wo);
     Vec3 F = fresnel->evaluate(dot(wi, h));
-    brdf = albedo *  (D * G * F) / (4 * cos_wi * cos_wo);
+    return albedo * (D * G * F) / (4 * cos_wi * cos_wo);
+}
+
+bool Microfacet::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+    Vec3 h = distribution->sample_halfvector();
+    wo = unit_vector(reflect(wi, h)); // ハーフベクトルと入射方向から出射方向を計算
+    pdf = sample_pdf(wi, h);
+    brdf = f(wi, h);
     return true;
 }
 
@@ -85,8 +107,11 @@ bool Microfacet::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, 
 // *** 発光 ***
 Emitter::Emitter(Vec3 _intensity) : Material(MaterialType::Emitter), intensity(_intensity) {}
 
-float Emitter::sample_pdf(const Vec3& wi, const Vec3& wo) const { return 1.0; }
-bool Emitter::f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+float Emitter::sample_pdf(const Vec3& wi, const Vec3& wo) const { 
+    return 1.0; 
+}
+
+bool Emitter::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
     return false;
 }
 

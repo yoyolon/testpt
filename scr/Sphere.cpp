@@ -76,7 +76,7 @@ bool Disk::intersect(const Ray& r, float t_min, float t_max, intersection& p) co
 };
 
 float Disk::area() const {
-    return 2 * pi * radius;
+    return pi * radius * radius;
 }
 
 intersection Disk::sample(const intersection& ref) const {
@@ -87,7 +87,6 @@ intersection Disk::sample(const intersection& ref) const {
     intersection isect;
     isect.normal = Vec3(0, -1, 0);
     isect.pos = Vec3(x, y, z);
-    auto wi = isect.pos - ref.pos;
     return isect;
 }
 

@@ -23,8 +23,6 @@ public:
 
     float area() const override;
 
-    float sample_pdf(const intersection& ref, const Vec3& w) const override;
-
     intersection sample(const intersection& ref) const override;
 
 private:
@@ -48,8 +46,6 @@ public:
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
     float area() const override;
-
-    float sample_pdf(const intersection& ref, const Vec3& w) const override;
 
     intersection sample(const intersection& ref) const override;
 
@@ -75,8 +71,6 @@ public:
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
     float area() const override;
-
-    float sample_pdf(const intersection& ref, const Vec3& w) const override;
 
     intersection sample(const intersection& ref) const override;
 

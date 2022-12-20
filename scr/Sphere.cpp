@@ -36,9 +36,6 @@ float Sphere::area() const {
     return 4 * pi * radius;
 }
 
-float Sphere::sample_pdf(const intersection& p, const Vec3& w) const {
-    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
-}
 intersection Sphere::sample(const intersection& ref) const {
     // 一様サンプリング(TODO: 可視性を考慮)
     intersection isect;
@@ -82,14 +79,10 @@ float Disk::area() const {
     return 2 * pi * radius;
 }
 
-float Disk::sample_pdf(const intersection& p, const Vec3& w) const {
-    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
-}
-
 intersection Disk::sample(const intersection& ref) const {
     auto disk_sample = Random::concentric_disk_sample();
-    auto x = disk_sample.get_x() * radius - center.get_x();
-    auto z = disk_sample.get_y() * radius - center.get_z();
+    auto x = disk_sample.get_x() * radius + center.get_x();
+    auto z = disk_sample.get_y() * radius + center.get_z();
     auto y = center.get_y();
     intersection isect;
     isect.normal = Vec3(0, -1, 0);
@@ -149,10 +142,6 @@ bool Cylinder::intersect(const Ray& r, float t_min, float t_max, intersection& p
 
 float Cylinder::area() const {
     return 2 * pi * radius * height;
-}
-
-float Cylinder::sample_pdf(const intersection& p, const Vec3& w) const {
-    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
 }
 
 intersection Cylinder::sample(const intersection& p) const {

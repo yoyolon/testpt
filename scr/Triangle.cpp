@@ -113,10 +113,6 @@ float Triangle::area() const {
     return 0.5f * cross(V1 - V0, V2 - V0).length();
 }
 
-float Triangle::sample_pdf(const intersection& p, const Vec3& w) const {
-    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
-}
-
 intersection Triangle::sample(const intersection& ref) const {
     auto barycenter = Random::uniform_triangle_sample();
     auto s = barycenter.get_x();
@@ -220,11 +216,6 @@ float TriangleMesh::area() const {
         a += tri.area();
     }
     return a;
-}
-
-float TriangleMesh::sample_pdf(const intersection& p, const Vec3& w) const {
-    // TODO: ‰Â‹«‚Íl—¶‚·‚é‚×‚«?
-    return w.length2() / (std::abs(dot(p.normal, unit_vector(-w))) * area());
 }
 
 intersection TriangleMesh::sample(const intersection& p) const {

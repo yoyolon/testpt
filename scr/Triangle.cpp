@@ -24,6 +24,7 @@ std::vector<std::string> split_string(const std::string& line, char delimiter = 
 * @param[in]   filename :ファイル名
 * @return std::vector<std::string> 文字列配列
 * @details データ構造: https://en.wikipedia.org/wiki/Wavefront_.obj_file
+* @note objファイルに二つ以上の空白があるとエラー
 */
 void load_obj(std::vector<Vec3>& vertex, std::vector<Vec3>& index, const std::string& filename) {
     std::ifstream ifs;

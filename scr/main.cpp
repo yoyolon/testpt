@@ -40,13 +40,21 @@
 #include <string>
 #include <vector>
 
-constexpr bool DEBUG_MODE = false;
-constexpr bool IMAGE_BASED_LIGHTING = false;
+enum class Sampling {
+    BRDF  = 1, // 01
+    LIGHT = 2, // 10
+    MIS   = 3  // 11
+};
 
+constexpr bool DEBUG_MODE           = false;
+constexpr bool DIRECT_ILLUMINATION  = true;
+constexpr bool IMAGE_BASED_LIGHTING = false;
+constexpr int  SAMPLES = 128;
 // デバッグ用
 int raycontrib = 0; // 光源からの寄与
 int raydeath = 0;   // ロシアンルーレット打ち切り
 int raybg = 0;      // 背景からの寄与
+Sampling sampling_strategy = Sampling::MIS;
 
 /**
 * @brief シンプルな球のシーンを生成する関数
@@ -112,55 +120,54 @@ void make_scene_cylinder(Scene& world, Camera& cam, float aspect) {
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 * @param[in]  float :カメラのアスペクト比
+* @note モデル出典: https://github.com/wjakob/nori/tree/master/scenes/pa5/veach_mi
 */
 void make_scene_MIS(Scene& world, Camera& cam, float aspect) {
     world.clear();
     // マテリアル
-    auto dist_ggx1 = std::make_shared<GGXDistribution>(0.25f);
-    auto dist_ggx2 = std::make_shared<GGXDistribution>(0.05f);
-    auto dist_ggx3 = std::make_shared<GGXDistribution>(0.01f);
-    auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
-    auto mat_rough  = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx1, fres_schlick);
-    auto mat_normal = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx2, fres_schlick);
-    auto mat_smooth = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx3, fres_schlick);
-    auto mat_light  = std::make_shared<Emitter>(Vec3(10.00f, 10.00f, 10.00f));
-    auto mat_diff   = std::make_shared<Diffuse>(Vec3(0.0f, 0.0f, 0.0f));
+    auto dist_ggx_vr = std::make_shared<GGXDistribution>(0.100f);
+    auto dist_ggx_r  = std::make_shared<GGXDistribution>(0.050f);
+    auto dist_ggx_n  = std::make_shared<GGXDistribution>(0.020f);
+    auto dist_ggx_s  = std::make_shared<GGXDistribution>(0.005f);
+    auto fres        = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_vrough  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_vr, fres);
+    auto mat_rough   = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_r,  fres);
+    auto mat_normal  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_n,  fres);
+    auto mat_smooth  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_s,  fres);
+    auto mat_light   = std::make_shared<Emitter>(Vec3(10.0f,10.0f,10.0f));
+    auto mat_diff    = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
+    auto mat_mirr    = std::make_shared<Mirror>(Vec3(1.0f, 1.0f, 1.0f));
     // 光源
-    auto sphere_L = std::make_shared<Sphere>(Vec3( 8.0f, 8.0f, -4.0f), 2.0f, mat_light);
-    auto sphere_M = std::make_shared<Sphere>(Vec3( 0.0f, 8.0f, -4.0f), 1.0f, mat_light);
-    auto sphere_S = std::make_shared<Sphere>(Vec3(-8.0f, 8.0f, -4.0f), 0.5f, mat_light);
-    auto light_L = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), sphere_L);
-    auto light_M = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), sphere_M);
-    auto light_S = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), sphere_S);
-    // オブジェクト
-    auto floor = std::make_shared<TriangleMesh>(
-        std::vector<Vec3>{
-            Vec3( 16.0f, 0.0f,-16.0f),
-            Vec3(-16.0f, 0.0f,-16.0f),
-            Vec3(-16.0f, 0.0f, 16.0f),
-            Vec3( 16.0f, 0.0f, 16.0f)},
-        std::vector<Vec3>{Vec3(0, 2, 1), Vec3(0, 3, 2)},
-        mat_diff,
-        Vec3(0.0f, 0.0f, 0.0f));
-    auto back = std::make_shared<TriangleMesh>(
-        std::vector<Vec3>{
-            Vec3( 16.0f,  0.0f, -16.0f),
-            Vec3(-16.0f,  0.0f, -16.0f),
-            Vec3(-16.0f, 16.0f, -16.0f),
-            Vec3( 16.0f, 16.0f, -16.0f)},
-        std::vector<Vec3>{Vec3(0, 2, 1), Vec3(0, 3, 2)},
-        mat_diff,
-        Vec3(0.0f, 0.0f, 0.0f));
+    auto sphere_L  = std::make_shared<Sphere>(Vec3( 3.75f, 0.0f, 0.0f), 0.9f, mat_light);
+    auto sphere_M  = std::make_shared<Sphere>(Vec3( 1.25f, 0.0f, 0.0f), 0.3f, mat_light);
+    auto sphere_S  = std::make_shared<Sphere>(Vec3(-1.25f, 0.0f, 0.0f), 0.1f, mat_light);
+    auto sphere_SS = std::make_shared<Sphere>(Vec3(-3.75f, 0.0f, 0.0f), 0.1f / 3, mat_light);
+    auto sphere    = std::make_shared<Sphere>(Vec3(  0.0f, 4.0f, 3.0f), 1.0f , mat_light);
+    auto light_L   = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)/81, sphere_L);
+    auto light_M   = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)/9 , sphere_M);
+    auto light_S   = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)   , sphere_S);
+    auto light_SS  = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)*9 , sphere_SS);
+    auto light     = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)   , sphere);
+    auto plate1 = std::make_shared<TriangleMesh>("asset/veach_mis/plate1.obj", mat_smooth, Vec3(0.0f, 0.0f, 0.0f)); // 滑らか
+    auto plate2 = std::make_shared<TriangleMesh>("asset/veach_mis/plate2.obj", mat_normal, Vec3(0.0f, 0.0f, 0.0f));
+    auto plate3 = std::make_shared<TriangleMesh>("asset/veach_mis/plate3.obj", mat_rough, Vec3(0.0f, 0.0f, 0.0f));
+    auto plate4 = std::make_shared<TriangleMesh>("asset/veach_mis/plate4.obj", mat_vrough, Vec3(0.0f, 0.0f, 0.0f));
+    auto floor  = std::make_shared<TriangleMesh>("asset/veach_mis/floor.obj", mat_diff, Vec3(0.0f, 0.0f, 0.0f));
     world.add(light_L);
     world.add(light_M);
     world.add(light_S);
+    world.add(light_SS);
     world.add(floor);
-    world.add(back);
+    world.add(plate1);
+    world.add(plate2);
+    world.add(plate3);
+    world.add(plate4);
 
     // カメラの設定
-    auto fd = 2.5f; // 焦点距離
-    Vec3 cam_pos(0.0f, 5.0f, 25.0f);
-    Vec3 cam_target(0.0f, 3.0f, 0.0f);
+    //auto fd = 4.732f; // 焦点距離
+    auto fd = 2.0 / 0.42261826174 * 0.90630 * aspect;
+    Vec3 cam_pos(0.0f, 6.0f, 27.5f);
+    Vec3 cam_target(0.0f, -1.5f, 2.5f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
 }
@@ -176,7 +183,8 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
     world.clear();
     auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
     auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
-    auto mat_ggx = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_schlick);
+    auto mat_ggx   = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_schlick);
+    auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
     auto mat_red   = std::make_shared<Diffuse>(Vec3(0.5694f, 0.0430f, 0.0451f));
     auto mat_green = std::make_shared<Diffuse>(Vec3(0.1039f, 0.3778f, 0.0768f));
     auto mat_white = std::make_shared<Diffuse>(Vec3(0.8860f, 0.6977f, 0.6676f));
@@ -194,8 +202,11 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
     auto radiance = Vec3(20.6904f, 10.8669f, 2.7761f);
     auto light = std::make_shared<AreaLight>(radiance, light_shape);
     // light sorce2
-    auto light_shape_disk = std::make_shared<Disk>(Vec3(278.0f, 548.7f, 279.6f), 50.0f, mat_light);
+    auto light_shape_disk = std::make_shared<Disk>(Vec3(-278.0f, 548.7f, -279.6f), 50.0f, mat_light);
     auto light_disk = std::make_shared<AreaLight>(radiance, light_shape_disk);
+    // light sorce3
+    auto light_shape_spehre = std::make_shared<Sphere>(Vec3(-278.0f, 548.7f - 50.0f, -279.6f), 50.0f, mat_light);
+    auto light_sphere = std::make_shared<AreaLight>(radiance, light_shape_spehre);
     // ceiling
     auto ceiling = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
@@ -358,6 +369,7 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
     world.add(tall_bck);
     world.add(light);
     //world.add(light_disk);
+    //world.add(light_sphere);
 
     //// カメラの設定
     auto fd = 0.035f; // 焦点距離
@@ -442,7 +454,6 @@ void make_scene_vase(Scene& world, Camera& cam, float aspect) {
     auto mat_phong = std::make_shared<Phong>(Vec3(1.0f, 1.0f, 1.0f), Vec3(0.0f,0.0f,0.0f), Vec3(1.0f,1.0f,1.0f), 45.0f);
     // オブジェクト
     std::string vasepath = "asset/model.obj";
-    std::cout << vasepath << '\n';
     auto obj_pot = std::make_shared<TriangleMesh>(vasepath, mat_microfacet, Vec3(0.0f, 0.0f, 0.0f));
     world.add(obj_pot);
 
@@ -561,48 +572,58 @@ Vec3 L_direct(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3
             // 拡散・光沢反射
             else {
                 auto Ld = Vec3(0.0f, 0.0f, 0.0f);
-                float weight = 0.0f;
-                // BRDFからサンプリング
-                Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local));
-                float cos_term = dot(isect.normal, wo_scattering);
-                for (const auto& light : world.get_light()) { // 光源と交差判定
-                    auto pdf_light = light->sample_pdf(isect, wo_scattering);
-                    if (pdf_light != 0) {
-                        intersection isect_light;
-                        light->intersect(Ray(isect.pos, wo_scattering), eps_isect, inf, isect_light); // 光源の交差点情報を取得
-                        // 遮蔽判定
-                        if (!world.intersect_object(Ray(isect.pos, wo_scattering), eps_isect, isect_light.t)) {
-                            weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
-                            weight = 1.0f;
+                float weight = 1.0f;
+                 // BRDFからサンプリング
+                if ((sampling_strategy == Sampling::BRDF) || (sampling_strategy == Sampling::MIS)) {
+                    Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local));
+                    float cos_term = dot(isect.normal, wo_scattering);
+                    for (const auto& light : world.get_light()) { // 光源と交差判定
+                        auto pdf_light = light->sample_pdf(isect, wo_scattering);
+                        if (pdf_light != 0) {
+                            intersection isect_light;
+                            // 光源と交差判定
+                            if (!light->intersect(Ray(isect.pos, wo_scattering), eps_isect, inf, isect_light)) {
+                                return Vec3(0.0f, 0.0f, 1.0f);
+                                continue;
+                            }
+                            // 遮蔽判定
+                            if (world.intersect_object(Ray(isect.pos, wo_scattering), eps_isect, isect_light.t)) {
+                                continue;
+                            }
+                            if (sampling_strategy == Sampling::MIS) {
+                                weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
+                            }
                             Ld += contrib * brdf * cos_term * weight * light->emitte() / pdf_scattering;
-                            break;
                         }
                     }
                 }
-                // 光源からサンプリング
-                //for (const auto& light : world.get_light()) { // シーン中の光源を取得
-                //    float pdf_light = 0.0f;
-                //    Vec3 wo_light;
-                //    Vec3 L = light->sample_light(isect, wo_light, pdf_light);
-                //    if (is_zero(L) || pdf_light == 0) {
-                //        continue;
-                //    }
-                //    // 光源の可視判定
-                //    auto r_light = Ray(isect.pos, wo_light);
-                //    intersection isect_light;
-                //    light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
-                //    if (world.intersect_object(r_light, eps_isect, isect_light.t)) {
-                //        continue;
-                //    }
-                //    // 光源サンプリング時のBRDFを評価
-                //    auto wo_light_local = -shadingCoord.to_local(wo_light);
-                //    auto brdf_light = isect.mat->f(wi_local, wo_light_local);
-                //    pdf_scattering = isect.mat->sample_pdf(wi_local, wo_light_local);
-                //    auto cos_term_light = std::abs(dot(isect.normal, unit_vector(wo_light)));
-                //    weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
-                //    weight = 1.0f;
-                //    Ld += contrib * brdf_light * L * cos_term_light * weight / pdf_light;
-                //}
+                if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
+                    // 光源からサンプリング
+                    for (const auto& light : world.get_light()) { // シーン中の光源を取得
+                        float pdf_light = 0.0f;
+                        Vec3 wo_light;
+                        Vec3 L = light->sample_light(isect, wo_light, pdf_light);
+                        if (is_zero(L) || pdf_light == 0) {
+                            continue;
+                        }
+                        // 光源の可視判定
+                        auto r_light = Ray(isect.pos, wo_light);
+                        intersection isect_light;
+                        light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
+                        if (world.intersect_object(r_light, eps_isect, isect_light.t - eps_isect)) {
+                            continue;
+                        }
+                        // 光源サンプリング時のBRDFを評価
+                        auto wo_light_local = -shadingCoord.to_local(wo_light);
+                        auto brdf_light = isect.mat->f(wi_local, wo_light_local);
+                        pdf_scattering = isect.mat->sample_pdf(wi_local, wo_light_local);
+                        auto cos_term_light = std::abs(dot(isect.normal, unit_vector(wo_light)));
+                        if (sampling_strategy == Sampling::MIS) {
+                            weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
+                        }
+                        Ld += contrib * brdf_light * L * cos_term_light * weight / pdf_light;
+                    }
+                }
                 return Ld;
             }
         }
@@ -639,15 +660,15 @@ int main(int argc, char* argv[]) {
     Random::init(); // 乱数の初期化
     // 出力画像
     const char* filename = "image.png";  // パス
-    constexpr auto aspect = 3.0f / 3.0f;     // アスペクト比
-    constexpr int h = 600;                   // 高さ
-    constexpr int w = int(h * aspect);       // 幅
-    constexpr int c = 3;                     // チャンネル数
+    constexpr auto w = 768;              // 高さ
+    constexpr auto h = 512;              // 幅
+    constexpr auto aspect = (float)w / h;       // アスペクト比
+    constexpr int c = 3;                 // チャンネル数
     std::vector<uint8_t> img(w * h * c); // 画像データ
     // パラメータ
-    const int nsample = (argc == 2) ? atoi(argv[1]) : 128; // レイのサンプル数
-    constexpr auto max_depth = 100; // レイの最大追跡数
-    constexpr auto gamma = 1 / 2.2f;    // ガンマ補正用
+    const int nsample = (argc == 2) ? atoi(argv[1]) : SAMPLES; // レイのサンプル数
+    constexpr auto max_depth = 100;  // レイの最大追跡数
+    constexpr auto gamma = 1 / 2.2f; // ガンマ補正用
     // シーン
     Scene world;
     if (IMAGE_BASED_LIGHTING) {
@@ -658,8 +679,8 @@ int main(int argc, char* argv[]) {
     Camera cam;
     //make_scene_simple(world, cam, aspect);
     //make_scene_cylinder(world, cam, aspect);
-    //make_scene_MIS(world, cam, aspect);
-    make_scene_cornell(world, cam, aspect);
+    make_scene_MIS(world, cam, aspect);
+    //make_scene_cornell(world, cam, aspect);
     //make_scene_sphere(world, cam, aspect);
     //make_scene_vase(world, cam, aspect);
 
@@ -680,7 +701,10 @@ int main(int argc, char* argv[]) {
                     I += L_normal(r, world);
                 }
                 else {
-                    I += L_direct(r, 0, max_depth, world, Vec3(1.0f, 1.0f, 1.0f));
+                    if (DIRECT_ILLUMINATION)
+                        I += L_direct(r, 0, max_depth, world, Vec3(1.0f, 1.0f, 1.0f));
+                    else 
+                        I += L(r, 0, max_depth, world, Vec3(1.0f, 1.0f, 1.0f));
                 }
             }
             I *= 1.0f / nsample;

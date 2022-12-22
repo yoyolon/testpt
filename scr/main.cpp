@@ -54,7 +54,7 @@ constexpr int  SAMPLES = 128;
 int raycontrib = 0; // 光源からの寄与
 int raydeath = 0;   // ロシアンルーレット打ち切り
 int raybg = 0;      // 背景からの寄与
-Sampling sampling_strategy = Sampling::MIS;
+Sampling sampling_strategy = Sampling::BRDF;
 
 /**
 * @brief シンプルな球のシーンを生成する関数
@@ -136,6 +136,7 @@ void make_scene_MIS(Scene& world, Camera& cam, float aspect) {
     auto mat_smooth  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_s,  fres);
     auto mat_light   = std::make_shared<Emitter>(Vec3(10.0f,10.0f,10.0f));
     auto mat_diff    = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
+    auto mat_diff2   = std::make_shared<Diffuse>(Vec3(1.0f,0.1f,0.1f));
     auto mat_mirr    = std::make_shared<Mirror>(Vec3(1.0f, 1.0f, 1.0f));
     // 光源
     auto sphere_L  = std::make_shared<Sphere>(Vec3( 3.75f, 0.0f, 0.0f), 0.9f, mat_light);
@@ -157,6 +158,7 @@ void make_scene_MIS(Scene& world, Camera& cam, float aspect) {
     world.add(light_M);
     world.add(light_S);
     world.add(light_SS);
+    world.add(light);
     world.add(floor);
     world.add(plate1);
     world.add(plate2);
@@ -485,7 +487,8 @@ Vec3 L(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contri
         // シェーディング座標の構築
         ONB shadingCoord;
         shadingCoord.build_ONB(isect.normal);
-        Vec3 wi_local = -shadingCoord.to_local(r.get_dir());
+        Vec3 wi = unit_vector(r.get_dir());
+        Vec3 wi_local = -shadingCoord.to_local(wi);
         Vec3 wo_local;
         Vec3 wo;
         Vec3 brdf;
@@ -557,15 +560,16 @@ Vec3 L_direct(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3
             // シェーディング座標の構築
             ONB shadingCoord;
             shadingCoord.build_ONB(isect.normal);
-            Vec3 wi_local = -shadingCoord.to_local(r.get_dir());
+            Vec3 wi = unit_vector(r.get_dir());
+            Vec3 wi_local = -shadingCoord.to_local(wi);
             Vec3 wo_scattering_local;
             Vec3 brdf;
             float pdf_scattering;
             isect.mat->sample_f(wi_local, isect, brdf, wo_scattering_local, pdf_scattering);
+            Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local)); // 散乱方向
+            float cos_term = dot(isect.normal, wo_scattering);
             // 完全鏡面反射
             if (isect.mat->get_type() == MaterialType::Specular) {
-                Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local));
-                float cos_term = dot(isect.normal, wo_scattering);
                 contrib = contrib * brdf * cos_term / pdf_scattering;
                 return L(Ray(isect.pos, wo_scattering), ++bounces, max_depth, world, contrib);
             }
@@ -575,54 +579,51 @@ Vec3 L_direct(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3
                 float weight = 1.0f;
                  // BRDFからサンプリング
                 if ((sampling_strategy == Sampling::BRDF) || (sampling_strategy == Sampling::MIS)) {
-                    Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local));
-                    float cos_term = dot(isect.normal, wo_scattering);
-                    for (const auto& light : world.get_light()) { // 光源と交差判定
-                        auto pdf_light = light->sample_pdf(isect, wo_scattering);
-                        if (pdf_light != 0) {
-                            intersection isect_light;
-                            // 光源と交差判定
-                            if (!light->intersect(Ray(isect.pos, wo_scattering), eps_isect, inf, isect_light)) {
-                                return Vec3(0.0f, 0.0f, 1.0f);
-                                continue;
-                            }
-                            // 遮蔽判定
-                            if (world.intersect_object(Ray(isect.pos, wo_scattering), eps_isect, isect_light.t)) {
-                                continue;
-                            }
+                    // シーン中の全光源と交差判定
+                    intersection isect_light;
+                    if (world.intersect_light(Ray(isect.pos, wo_scattering), eps_isect, inf, isect_light)) {
+                        // 光源の可視判定
+                        if (!world.intersect_object(Ray(isect.pos, wo_scattering), eps_isect, isect_light.t)) {
                             if (sampling_strategy == Sampling::MIS) {
+                                auto pdf_light = isect_light.light->sample_pdf(isect, wo_scattering);
                                 weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
                             }
-                            Ld += contrib * brdf * cos_term * weight * light->emitte() / pdf_scattering;
+                            Ld += contrib * brdf * cos_term * weight * isect_light.light->emitte() / pdf_scattering;
                         }
                     }
                 }
+                // 光源からサンプリング
+                // 複数光源の場合どのようにサンプリングする?
+                // 1. 光源を1つ選びサンプリング
+                // 2. 放射エネルギーに基づき1点をサンプリング
+                // 3. 各光源から1点サンプリング
+                // 4. n点サンプリング
+                // とりあえず(1)を試す
                 if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
-                    // 光源からサンプリング
-                    for (const auto& light : world.get_light()) { // シーン中の光源を取得
-                        float pdf_light = 0.0f;
-                        Vec3 wo_light;
-                        Vec3 L = light->sample_light(isect, wo_light, pdf_light);
-                        if (is_zero(L) || pdf_light == 0) {
-                            continue;
-                        }
-                        // 光源の可視判定
-                        auto r_light = Ray(isect.pos, wo_light);
-                        intersection isect_light;
-                        light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
-                        if (world.intersect_object(r_light, eps_isect, isect_light.t - eps_isect)) {
-                            continue;
-                        }
-                        // 光源サンプリング時のBRDFを評価
-                        auto wo_light_local = -shadingCoord.to_local(wo_light);
-                        auto brdf_light = isect.mat->f(wi_local, wo_light_local);
-                        pdf_scattering = isect.mat->sample_pdf(wi_local, wo_light_local);
-                        auto cos_term_light = std::abs(dot(isect.normal, unit_vector(wo_light)));
-                        if (sampling_strategy == Sampling::MIS) {
-                            weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
-                        }
-                        Ld += contrib * brdf_light * L * cos_term_light * weight / pdf_light;
+                    const auto& lights = world.get_light();
+                    const auto& light = lights[3];
+                    float pdf_light = 0.0f;
+                    Vec3 wo_light;
+                    Vec3 L = light->sample_light(isect, wo_light, pdf_light);
+                    if (is_zero(L) || pdf_light == 0) {
+                        return Vec3(0.0f,1.0f,1.0f);
                     }
+                    // 光源の可視判定
+                    auto r_light = Ray(isect.pos, wo_light);
+                    intersection isect_light;
+                    light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
+                    if (world.intersect_object(r_light, eps_isect, isect_light.t)) { // 遮蔽
+                        return Vec3(1.0f, 0.0f, 0.0f);
+                    }
+                    // 光源サンプリング時のBRDFを評価
+                    auto wo_light_local = -shadingCoord.to_local(unit_vector(wo_light));
+                    auto brdf_light = isect.mat->f(wi_local, wo_light_local);
+                    pdf_scattering = isect.mat->sample_pdf(wi_local, wo_light_local);
+                    auto cos_term_light = std::abs(dot(isect.normal, unit_vector(wo_light)));
+                    if (sampling_strategy == Sampling::MIS) {
+                        weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
+                    }
+                    Ld += contrib * brdf_light * L * cos_term_light * weight / pdf_light;
                 }
                 return Ld;
             }

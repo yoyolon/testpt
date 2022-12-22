@@ -119,6 +119,32 @@ public:
     }
 
     /**
+    * @brief レイと光源の交差判定を行う関数
+    * @param[in]  r     :入射レイ
+    * @param[in]  t_min :入射レイのパラメータ制限
+    * @param[in]  t_max :入射レイのパラメータ制限
+    * @param[out] p     :交差点情報
+    * @return bool      :交差判定の結果
+    * @note TODO: BVHの実装
+    */
+    bool intersect_light(const Ray& r, float t_min, float t_max, intersection& p) const {
+        intersection isect;
+        bool is_isect = false;
+        auto t_first = t_max;
+        isect.type = IsectType::Light;
+        // 光源との交差判定
+        for (const auto& light : light_list) {
+            if (light->intersect(r, t_min, t_first, isect)) {
+                is_isect = true;
+                t_first = isect.t;
+                isect.light = light;
+                p = isect;
+            }
+        }
+        return is_isect;
+    }
+
+    /**
     * @brief 環境マップのサンプリング
     * @param[in]  r :レイ
     * @return Vec3  :レイに沿った環境マップの放射輝度

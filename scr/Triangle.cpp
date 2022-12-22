@@ -147,7 +147,7 @@ TriangleMesh::TriangleMesh(std::string filename, std::shared_ptr<Material> m, bo
     : mat(m) {
     std::vector<Vec3> Vertices, Indices;
     load_obj(Vertices, Indices, filename);
-    std::vector<Vec3> Normals(Vertices.size(), Vec3(0.0f, 0.0f, 0.0f)); // 頂点の法線
+    std::vector<Vec3> Normals(Vertices.size(), Vec3::zero); // 頂点の法線
     // スムーズシェーディング
     if (is_smooth) {
         // 各頂点を探索

@@ -46,6 +46,7 @@
     <ClCompile Include="scr\Shape.cpp" />
     <ClCompile Include="scr\Sphere.cpp" />
     <ClCompile Include="scr\Triangle.cpp" />
+    <ClCompile Include="scr\Vec3.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

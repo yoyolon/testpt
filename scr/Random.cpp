@@ -35,7 +35,7 @@ Vec3 Random::concentric_disk_sample() {
     auto u = 2 * Random::uniform_float() -1.0f;
     auto v = 2 * Random::uniform_float() -1.0f;
     if (u == 0 && v == 0) {
-        return Vec3(0.0f, 0.0f, 0.0f);
+        return Vec3::zero;
     }
     if (u * u > v * v) {
         r = u;

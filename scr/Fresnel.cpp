@@ -136,7 +136,7 @@ FresnelDielectric::FresnelDielectric(float _ni, float _no)
 Vec3 FresnelDielectric::evaluate(float cos_theta) const {
     float sin_theta = std::sqrt(std::max(0.0f, 1.0f - cos_theta * cos_theta));
     float sinO = no / ni * sin_theta;
-    if (sinO >= 1.0f) return Vec3(0.0f, 0.0f, 0.0f);
+    if (sinO >= 1.0f) return Vec3::zero;
     float cosO = std::sqrt(std::max(0.0f, 1.0f - sinO * sinO));
     float Rs = fresnel_rs(ni, no, cos_theta, cosO);
     float Rp = fresnel_rp(ni, no, cos_theta, cosO);

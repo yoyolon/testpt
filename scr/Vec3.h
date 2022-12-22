@@ -123,7 +123,9 @@ public:
      * @param[in]  b :ベクトル2
      * @return float :ベクトルの内積
      */
-    friend inline float dot(Vec3 a, Vec3 b) { return a.e[0] * b.e[0] + a.e[1] * b.e[1] + a.e[2] * b.e[2]; }
+    friend inline float dot(Vec3 a, Vec3 b) { 
+        return a.e[0] * b.e[0] + a.e[1] * b.e[1] + a.e[2] * b.e[2]; 
+    }
 
      /**
      * @brief 2つのベクトルの外積を計算する関数
@@ -139,6 +141,14 @@ public:
 
 private:
     float e[3]; /**< ベクトルの成分 */
+
+public:
+    // 定数
+    static const Vec3 zero;  /**< ゼロベクトル      */
+    static const Vec3 one;   /**< 要素が1のベクトル */
+    static const Vec3 red;   /**< 赤色 */
+    static const Vec3 green; /**< 緑色 */
+    static const Vec3 blue;  /**< 青色 */
 };
 
 

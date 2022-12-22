@@ -92,13 +92,13 @@ public:
     * @param[out] wo :出射方向ベクトル
     * @return Vec3   :BRDFの値
     */
-    virtual Vec3 f(const Vec3& wi, const Vec3& wo) const { return Vec3(0.0f, 0.0f, 0.0f); }
+    virtual Vec3 f(const Vec3& wi, const Vec3& wo) const { return Vec3::zero; }
 
     /**
     * @brief 自己発光を評価する関数
     * @return Vec3 : 発光による放射輝度
     */
-    virtual Vec3 emitte() const { return Vec3(0.0f, 0.0f, 0.0f); }
+    virtual Vec3 emitte() const { return Vec3::zero; }
 
     /**
     * @brief 出射方向のサンプリング確率密度を計算する関数

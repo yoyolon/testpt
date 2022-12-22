@@ -17,6 +17,12 @@ public:
     ONB() {}
 
     /**
+    * @brief 法線ベクトル(上向きベクトル)からONBを構築
+    * @param[in]  Vec3 :上向きの軸ベクトル
+    */
+    ONB(const Vec3& _n) : n(_n) { build_ONB(n); }
+
+    /**
     * @brief 基底ベクトルを取得する関数
     * @return Vec3 :s軸の基底ベクトル
     */

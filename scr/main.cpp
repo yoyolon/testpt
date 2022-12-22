@@ -55,7 +55,7 @@ constexpr int  SAMPLES = 128;
 int raycontrib = 0; // 光源からの寄与
 int raydeath = 0;   // ロシアンルーレット打ち切り
 int raybg = 0;      // 背景からの寄与
-Sampling sampling_strategy = Sampling::BRDF;
+Sampling sampling_strategy = Sampling::MIS;
 
 /**
 * @brief シンプルな球のシーンを生成する関数
@@ -66,22 +66,23 @@ Sampling sampling_strategy = Sampling::BRDF;
 void make_scene_simple(Scene& world, Camera& cam, float aspect) {
     world.clear();
     // マテリアル
-    auto dist_ggx = std::make_shared<GGXDistribution>(0.025f);
-    auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
-    auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_schlick);
-    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
-    auto mat_light = std::make_shared<Emitter>(Vec3(10.00f, 10.00f, 10.00f));
-    // オブジェクト
-    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 3.0f, mat_microfacet);
-    auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f, 20.0f, 0.0f), 50.0f, mat_light);
-    auto light_disk = std::make_shared<AreaLight>(Vec3(1.0f, 1.0f, 1.0f), light_shape_disk);
-    world.add(obj_sphere);
-    //world.add(light_disk);
+    auto dist_ggx       = std::make_shared<GGXDistribution>(0.025f);
+    auto fres_schlick   = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_schlick);
+    auto mat_mirr       = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_light      = std::make_shared<Emitter>(Vec3(10.00f,10.00f,10.00f));
 
-    // カメラの設定
+    // オブジェクト
+    auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_microfacet);
+    auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f,20.0f,0.0f), 50.0f, mat_light);
+    auto light_disk       = std::make_shared<AreaLight>(Vec3(1.0f,1.0f,1.0f), light_shape_disk);
+    world.add(obj_sphere);
+    world.add(light_disk);
+
+    // カメラ設定
     auto fd = 2.5f; // 焦点距離
-    Vec3 cam_pos(0.0f, 2.0f, 15.0f);
-    Vec3 cam_target(0.0f, 2.0f, 0.0f);
+    Vec3 cam_pos(0.0f,2.0f,15.0f);
+    Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
 }
@@ -95,23 +96,24 @@ void make_scene_simple(Scene& world, Camera& cam, float aspect) {
 void make_scene_cylinder(Scene& world, Camera& cam, float aspect) {
     world.clear();
     // マテリアル
-    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
-    auto mat_light = std::make_shared<Emitter>(Vec3(10.00f, 10.00f, 10.00f));
+    auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_light = std::make_shared<Emitter>(Vec3(10.00f,10.00f,10.00f));
+
     // オブジェクト
-    auto obj_disk_top = std::make_shared<Disk>(Vec3(0.0f, 8.0f, 0.0f), 4.0f, mat_mirr);
+    auto obj_disk_top = std::make_shared<Disk>(Vec3(0.0f,8.0f,0.0f), 4.0f, mat_mirr);
     auto obj_disk_btm = std::make_shared<Disk>(Vec3::zero, 4.0f, mat_mirr);
     auto obj_cylinder = std::make_shared<Cylinder>(Vec3::zero, 4.0f, 8.0f, mat_mirr);
-    auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f, 20.0f, 0.0f), 50.0f, mat_light);
-    auto light_disk = std::make_shared<AreaLight>(Vec3(10.0f, 10.0f, 10.0f), light_shape_disk);
+    auto light_shape  = std::make_shared<Disk>(Vec3(0.0f,20.0f,0.0f), 50.0f, mat_light);
+    auto light_disk   = std::make_shared<AreaLight>(Vec3(10.0f,10.0f,10.0f), light_shape);
     world.add(obj_disk_top);
     world.add(obj_disk_btm);
     world.add(obj_cylinder);
-    //world.add(light_shape_disk);
+    world.add(light_shape);
 
-    // カメラの設定
+    // カメラ設定
     auto fd = 1.5f; // 焦点距離
-    Vec3 cam_pos(0.0f, 10.0f, 20.0f);
-    Vec3 cam_target(0.0f, 2.0f, 0.0f);
+    Vec3 cam_pos(0.0f,10.0f,20.0f);
+    Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
 }
@@ -126,39 +128,39 @@ void make_scene_cylinder(Scene& world, Camera& cam, float aspect) {
 void make_scene_MIS(Scene& world, Camera& cam, float aspect) {
     world.clear();
     // マテリアル
-    auto dist_ggx_vr = std::make_shared<GGXDistribution>(0.100f);
-    auto dist_ggx_r  = std::make_shared<GGXDistribution>(0.050f);
-    auto dist_ggx_n  = std::make_shared<GGXDistribution>(0.020f);
-    auto dist_ggx_s  = std::make_shared<GGXDistribution>(0.005f);
-    auto fres        = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
-    auto mat_vrough  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_vr, fres);
-    auto mat_rough   = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_r,  fres);
-    auto mat_normal  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_n,  fres);
-    auto mat_smooth  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist_ggx_s,  fres);
-    auto mat_light   = std::make_shared<Emitter>(Vec3(10.0f,10.0f,10.0f));
-    auto mat_diff    = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
-    auto mat_diff2   = std::make_shared<Diffuse>(Vec3(1.0f,0.1f,0.1f));
-    auto mat_mirr    = std::make_shared<Mirror>(Vec3(1.0f, 1.0f, 1.0f));
+    auto dist1 = std::make_shared<GGXDistribution>(0.100f);
+    auto dist2 = std::make_shared<GGXDistribution>(0.050f);
+    auto dist3 = std::make_shared<GGXDistribution>(0.020f);
+    auto dist4 = std::make_shared<GGXDistribution>(0.005f);
+    auto fres  = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_vrough = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist1, fres);
+    auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist2, fres);
+    auto mat_normal = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist3, fres);
+    auto mat_smooth = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist4, fres);
+    auto mat_light  = std::make_shared<Emitter>(Vec3(10.0f,10.0f,10.0f));
+    auto mat_diff   = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
+    auto mat_mirr   = std::make_shared<Mirror>(Vec3(1.0f, 1.0f, 1.0f));
     // 光源
-    auto sphere_L  = std::make_shared<Sphere>(Vec3( 3.75f, 0.0f, 0.0f), 0.9f, mat_light);
-    auto sphere_M  = std::make_shared<Sphere>(Vec3( 1.25f, 0.0f, 0.0f), 0.3f, mat_light);
-    auto sphere_S  = std::make_shared<Sphere>(Vec3(-1.25f, 0.0f, 0.0f), 0.1f, mat_light);
-    auto sphere_SS = std::make_shared<Sphere>(Vec3(-3.75f, 0.0f, 0.0f), 0.1f / 3, mat_light);
-    auto sphere    = std::make_shared<Sphere>(Vec3(  0.0f, 4.0f, 3.0f), 1.0f , mat_light);
-    auto light_L   = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)/81, sphere_L);
-    auto light_M   = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)/9 , sphere_M);
-    auto light_S   = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)   , sphere_S);
-    auto light_SS  = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)*9 , sphere_SS);
-    auto light     = std::make_shared<AreaLight>(Vec3(100.0f, 100.0f, 100.0f)   , sphere);
+    auto sphere_XL = std::make_shared<Sphere>(Vec3( 3.75f,0.0f,0.0f), 0.90f, mat_light);
+    auto sphere_L  = std::make_shared<Sphere>(Vec3( 1.25f,0.0f,0.0f), 0.30f, mat_light);
+    auto sphere_M  = std::make_shared<Sphere>(Vec3(-1.25f,0.0f,0.0f), 0.10f, mat_light);
+    auto sphere_S  = std::make_shared<Sphere>(Vec3(-3.75f,0.0f,0.0f), 0.03f, mat_light);
+    auto sphere    = std::make_shared<Sphere>(Vec3(  0.0f,4.0f,3.0f), 1.0f, mat_light);
+    auto light_XL  = std::make_shared<AreaLight>(Vec3(  1.2f,  1.2f,  1.2f), sphere_XL);
+    auto light_L   = std::make_shared<AreaLight>(Vec3( 11.1f, 11.1f, 11.1f), sphere_L);
+    auto light_M   = std::make_shared<AreaLight>(Vec3(100.0f,100.0f,100.0f), sphere_M);
+    auto light_S   = std::make_shared<AreaLight>(Vec3(900.0f,900.0f,900.0f), sphere_S);
+    auto light     = std::make_shared<AreaLight>(Vec3(100.0f,100.0f,100.0f), sphere);
+    // オブジェクト
     auto plate1 = std::make_shared<TriangleMesh>("asset/veach_mis/plate1.obj", mat_smooth);
     auto plate2 = std::make_shared<TriangleMesh>("asset/veach_mis/plate2.obj", mat_normal);
     auto plate3 = std::make_shared<TriangleMesh>("asset/veach_mis/plate3.obj", mat_rough);
     auto plate4 = std::make_shared<TriangleMesh>("asset/veach_mis/plate4.obj", mat_vrough);
     auto floor  = std::make_shared<TriangleMesh>("asset/veach_mis/floor.obj" , mat_diff);
+    world.add(light_XL);
     world.add(light_L);
     world.add(light_M);
     world.add(light_S);
-    world.add(light_SS);
     //world.add(light);
     world.add(floor);
     world.add(plate1);
@@ -377,49 +379,49 @@ void make_scene_sphere(Scene& world, Camera& cam, float aspect) {
     // マイクロファセット分布
     auto dist_ggx = std::make_shared<GGXDistribution>(0.1f);
     // フレネルの式
-    auto fres_thinfilm1 = std::make_shared<FresnelThinfilm>(200.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm2 = std::make_shared<FresnelThinfilm>(300.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm3 = std::make_shared<FresnelThinfilm>(400.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm4 = std::make_shared<FresnelThinfilm>(500.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm5 = std::make_shared<FresnelThinfilm>(600.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm6 = std::make_shared<FresnelThinfilm>(700.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm7 = std::make_shared<FresnelThinfilm>(800.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm8 = std::make_shared<FresnelThinfilm>(900.f, 1.0f, 1.6f, 1.2f);
-    auto fres_thinfilm9 = std::make_shared<FresnelThinfilm>(1000.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid1 = std::make_shared<FresnelThinfilm>(200.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid2 = std::make_shared<FresnelThinfilm>(300.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid3 = std::make_shared<FresnelThinfilm>(400.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid4 = std::make_shared<FresnelThinfilm>(500.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid5 = std::make_shared<FresnelThinfilm>(600.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid6 = std::make_shared<FresnelThinfilm>(700.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid7 = std::make_shared<FresnelThinfilm>(800.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid8 = std::make_shared<FresnelThinfilm>(900.f, 1.0f, 1.6f, 1.2f);
+    auto fres_irid9 = std::make_shared<FresnelThinfilm>(999.f, 1.0f, 1.6f, 1.2f);
     // マテリアル
-    auto mat_microfacet1 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm1);
-    auto mat_microfacet2 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm2);
-    auto mat_microfacet3 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm3);
-    auto mat_microfacet4 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm4);
-    auto mat_microfacet5 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm5);
-    auto mat_microfacet6 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm6);
-    auto mat_microfacet7 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm7);
-    auto mat_microfacet8 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm8);
-    auto mat_microfacet9 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_thinfilm9);
+    auto mat_ggx1 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid1);
+    auto mat_ggx2 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid2);
+    auto mat_ggx3 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid3);
+    auto mat_ggx4 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid4);
+    auto mat_ggx5 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid5);
+    auto mat_ggx6 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid6);
+    auto mat_ggx7 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid7);
+    auto mat_ggx8 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid8);
+    auto mat_ggx9 = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_irid9);
     // 球
-    auto obj_sphere1 = std::make_shared<Sphere>(Vec3(-2.2f, -0.2f, 0.0f), 1.0f, mat_microfacet1);
-    auto obj_sphere2 = std::make_shared<Sphere>(Vec3(0.0f, -0.2f, 0.0f), 1.0f, mat_microfacet2);
-    auto obj_sphere3 = std::make_shared<Sphere>(Vec3(2.2f, -0.2f, 0.0f), 1.0f, mat_microfacet3);
-    auto obj_sphere4 = std::make_shared<Sphere>(Vec3(-2.2f, 2.0f, 0.0f), 1.0f, mat_microfacet4);
-    auto obj_sphere5 = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 1.0f, mat_microfacet5);
-    auto obj_sphere6 = std::make_shared<Sphere>(Vec3(2.2f, 2.0f, 0.0f), 1.0f, mat_microfacet6);
-    auto obj_sphere7 = std::make_shared<Sphere>(Vec3(-2.2f, 4.2f, 0.0f), 1.0f, mat_microfacet7);
-    auto obj_sphere8 = std::make_shared<Sphere>(Vec3(0.0f, 4.2f, 0.0f), 1.0f, mat_microfacet8);
-    auto obj_sphere9 = std::make_shared<Sphere>(Vec3(2.2f, 4.2f, 0.0f), 1.0f, mat_microfacet9);
+    auto spehre1 = std::make_shared<Sphere>(Vec3(-2.2f,-0.2f,0.0f), 1.0f, mat_ggx1);
+    auto spehre2 = std::make_shared<Sphere>(Vec3( 0.0f,-0.2f,0.0f), 1.0f, mat_ggx2);
+    auto spehre3 = std::make_shared<Sphere>(Vec3( 2.2f,-0.2f,0.0f), 1.0f, mat_ggx3);
+    auto spehre4 = std::make_shared<Sphere>(Vec3(-2.2f, 2.0f,0.0f), 1.0f, mat_ggx4);
+    auto spehre5 = std::make_shared<Sphere>(Vec3( 0.0f, 2.0f,0.0f), 1.0f, mat_ggx5);
+    auto spehre6 = std::make_shared<Sphere>(Vec3( 2.2f, 2.0f,0.0f), 1.0f, mat_ggx6);
+    auto spehre7 = std::make_shared<Sphere>(Vec3(-2.2f, 4.2f,0.0f), 1.0f, mat_ggx7);
+    auto spehre8 = std::make_shared<Sphere>(Vec3( 0.0f, 4.2f,0.0f), 1.0f, mat_ggx8);
+    auto spehre9 = std::make_shared<Sphere>(Vec3( 2.2f, 4.2f,0.0f), 1.0f, mat_ggx9);
     // オブジェクトをシーンに追加
-    world.add(obj_sphere1);
-    world.add(obj_sphere2);
-    world.add(obj_sphere3);
-    world.add(obj_sphere4);
-    world.add(obj_sphere5);
-    world.add(obj_sphere6);
-    world.add(obj_sphere7);
-    world.add(obj_sphere8);
-    world.add(obj_sphere9);
+    world.add(spehre1);
+    world.add(spehre2);
+    world.add(spehre3);
+    world.add(spehre4);
+    world.add(spehre5);
+    world.add(spehre6);
+    world.add(spehre7);
+    world.add(spehre8);
+    world.add(spehre9);
     // カメラの設定
     auto fd = 2.5f; // 焦点距離
-    Vec3 cam_pos(0.0f, 2.0f, -10.0f);
-    Vec3 cam_target(0.0f, 2.0f, 0.0f);
+    Vec3 cam_pos(0.0f,2.0f,-10.0f);
+    Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = -unit_vector(cam_target - cam_pos);
     cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
 }
@@ -435,18 +437,16 @@ void make_scene_vase(Scene& world, Camera& cam, float aspect) {
     world.clear();
     // マテリアル
     auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
-    auto fres_Schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
-    auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_Schlick);
-    auto mat_phong = std::make_shared<Phong>(Vec3(1.0f,1.0f,1.0f), Vec3(0.0f,0.0f,0.0f), Vec3(1.0f,1.0f,1.0f), 45.0f);
+    auto fres     = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_ggx  = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres);
     // オブジェクト
-    std::string vasepath = "asset/model.obj";
-    auto obj_pot = std::make_shared<TriangleMesh>(vasepath, mat_microfacet);
+    auto obj_pot = std::make_shared<TriangleMesh>("asset/model.obj", mat_ggx);
     world.add(obj_pot);
 
     // カメラの設定
     auto fd = 2.5f; // 焦点距離
-    Vec3 cam_pos(0.0f, 2.0f, 7.5f);
-    Vec3 cam_target(0.0f, 2.0f, 0.0f);
+    Vec3 cam_pos(0.0f,2.0f,7.5f);
+    Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
 }
@@ -535,14 +535,13 @@ Vec3 L_direct(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3
         raybg++;
         return contrib * world.sample_envmap(r);
     }
-    // マテリアルの場合
+    // 交差点がマテリアルの場合
     if (isect.type == IsectType::Material) {
         if (isect.mat->get_type() == MaterialType::Emitter) {
             return contrib * isect.mat->emitte();
         }
         // シェーディング座標の構築
         ONB shadingCoord(isect.normal);
-        //shadingCoord.build_ONB(isect.normal);
         Vec3 wi = unit_vector(r.get_dir());
         Vec3 wi_local = -shadingCoord.to_local(wi);
         Vec3 wo_scattering_local;
@@ -582,7 +581,7 @@ Vec3 L_direct(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3
             // 3. 各光源から1点サンプリング
             // 4. n点サンプリング
             // とりあえず(1)を試す
-            // NOTE: 
+            // NOTE: マイクロファセットBRDFの値が小さすぎる<-なぜ？？？？
             if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
                 const auto& lights = world.get_light();
                 auto light_index = Random::uniform_int(0, lights.size() - 1);
@@ -591,27 +590,22 @@ Vec3 L_direct(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3
                 Vec3 wo_light;
                 Vec3 L = light->sample_light(isect, wo_light, pdf_light);
                 if (is_zero(L) || pdf_light == 0) {
-                    return Vec3(0.0f, 1.0f, 0.0f);
+                    return Ld;
                 }
                 // 光源の可視判定
                 auto r_light = Ray(isect.pos, wo_light);
                 intersection isect_light;
                 light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
-                if (world.intersect_object(r_light, eps_isect, isect_light.t)) { // 遮蔽
-                    return Vec3(1.0f, 0.0f, 0.0f);
+                if (world.intersect_object(r_light, eps_isect, isect_light.t)) {
+                    return Ld;
                 }
                 // 光源サンプリング時のBRDFを評価
-                auto wo_light_local = -shadingCoord.to_local(unit_vector(wo_light));
+                auto wo_light_local = shadingCoord.to_local(unit_vector(wo_light));
                 auto brdf_light = isect.mat->f(wi_local, wo_light_local);
                 auto cos_term_light = std::abs(dot(isect.normal, unit_vector(wo_light)));
                 if (sampling_strategy == Sampling::MIS) {
                     pdf_scattering = isect.mat->sample_pdf(wi_local, wo_light_local);
                     weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
-                }
-                if (isect.mat->get_type() == MaterialType::Glossy) {
-                    //std::cout << "brdf: " << brdf_light << '\n';
-                    //std::cout << "cos_term: " << cos_term_light << '\n';
-                    //std::cout << "weight: " << weight << '\n';
                 }
                 Ld += contrib * brdf_light * L * cos_term_light * weight / pdf_light;
             }

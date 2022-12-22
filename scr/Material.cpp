@@ -74,13 +74,13 @@ Microfacet::Microfacet(Vec3 _albedo, std::shared_ptr<MicrofacetDistribution> _di
                        std::shared_ptr<Fresnel> _fresnel)
     : Material(MaterialType::Glossy), albedo(_albedo), distribution(_distribution), fresnel(_fresnel) {}
 
-float Microfacet::sample_pdf(const Vec3& wi, const Vec3& h) const {
+float Microfacet::sample_pdf(const Vec3& wi, const Vec3& wo) const {
+    auto h = unit_vector(wi + wo);
     return distribution->sample_pdf(wi, h) / (4 * dot(wi, h)); // 確率密度の変換
 }
 
-Vec3 Microfacet::f(const Vec3& wi, const Vec3& h) const {
-    // NOTE: hでなくwoを渡してhを計算すると上手くいかない(なぜ?)
-    auto wo = unit_vector(reflect(wi, h));
+Vec3 Microfacet::f(const Vec3& wi, const Vec3& wo) const {
+    auto h = unit_vector(wi + wo);
     float cos_wi = std::abs(get_cos(wi));
     float cos_wo = std::abs(get_cos(wo));
     if (cos_wi == 0 || cos_wo == 0) {
@@ -98,8 +98,8 @@ Vec3 Microfacet::f(const Vec3& wi, const Vec3& h) const {
 bool Microfacet::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
     Vec3 h = distribution->sample_halfvector();
     wo = unit_vector(reflect(wi, h)); // ハーフベクトルと入射方向から出射方向を計算
-    pdf = sample_pdf(wi, h);
-    brdf = f(wi, h);
+    pdf = sample_pdf(wi, wo);
+    brdf = f(wi, wo);
     return true;
 }
 

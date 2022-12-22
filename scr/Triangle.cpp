@@ -129,22 +129,22 @@ intersection Triangle::sample(const intersection& ref) const {
 // *** 三角形メッシュクラス ***
 TriangleMesh::TriangleMesh() {}
 
-TriangleMesh::TriangleMesh(std::vector<Vec3> Vertices, std::vector<Vec3> Indices, std::shared_ptr<Material> m, Vec3 p)
-    : mat(m), pos(p) {
+TriangleMesh::TriangleMesh(std::vector<Vec3> Vertices, std::vector<Vec3> Indices, std::shared_ptr<Material> m)
+    : mat(m) {
     // 各頂点インデックスから三角ポリゴンを構成
     for (const auto& index : Indices) {
         int x = std::max((int)index.get_x(), 0);
         int y = std::max((int)index.get_y(), 0);
         int z = std::max((int)index.get_z(), 0);
-        Vec3 V0 = Vertices[x] - pos;
-        Vec3 V1 = Vertices[y] - pos;
-        Vec3 V2 = Vertices[z] - pos;
+        Vec3 V0 = Vertices[x];
+        Vec3 V1 = Vertices[y];
+        Vec3 V2 = Vertices[z];
         Triangles.push_back(Triangle(V0, V1, V2, m));
     }
 };
 
-TriangleMesh::TriangleMesh(std::string filename, std::shared_ptr<Material> m, Vec3 p, bool is_smooth)
-    : mat(m), pos(p) {
+TriangleMesh::TriangleMesh(std::string filename, std::shared_ptr<Material> m, bool is_smooth)
+    : mat(m) {
     std::vector<Vec3> Vertices, Indices;
     load_obj(Vertices, Indices, filename);
     std::vector<Vec3> Normals(Vertices.size(), Vec3(0.0f, 0.0f, 0.0f)); // 頂点の法線
@@ -177,9 +177,9 @@ TriangleMesh::TriangleMesh(std::string filename, std::shared_ptr<Material> m, Ve
         int x = std::max((int)index.get_x() - 1, 0);
         int y = std::max((int)index.get_y() - 1, 0);
         int z = std::max((int)index.get_z() - 1, 0);
-        Vec3 V0 = Vertices[x] - pos;
-        Vec3 V1 = Vertices[y] - pos;
-        Vec3 V2 = Vertices[z] - pos;
+        Vec3 V0 = Vertices[x];
+        Vec3 V1 = Vertices[y];
+        Vec3 V2 = Vertices[z];
         if (is_smooth) {
             Vec3 N0 = Normals[x];
             Vec3 N1 = Normals[y];

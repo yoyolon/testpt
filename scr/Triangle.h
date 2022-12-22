@@ -68,7 +68,7 @@ public:
     * @param[in] m        :マテリアル
     * @param[in] p        :位置オフセット
     */
-    TriangleMesh(std::vector<Vec3> vertices, std::vector<Vec3>indices, std::shared_ptr<Material> m, Vec3 p);
+    TriangleMesh(std::vector<Vec3> vertices, std::vector<Vec3> indices, std::shared_ptr<Material> m);
 
     /**
     * @brief objファイルから三角形メッシュオブジェクトを初期化
@@ -77,7 +77,7 @@ public:
     * @param[in] p         :位置オフセット
     * @param[in] is_smooth :スムーズシェーディングの設定 
     */
-    TriangleMesh(std::string filename, std::shared_ptr<Material> m, Vec3 p, bool is_smooth=true);
+    TriangleMesh(std::string filename, std::shared_ptr<Material> m, bool is_smooth=true);
 
     void move(Vec3 pos);
 
@@ -90,5 +90,4 @@ public:
 private:
     std::vector<Triangle> Triangles; /**< 三角形配列     */
     std::shared_ptr<Material> mat;   /**< マテリアル     */
-    Vec3 pos;                        /**< 位置オフセット */
 };

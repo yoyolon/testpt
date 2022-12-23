@@ -8,7 +8,7 @@
 /** カメラのフィルム情報を保持するクラス */
 class Film {
 public:
-	Film(int _h, int _w, int _c, const char* filename);
+	Film(int _w, int _h, int _c, const char* filename);
 
 	int get_w() const { return w; }
 	int get_h() const { return h; }

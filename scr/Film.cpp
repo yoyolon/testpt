@@ -1,8 +1,8 @@
 #include "Film.h"
 
 
-Film::Film(int _h, int _w, int _c, const char* f)
-	: h(_h), w(_w), c(_c), filename(f)
+Film::Film(int _w, int _h, int _c, const char* f)
+	: w(_w), h(_h), c(_c), filename(f)
 {
 	aspect = (float)w / h;
 }

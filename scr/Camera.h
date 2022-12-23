@@ -14,14 +14,22 @@ public:
 
     /**
     * @brief カメラを初期化
-    * @param[in] h        :フィルムの高さ
-    * @param[in] _aspect  :フィルムのアスペクト比
+    */
+    Camera();
+
+    /**
+    * @brief カメラを初期化
+    * @param[in] film     :フィルム
     * @param[in] _fd      :焦点距離
     * @param[in] _pos     :カメラの原点
     * @param[in] _forward :カメラの方向ベクトル
     */
-    Camera(float h=2.0, float _aspect=1.0, float _fd=1.0, 
-           Vec3 _pos=Vec3(0.0, 0.0, 0.0), Vec3 _forward=Vec3(0.0, 0.0, 1.0));
+    Camera(std::shared_ptr<class Film> _film, float _fd,  Vec3 _pos, Vec3 _forward);
+
+    int get_h() const;
+    int get_w() const;
+    int get_c() const;
+    const char* get_filename() const;
 
     /**
     * @brief カメラの原点からレイを生成
@@ -32,13 +40,11 @@ public:
     Ray generate_ray(float u, float v);
 
 private:
-    float film_w;        /**< フィルム幅           */
-    float film_h;        /**< フィルム高さ         */
-    float aspect;        /**< アスペクト比         */
-    float fd;            /**< 焦点距離             */
-    Vec3 pos;            /**< カメラの原点         */
-    Vec3 forward_vector; /**< 前方ベクトル         */
-    Vec3 right_vector;   /**< 右ベクトル           */
-    Vec3 up_vector;      /**< 上ベクトル           */
-    Vec3 film_corner;    /**< フィルム左下端の座標 */
+    float fd;         /**< 焦点距離             */
+    Vec3 pos;         /**< カメラの原点         */
+    Vec3 forward;     /**< 前方ベクトル         */
+    Vec3 right;       /**< 右ベクトル           */
+    Vec3 up;          /**< 上ベクトル           */
+    Vec3 film_corner; /**< フィルム左下端の座標 */
+    std::shared_ptr<class Film> film; /**< フィルム             */
 };

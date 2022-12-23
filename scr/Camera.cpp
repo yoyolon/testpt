@@ -1,19 +1,39 @@
 #include "Camera.h"
+#include "Film.h"
 #include <iostream>
 
-Camera::Camera(float h, float _aspect, float _fd, Vec3 _pos, Vec3 _forward)
-    : film_h(h), aspect(_aspect), fd(_fd), pos(_pos), forward_vector(_forward)
+Camera::Camera()
+    : fd(1.0f), 
+      forward(Vec3::zero), 
+      right(Vec3::zero),
+      up(Vec3::zero),
+      film_corner(Vec3::zero),
+      film(nullptr)
+{}
+
+Camera::Camera(std::shared_ptr<Film> _film, float _fd, Vec3 _pos, Vec3 _forward)
+    : film(_film), fd(_fd), pos(_pos), forward(_forward)
 {
-    forward_vector *= -1;
-    right_vector = unit_vector(cross(Vec3(0.0, 1.0, 0.0), forward_vector));
-    up_vector = unit_vector(cross(right_vector, forward_vector));
-    film_w = film_h * aspect;
-    right_vector *= film_w;
-    up_vector *= film_h;
-    film_corner = -0.5 * right_vector -0.5 * up_vector - fd * forward_vector + pos;
+    forward *= -1;
+    right = unit_vector(cross(Vec3(0.0, 1.0, 0.0), forward));
+    up = unit_vector(cross(right, forward));
+    // note: ‰¼‘zƒtƒBƒ‹ƒ€‚Ì‚‚³‚Í2.0‚ÅŒÅ’è
+    auto film_h = 2.0f;
+    auto film_w = film_h * film->get_aspect();
+    right *= film_w;
+    up *= film_h;
+    film_corner = -0.5 * right -0.5 * up - fd * forward + pos;
 }
 
+int Camera::get_h() const { return film->get_h(); }
+
+int Camera::get_w() const { return film->get_w(); }
+
+int Camera::get_c() const { return film->get_c(); }
+
+const char* Camera::get_filename() const { return film->get_filename(); }
+
 Ray Camera::generate_ray(float u, float v) {
-    auto dir = film_corner + u * right_vector + v * up_vector - pos;
+    auto dir = film_corner + u * right + v * up - pos;
     return Ray(pos, dir);
 }

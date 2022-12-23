@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="scr\Camera.h" />
+    <ClInclude Include="scr\Film.h" />
     <ClInclude Include="scr\Fresnel.h" />
     <ClInclude Include="scr\Light.h" />
     <ClInclude Include="scr\Material.h" />
@@ -36,6 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scr\Camera.cpp" />
+    <ClCompile Include="scr\Film.cpp" />
     <ClCompile Include="scr\Fresnel.cpp" />
     <ClCompile Include="scr\Light.cpp" />
     <ClCompile Include="scr\Material.cpp" />

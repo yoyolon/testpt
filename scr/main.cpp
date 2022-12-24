@@ -21,6 +21,7 @@
 #include "external/stb_image_write.h"
 #include "external/stb_image.h"
 #include "Camera.h"
+#include "Film.h"
 #include "Fresnel.h"
 #include "Light.h"
 #include "Material.h"
@@ -47,14 +48,11 @@ enum class Sampling {
 };
 
 constexpr bool DEBUG_MODE           = false;
-constexpr bool DIRECT_ILLUMINATION  = true;
+constexpr bool DIRECT_ILLUMINATION  = false;
 constexpr bool IMAGE_BASED_LIGHTING = false;
 constexpr bool IS_GAMMA_CORRECTION  = true;
-constexpr int  SAMPLES = 128;
+constexpr int  SAMPLES = 32;
 // デバッグ用
-int raycontrib = 0; // 光源からの寄与
-int raydeath = 0;   // ロシアンルーレット打ち切り
-int raybg = 0;      // 背景からの寄与
 Sampling sampling_strategy = Sampling::MIS;
 
 /**
@@ -63,7 +61,7 @@ Sampling sampling_strategy = Sampling::MIS;
 * @param[out] cam   :カメラデータ
 * @param[in]  float :カメラのアスペクト比
 */
-void make_scene_simple(Scene& world, Camera& cam, float aspect) {
+void make_scene_simple(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
     auto dist_ggx       = std::make_shared<GGXDistribution>(0.025f);
@@ -80,11 +78,12 @@ void make_scene_simple(Scene& world, Camera& cam, float aspect) {
     world.add(light_disk);
 
     // カメラ設定
+    auto film = std::make_shared<Film>(600, 600, 3, "simple.png"); // フィルム
     auto fd = 2.5f; // 焦点距離
     Vec3 cam_pos(0.0f,2.0f,15.0f);
     Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
-    cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
+    cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
 /**
@@ -93,7 +92,7 @@ void make_scene_simple(Scene& world, Camera& cam, float aspect) {
 * @param[out] cam   :カメラデータ
 * @param[in]  float :カメラのアスペクト比
 */
-void make_scene_cylinder(Scene& world, Camera& cam, float aspect) {
+void make_scene_cylinder(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
     auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
@@ -111,11 +110,12 @@ void make_scene_cylinder(Scene& world, Camera& cam, float aspect) {
     world.add(light_shape);
 
     // カメラ設定
+    auto film = std::make_shared<Film>(768, 512, 3, "cylinder.png"); // フィルム
     auto fd = 1.5f; // 焦点距離
     Vec3 cam_pos(0.0f,10.0f,20.0f);
     Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
-    cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
+    cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
 /**
@@ -125,7 +125,7 @@ void make_scene_cylinder(Scene& world, Camera& cam, float aspect) {
 * @param[in]  float :カメラのアスペクト比
 * @note モデル出典: https://github.com/wjakob/nori/tree/master/scenes/pa5/veach_mi
 */
-void make_scene_MIS(Scene& world, Camera& cam, float aspect) {
+void make_scene_MIS(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
     auto dist1 = std::make_shared<GGXDistribution>(0.100f);
@@ -167,13 +167,13 @@ void make_scene_MIS(Scene& world, Camera& cam, float aspect) {
     world.add(plate2);
     world.add(plate3);
     world.add(plate4);
-
     // カメラの設定
-    auto fd = 4.732f * aspect;
+    auto film = std::make_shared<Film>(768, 512, 3, "veach_mis.png"); // フィルム
+    auto fd = 4.732f * film->get_aspect();
     Vec3 cam_pos(0.0f, 6.0f, 27.5f);
     Vec3 cam_target(0.0f, -1.5f, 2.5f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
-    cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
+    cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
 /**
@@ -183,7 +183,7 @@ void make_scene_MIS(Scene& world, Camera& cam, float aspect) {
 * @param[in]  float :カメラのアスペクト比
 * @note 参考: http://www.graphics.cornell.edu/online/box/data.html
 */
-void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
+void make_scene_cornell(Scene& world, Camera& cam) {
     world.clear();
     auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
     auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
@@ -204,12 +204,6 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
         mat_light);
     auto radiance = Vec3(20.6904f, 10.8669f, 2.7761f);
     auto light = std::make_shared<AreaLight>(radiance, light_shape);
-    // light sorce2
-    auto light_shape_disk = std::make_shared<Disk>(Vec3(-278.0f, 548.7f, -279.6f), 50.0f, mat_light);
-    auto light_disk = std::make_shared<AreaLight>(radiance, light_shape_disk);
-    // light sorce3
-    auto light_shape_spehre = std::make_shared<Sphere>(Vec3(-278.0f, 548.7f - 50.0f, -279.6f), 50.0f, mat_light);
-    auto light_sphere = std::make_shared<AreaLight>(radiance, light_shape_spehre);
     // ceiling
     auto ceiling = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
@@ -338,8 +332,6 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
         mat_white);
     // オブジェクトと光源をシーンに追加
-    //auto sphere = std::make_shared<Sphere>(Vec3(-255.0f, 255.0f, -255.0f), 50.0f, mat_white);
-    //world.add(sphere);
     world.add(left);
     world.add(right);
     world.add(back);
@@ -356,15 +348,14 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
     world.add(tall_lft);
     world.add(tall_bck);
     world.add(light);
-    //world.add(light_disk);
-    //world.add(light_sphere);
 
     //// カメラの設定
-    auto fd = 0.035f; // 焦点距離
+    auto film = std::make_shared<Film>(600, 600, 3, "cornell_box.png"); // フィルム
+    auto fd = 0.035f / 0.025f * 2.0f; // 焦点距離
     Vec3 cam_pos(-278.0f, 273.0f, 800.0f);
     Vec3 cam_target(-278.0f, 273.0f, 0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos); // z軸負の方向がカメラの前方
-    cam = Camera(0.025f, aspect, fd, cam_pos, cam_forward);
+    cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
 /**
@@ -373,7 +364,7 @@ void make_scene_cornell(Scene& world, Camera& cam, float aspect) {
 * @param[out] cam   :カメラデータ
 * @param[in]  float :カメラのアスペクト比
 */
-void make_scene_sphere(Scene& world, Camera& cam, float aspect) {
+void make_scene_sphere(Scene& world, Camera& cam) {
     world.clear();
 
     // マイクロファセット分布
@@ -419,11 +410,12 @@ void make_scene_sphere(Scene& world, Camera& cam, float aspect) {
     world.add(spehre8);
     world.add(spehre9);
     // カメラの設定
+    auto film = std::make_shared<Film>(600, 600, 3, "spehre.png"); // フィルム
     auto fd = 2.5f; // 焦点距離
     Vec3 cam_pos(0.0f,2.0f,-10.0f);
     Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = -unit_vector(cam_target - cam_pos);
-    cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
+    cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
 /**
@@ -433,7 +425,7 @@ void make_scene_sphere(Scene& world, Camera& cam, float aspect) {
 * @param[in]  float :カメラのアスペクト比
 * @note モデル出典: https://polyhaven.com/a/ceramic_vase_01
 */
-void make_scene_vase(Scene& world, Camera& cam, float aspect) {
+void make_scene_vase(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
     auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
@@ -444,77 +436,147 @@ void make_scene_vase(Scene& world, Camera& cam, float aspect) {
     world.add(obj_pot);
 
     // カメラの設定
+    auto film = std::make_shared<Film>(600, 600, 3, "vase.png"); // フィルム
     auto fd = 2.5f; // 焦点距離
     Vec3 cam_pos(0.0f,2.0f,7.5f);
     Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
-    cam = Camera(2.0f, aspect, fd, cam_pos, cam_forward);
+    cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
-
 /**
-* @brief レイに沿った放射輝度伝搬を計算する関数
-* @param[in]  r         :追跡するレイ
-* @param[in]  bouunce   :現在のレイのバウンス回数
-* @param[in]  max_depth :レイの最大バウンス回数
-* @param[in]  world     :レンダリングするシーンのデータ
-* @param[in]  contrib   :現在のレイの寄与
-* @return Vec3          :レイに沿った放射輝度
+* @brief 明示的に直接光をサンプリング
+* @pram[in] r     :入射レイ
+* @pram[in] isect :交差点情報
+* @pram[in] world :シーン
+* @return Vec3 :光源の重み付き放射輝度
 */
-Vec3 L(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contrib) {
-    if (bounces >= max_depth) {
-        return Vec3::zero;
-    }
-    intersection isect; // 交差点情報
-    if (!world.intersect(r, eps_isect, inf, isect)) {
-        raybg++;
-        return contrib * world.sample_envmap(r);
+Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene& world) {
+    auto Ld = Vec3::zero;
+    auto contrib = Vec3::one;
+    // 完全鏡面反射
+    if (isect.mat->get_type() == MaterialType::Specular) {
+        return Ld;
     }
     // シェーディング座標の構築
-    // NOTE: カメラ方向をwi，光源方向をwoにしている(あとで修正)
     ONB shadingCoord(isect.normal);
-    //shadingCoord.build_ONB(isect.normal);
     Vec3 wi = unit_vector(r.get_dir());
     Vec3 wi_local = -shadingCoord.to_local(wi);
-    Vec3 wo_local, wo, brdf;
-    float pdf;
-    // マテリアルの場合
-    if (isect.type == IsectType::Material) {
-        isect.mat->sample_f(wi_local, isect, brdf, wo_local, pdf);
-        // 発光
-        if (isect.mat->get_type() == MaterialType::Emitter) {
-            return contrib * isect.mat->emitte();
+    Vec3 wo_scattering_local;
+    Vec3 brdf;
+    float pdf_scattering;
+    isect.mat->sample_f(wi_local, isect, brdf, wo_scattering_local, pdf_scattering);
+    Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local)); // 散乱方向
+    float cos_term = dot(isect.normal, wo_scattering);
+    float weight = 1.0f;
+    // BRDFからサンプリング
+    if ((sampling_strategy == Sampling::BRDF) || (sampling_strategy == Sampling::MIS)) {
+        // シーン中の全光源と交差判定
+        intersection isect_light;
+        if (world.intersect_light(Ray(isect.pos, wo_scattering), eps_isect, inf, isect_light)) {
+            // 光源の可視判定
+            if (!world.intersect_object(Ray(isect.pos, wo_scattering), eps_isect, isect_light.t)) {
+                if (sampling_strategy == Sampling::MIS) {
+                    auto pdf_light = isect_light.light->sample_pdf(isect, wo_scattering);
+                    weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
+                }
+                Ld += contrib * brdf * cos_term * weight * isect_light.light->emitte() / pdf_scattering;
+            }
         }
-        // 完全鏡面反射
-        else if (isect.mat->get_type() == MaterialType::Specular) {
-            wo = shadingCoord.to_world(wo_local);
-            float cos_term = dot(isect.normal, unit_vector(wo));
-            contrib = contrib * brdf * cos_term / pdf;
+    }
+    // 光源からサンプリング
+    // シーン中の光源を一つサンプリング
+    if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
+        const auto& lights = world.get_light();
+        auto light_index = Random::uniform_int(0, lights.size() - 1);
+        const auto& light = lights[light_index];
+        float pdf_light = 0.0f;
+        Vec3 wo_light;
+        Vec3 L = light->sample_light(isect, wo_light, pdf_light);
+        if (is_zero(L) || pdf_light == 0) {
+            return Ld;
         }
-        // 拡散・光沢反射
-        else {
-            wo = shadingCoord.to_world(wo_local);
-            float cos_term = dot(isect.normal, unit_vector(wo));
-            contrib = contrib * brdf * cos_term / pdf;
+        // 光源の可視判定
+        auto r_light = Ray(isect.pos, wo_light);
+        intersection isect_light;
+        light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
+        if (world.intersect_object(r_light, eps_isect, isect_light.t)) {
+            return Ld;
         }
-        //ロシアンルーレット
-        if (bounces >= 5) {
-            float p_rr = std::max(0.5f, contrib.average());
-            if (p_rr > Random::uniform_float()) {
-                raydeath++;
-                return Vec3::zero;
+        // 光源サンプリング時のBRDFを評価
+        auto wo_light_local = shadingCoord.to_local(unit_vector(wo_light));
+        auto brdf_light = isect.mat->f(wi_local, wo_light_local);
+        auto cos_term_light = std::abs(dot(isect.normal, unit_vector(wo_light)));
+        if (sampling_strategy == Sampling::MIS) {
+            pdf_scattering = isect.mat->sample_pdf(wi_local, wo_light_local);
+            weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
+        }
+        Ld += contrib * brdf_light * L * cos_term_light * weight / pdf_light;
+    }
+    return Ld;
+}
+
+/**
+* @brief レイに沿った放射輝度伝搬を計算する関数
+* @param[in]  r         :追跡するレイ
+* @param[in]  bouunce   :現在のレイのバウンス回数
+* @param[in]  max_depth :レイの最大バウンス回数
+* @param[in]  world     :レンダリングするシーンのデータ
+* @param[in]  contrib   :現在のレイの寄与
+* @return Vec3          :レイに沿った放射輝度
+* @note 参考: https://www.pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Path_Tracing
+*
+*/
+// TODO: veach_misだと上手くパストレ出来ない
+// 1. マイクロファセットBRDFが原因? コーネルボックスで検証(上手くいった)
+// 2. 複数光源が原因? 光源を一つだけにする
+Vec3 path_tracing(const Ray& r_in, int max_depth, const Scene& world) {
+    auto L = Vec3::zero, contrib = Vec3::one;
+    Ray r = Ray(r_in);
+    bool is_prev_specular = false;
+    // パストレーシング
+    for (int bounces = 0; bounces < max_depth; bounces++) {
+        intersection isect; // 交差点情報
+        bool is_intersect = world.intersect(r, eps_isect, inf, isect);
+        // 光源サンプリングの例外(カメラレイとスペキュラレイの場合)
+        if (bounces == 0 || is_prev_specular) {
+            if (is_intersect) {
+                if (isect.type == IsectType::Light) {
+                    L += contrib * isect.light->emitte();
+                    break;
+                }
             }
             else {
-                contrib /= p_rr;
+                L += contrib * world.sample_envmap(r);
             }
         }
-        return L(Ray(isect.pos, wo), ++bounces, max_depth, world, contrib);
+        // 光源交差時に終了(明示的に光源サンプリングを行うため)
+        if (isect.type == IsectType::Light) {
+            break;
+        }
+        if (!is_intersect) break;
+        // 光源サンプリング
+        L += contrib * explicit_direct_light(r, isect, world);
+        // BRDFのサンプリング
+        // NOTE: カメラ方向をwi，光源方向をwoにしている
+        ONB shadingCoord(isect.normal);
+        Vec3 wi_local = -shadingCoord.to_local(unit_vector(r.get_dir()));
+        Vec3 wo_local, brdf;
+        float pdf;
+        isect.mat->sample_f(wi_local, isect, brdf, wo_local, pdf);
+        auto wo = shadingCoord.to_world(unit_vector(wo_local)); // ワールド座標系の出射方向
+        float cos_term = std::abs(dot(isect.normal, wo));
+        contrib = contrib * brdf * cos_term / pdf;
+        is_prev_specular = (isect.mat->get_type() == MaterialType::Specular) ? true : false;
+        r = Ray(isect.pos, wo); // 次のレイを生成
+        //ロシアンルーレット
+        if (bounces >= 3) {
+            float p_rr = std::max(0.05f, 1.0f - contrib.average()); // 打ち切り確率
+            if (p_rr > Random::uniform_float()) break;
+            contrib /= std::max(epsilon, 1.0f - p_rr);
+        }
     }
-    // 光源の場合
-    else {
-        raycontrib++;
-        return contrib * isect.light->emitte();
-    }
+    return L;
 }
 
 /**
@@ -526,95 +588,43 @@ Vec3 L(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contri
 * @param[in]  contrib   :現在のレイの寄与
 * @return Vec3          :レイに沿った放射輝度
 */
+// TODO: 再帰でなくループで実装
 Vec3 L_direct(const Ray& r, int bounces, int max_depth, const Scene& world, Vec3 contrib) {
     if (bounces >= max_depth) {
         return Vec3::zero;
     }
     intersection isect;
     if (!world.intersect(r, eps_isect, inf, isect)) {
-        raybg++;
         return contrib * world.sample_envmap(r);
     }
     // 交差点がマテリアルの場合
     if (isect.type == IsectType::Material) {
+        // 発光体
         if (isect.mat->get_type() == MaterialType::Emitter) {
             return contrib * isect.mat->emitte();
         }
-        // シェーディング座標の構築
-        ONB shadingCoord(isect.normal);
-        Vec3 wi = unit_vector(r.get_dir());
-        Vec3 wi_local = -shadingCoord.to_local(wi);
-        Vec3 wo_scattering_local;
-        Vec3 brdf;
-        float pdf_scattering;
-        isect.mat->sample_f(wi_local, isect, brdf, wo_scattering_local, pdf_scattering);
-        Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local)); // 散乱方向
-        float cos_term = dot(isect.normal, wo_scattering);
         // 完全鏡面反射
         if (isect.mat->get_type() == MaterialType::Specular) {
+            // シェーディング座標の構築
+            ONB shadingCoord(isect.normal);
+            Vec3 wi = unit_vector(r.get_dir());
+            Vec3 wi_local = -shadingCoord.to_local(wi);
+            Vec3 wo_scattering_local;
+            Vec3 brdf;
+            float pdf_scattering;
+            isect.mat->sample_f(wi_local, isect, brdf, wo_scattering_local, pdf_scattering);
+            Vec3 wo_scattering = unit_vector(shadingCoord.to_world(wo_scattering_local)); // 散乱方向
+            float cos_term = dot(isect.normal, wo_scattering);
             contrib = contrib * brdf * cos_term / pdf_scattering;
-            return L(Ray(isect.pos, wo_scattering), ++bounces, max_depth, world, contrib);
+            return L_direct(Ray(isect.pos, wo_scattering), ++bounces, max_depth, world, contrib);
         }
         // 拡散・光沢反射
         else {
-            auto Ld = Vec3::zero;
-            float weight = 1.0f;
-            // BRDFからサンプリング
-            if ((sampling_strategy == Sampling::BRDF) || (sampling_strategy == Sampling::MIS)) {
-                // シーン中の全光源と交差判定
-                intersection isect_light;
-                if (world.intersect_light(Ray(isect.pos, wo_scattering), eps_isect, inf, isect_light)) {
-                    // 光源の可視判定
-                    if (!world.intersect_object(Ray(isect.pos, wo_scattering), eps_isect, isect_light.t)) {
-                        if (sampling_strategy == Sampling::MIS) {
-                            auto pdf_light = isect_light.light->sample_pdf(isect, wo_scattering);
-                            weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
-                        }
-                        Ld += contrib * brdf * cos_term * weight * isect_light.light->emitte() / pdf_scattering;
-                    }
-                }
-            }
-            // 光源からサンプリング
-            // 複数光源の場合どのようにサンプリングする?
-            // 1. 光源を1つ選びサンプリング
-            // 2. 放射エネルギーに基づき1点をサンプリング
-            // 3. 各光源から1点サンプリング
-            // 4. n点サンプリング
-            // とりあえず(1)を試す
-            // NOTE: マイクロファセットBRDFの値が小さすぎる<-なぜ？？？？
-            if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
-                const auto& lights = world.get_light();
-                auto light_index = Random::uniform_int(0, lights.size() - 1);
-                const auto& light = lights[light_index];
-                float pdf_light = 0.0f;
-                Vec3 wo_light;
-                Vec3 L = light->sample_light(isect, wo_light, pdf_light);
-                if (is_zero(L) || pdf_light == 0) {
-                    return Ld;
-                }
-                // 光源の可視判定
-                auto r_light = Ray(isect.pos, wo_light);
-                intersection isect_light;
-                light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
-                if (world.intersect_object(r_light, eps_isect, isect_light.t)) {
-                    return Ld;
-                }
-                // 光源サンプリング時のBRDFを評価
-                auto wo_light_local = shadingCoord.to_local(unit_vector(wo_light));
-                auto brdf_light = isect.mat->f(wi_local, wo_light_local);
-                auto cos_term_light = std::abs(dot(isect.normal, unit_vector(wo_light)));
-                if (sampling_strategy == Sampling::MIS) {
-                    pdf_scattering = isect.mat->sample_pdf(wi_local, wo_light_local);
-                    weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
-                }
-                Ld += contrib * brdf_light * L * cos_term_light * weight / pdf_light;
-            }
-            return Ld;
+            return explicit_direct_light(r, isect, world);
         }
     }
     // 光源の場合
     else {
-        raycontrib++;
         return contrib * isect.light->emitte();
     }
 }
@@ -654,13 +664,6 @@ Vec3 gamma_correction(const Vec3& color, float gamma) {
 */
 int main(int argc, char* argv[]) {
     Random::init(); // 乱数の初期化
-    // 出力画像
-    const char* filename = "image.png";  // パス
-    constexpr auto w = 768;              // 高さ
-    constexpr auto h = 512;              // 幅
-    constexpr auto aspect = (float)w / h;       // アスペクト比
-    constexpr int c = 3;                 // チャンネル数
-    std::vector<uint8_t> img(w * h * c); // 画像データ
     // パラメータ
     const int nsample = (argc == 2) ? atoi(argv[1]) : SAMPLES; // レイのサンプル数
     constexpr auto max_depth = 100;  // レイの最大追跡数
@@ -673,13 +676,17 @@ int main(int argc, char* argv[]) {
         world = Scene(envmap, w_envmap, h_envmap, c_envmap);
     }
     Camera cam;
-    //make_scene_simple(world, cam, aspect);
-    //make_scene_cylinder(world, cam, aspect);
-    make_scene_MIS(world, cam, aspect);
-    //make_scene_cornell(world, cam, aspect);
-    //make_scene_sphere(world, cam, aspect);
-    //make_scene_vase(world, cam, aspect);
-
+    //make_scene_simple(world, cam);
+    //make_scene_cylinder(world, cam);
+    make_scene_MIS(world, cam);
+    //make_scene_cornell(world, cam);
+    //make_scene_sphere(world, cam);
+    //make_scene_vase(world, cam);
+    // 出力画像
+    const auto w = cam.get_w(); // 高さ
+    const auto h = cam.get_h(); // 幅
+    const auto c = cam.get_c(); // チャンネル数
+    std::vector<uint8_t> img(w * h * c);  // 画像データ
 
     // レイトレーシング
     auto start_time = std::chrono::system_clock::now(); // 計測開始時間
@@ -700,7 +707,7 @@ int main(int argc, char* argv[]) {
                     if (DIRECT_ILLUMINATION)
                         I += L_direct(r, 0, max_depth, world, Vec3(1.0f, 1.0f, 1.0f));
                     else 
-                        I += L(r, 0, max_depth, world, Vec3(1.0f, 1.0f, 1.0f));
+                        I += path_tracing(r, max_depth, world);
                 }
             }
             I *= 1.0f / nsample;
@@ -712,11 +719,6 @@ int main(int argc, char* argv[]) {
     }
     auto end_time = std::chrono::system_clock::now(); // 計測終了時間
     std::cout << '\n' << std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count()/1000 << "sec\n";
-    std::cout << std::setprecision(4)
-              << "light hit: " << (float)raycontrib / (h * w * nsample) * 100 << '\n'
-              << "bg hit:    " << (float)raybg      / (h * w * nsample) * 100 << '\n'
-              << "deth:      " << (float)raydeath   / (h * w * nsample) * 100 << '\n';
-
      // 画像出力
-    stbi_write_png(filename, w, h, 3, img.data(), w * c * sizeof(uint8_t));
+    stbi_write_png(cam.get_filename(), w, h, 3, img.data(), w * c * sizeof(uint8_t));
 }

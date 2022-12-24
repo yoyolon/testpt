@@ -37,7 +37,7 @@ Vec3 Mirror::f(const Vec3& wi, const Vec3& wo) const {
 }
 
 bool Mirror::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-    wo = unit_vector(Vec3(-wi.get_x(), -wi.get_y(), wi.get_z())); // 正反射方向
+    wo = Vec3(-wi.get_x(), -wi.get_y(), wi.get_z()); // 正反射方向
     pdf = sample_pdf(wi, wo);
     brdf = f(wi, wo);
     return true;
@@ -45,6 +45,7 @@ bool Mirror::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& w
 
 
 // *** Phongモデル ***
+// TODO: 正規化する & より効率的な重点的サンプリングの実装
 Phong::Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin) 
     : Material(MaterialType::Glossy), albedo(_albedo), Kd(_Kd), Ks(_Ks), shin(_shin) {}
 
@@ -53,11 +54,9 @@ float Phong::sample_pdf(const Vec3& wi, const Vec3& wo) const {
 }
 
 Vec3 Phong::f(const Vec3& wi, const Vec3& wo) const {
-    auto dir_spec = unit_vector(Vec3(-wi.get_x(), -wi.get_y(), wi.get_z())); // 正反射方向
+    auto dir_spec = Vec3(-wi.get_x(), -wi.get_y(), wi.get_z()); // 正反射方向
     Vec3 diffuse = Kd * invpi;
-    float cos_term = dot(Vec3(0, 0, 1), unit_vector(wo));
-    float sp = std::pow(std::max(0.0f, dot(dir_spec, wo)), shin);
-    Vec3 specular = Ks / cos_term * sp * invpi;
+    Vec3 specular = Ks * std::pow(dot(dir_spec, wo), shin) * invpi;
     return albedo * (diffuse + specular);
 }
 
@@ -97,7 +96,7 @@ Vec3 Microfacet::f(const Vec3& wi, const Vec3& wo) const {
 
 bool Microfacet::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
     Vec3 h = distribution->sample_halfvector();
-    wo = unit_vector(reflect(wi, h)); // ハーフベクトルと入射方向から出射方向を計算
+    wo = unit_vector(reflect(wi, h)); // reflect()では正規化しない
     pdf = sample_pdf(wi, wo);
     brdf = f(wi, wo);
     return true;

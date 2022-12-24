@@ -77,10 +77,10 @@ public:
 
     /**
     * @brief 入射方向に対して反射方向をサンプリングしてBRDFを評価する関数
-    * @param[in]  wi   :入射方向ベクトル
+    * @param[in]  wi   :入射方向ベクトル(正規化)
     * @param[in]  p    :物体表面の交差点情報
     * @param[out] brdf :入射方向と出射方向に対するBRDFの値
-    * @param[out] wo   :出射方向ベクトル
+    * @param[out] wo   :出射方向ベクトル(正規化)
     * @param[out] pdf  :立体角に関するサンプリング確率密度
     * @return bool     :反射材質ならTrue
     * @note: 実際は入射方向をサンプリングするがBRDF相反性により反射方向のサンプリングとして実装した

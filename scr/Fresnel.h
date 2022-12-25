@@ -56,7 +56,7 @@ private:
 };
 
 
-/** 薄膜干渉フレネルクラス */
+/** 単層薄膜干渉フレネルクラス */
 class FresnelThinfilm : public Fresnel {
 public:
     /**
@@ -67,6 +67,7 @@ public:
     * @param[in] _no :出射方向媒質の屈折率
     */
     FresnelThinfilm(float _d, float _ni, float _nf, float _no);
+
     Vec3 evaluate(float cos_theta) const override;
 
 private:

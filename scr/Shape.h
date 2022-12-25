@@ -52,6 +52,7 @@ public:
     * @param[in] w  :サンプリング方向(光源に向かう方向が正)
     * @return float :確率密度
     * @detail サンプリングは立体角に関して行う
+    * @note: PDFを算出にジオメトリの表面を使うの必要に応じてオーバーライド
     */
     virtual float sample_pdf(const intersection& ref, const Vec3& w) const;
 

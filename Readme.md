@@ -2,7 +2,7 @@
 
 ## 概要
 
-オブジェクト指向プログラミングやCGの勉強のために作成したC++によるナイーブなパストレーサーです．クラス設計などは[Raytracing in one weekend](https://raytracing.github.io/)のソースコードを参考に作成しています．実行すると三角ポリゴンと球で構成されたシーン(コーネルボックス)をレンダリングします．
+オブジェクト指向プログラミングやレンダリングの勉強のために作成したC++によるパストレーサーです．クラス設計などは[Raytracing in one weekend](https://raytracing.github.io/)を参考に作成しています．実行すると三角ポリゴンで構成されたシーン(コーネルボックス)をレンダリングします．
 
 ## 開発環境
 
@@ -13,10 +13,10 @@ C++17
 ## 実行例
 
 ソースコードをビルドしてください．  
-次のコマンドで1ピクセルあたり1000サンプルのパストレーシングを実行し下図のような画像が生成されます．
+次のコマンドで1ピクセルあたり128サンプル(128spp)のパストレーシングを実行され下図のような画像が生成されます．
 
 ```bash
-testpt.exe 1000
+testpt.exe 128
 ```
 
 <div align="center">
@@ -27,23 +27,35 @@ testpt.exe 1000
 
 Raytracing in one weekendにない機能として以下のものがあります．
 
-- 三角ポリゴンとレイの交差判定
-- Wavefront OBJ形式の3Dモデルの読み込み
-- マイクロファセットモデルと重点的サンプリング
-- 薄膜干渉を考慮した反射率
+- Wavefront OBJ形式の3Dポリゴンモデルの読み込み
+- 三角ポリゴンとレイの交差判定 [Moller & Trumbore 1997]
+- マイクロファセットBRDFと重点的サンプリング [Walter et al. 07]
+- 多重重点的サンプリング [Pharr et al. 2016]
+- 薄膜干渉マテリアル
 - 簡単なイメージベーストライティング
 
-これらを用いると下図のような画像を生成することも可能です(別途ポリゴンモデルと環境マップが必要です)．
+これらの機能により下図のような画像を生成することも可能です(別途ポリゴンモデルと環境マップが必要です)．
 
 <div align="center">
-  <img src="imgs/img2.png" width=40% />
+  <img src="imgs/img2.png" width=40%/>
   <img src="imgs/img3.png" width=40%/>
+  <p>左: 薄膜干渉による虹色 / 右: 3Dポリゴンモデルのレンダリング</p>
+</div>
+
+<br>
+
+多重重点的サンプリング(MIS: Multiple Importnce Sampling)によりモンテカルロ積分の分散を低減してノイズの少ない画像を生成できます．
+
+<div align="center">
+  <img src="imgs/img4_BRDF.png" width=40%/>
+  <img src="imgs/img4_MIS.png" width=40%/>
+  <p>左: BRDFによる直接光サンプリング / 右: MISによる直接光サンプリング</p>
 </div>
 
 ## 参考文献
 
-T. Moller, B. Trumbore. "Fast, minimum storage ray-triangle intersection" 1997.  
-B. Walter, S. R. Marschner, H. Li, K. E. Torrance. "Microfacet Models for Refraction through Rough Surfaces" 2007.  
-P. Shirley, R. K. Morley. "Realistic Ray Tracing" 2008.  
-M. Pharr, W. Jakob, G. Humphre. "Physically Based Rendering: From Theory To Implementation" 2016.  
-P. Shirley. "Raytracing in one weekend" 2020.  
+- [Moller & Trumbore 1997] "Fast, minimum storage ray-triangle intersection" JGT. 1997.
+- [Walter et al. 07] "Microfacet Models for Refraction through Rough Surfaces". EGSR 2007.
+- [Shirley & Morley 2008] "Realistic Ray Tracing". 2008.
+- [Pharr et al. 2016] "Physically Based Rendering: From Theory To Implementation" 2016.
+- [Shirley 2020]. "Raytracing in one weekend" 2020.

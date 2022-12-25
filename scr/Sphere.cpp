@@ -1,5 +1,6 @@
 #include "Sphere.h"
 #include "Random.h"
+#include "ONB.h"
 
 // *** 球 ***
 Sphere::Sphere(Vec3 c, float r, std::shared_ptr<Material> m)
@@ -37,13 +38,37 @@ float Sphere::area() const {
 }
 
 intersection Sphere::sample(const intersection& ref) const {
-    // 一様サンプリング(TODO: 球の裏側が不可視であることを考慮)
+    // 球から一様サンプリング(没)
+    //intersection isect;
+    //isect.normal = Random::uniform_sphere_sample();
+    //isect.pos = radius * isect.normal + center;
+    //return isect;
+    
+    // 球の可視領域を考慮してサンプリング
+    // ローカルな半球方向からサンプリング
+    auto z = unit_vector(ref.pos - center);
+    auto sampling_coord = ONB(z);
+    auto sampling_local_pos = Random::uniform_hemisphere_sample();
+    // グローバルな半球に変換
     intersection isect;
-    isect.normal = Random::uniform_sphere_sample(); // 球上の一様サンプリングが法線となる
+    isect.normal = sampling_coord.to_world(sampling_local_pos);
     isect.pos = radius * isect.normal + center;
     return isect;
 }
 
+float Sphere::sample_pdf(const intersection& ref, const Vec3& w) const {
+    auto r = Ray(ref.pos, unit_vector(w)); // refからジオメトリへのレイ
+    intersection isect;                    // ジオメトリの交差点
+    if (!intersect(r, eps_isect, inf, isect)) {
+        return 0.0f;
+    }
+    // 面の裏側をサンプルした場合pdfをゼロにする
+    if (dot(isect.normal, -w) < 0) {
+        return 0.0f;
+    }
+    auto d = ref.pos - isect.pos;
+    return d.length2() / (std::abs(dot(isect.normal, -w)) * area());
+}
 
 // *** 円盤 ***
 const Vec3 Disk::normal = Vec3(0.0f, -1.0f, 0.0f);

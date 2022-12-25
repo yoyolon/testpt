@@ -25,6 +25,15 @@ public:
 
     intersection sample(const intersection& ref) const override;
 
+    /**
+    * @brief ジオメトリサンプリングの確率密度を計算する関数(オーバーライド)
+    * @param[in] p  :サンプリング元の交差点情報
+    * @param[in] w  :サンプリング方向(光源に向かう方向が正)
+    * @return float :確率密度
+    * @note 球の可視領域を考慮して半球方向から一様サンプリング
+    */
+    float sample_pdf(const intersection& ref, const Vec3& w) const override;
+
 private:
     Vec3 center;                   /**< 中心座標   */
     float radius;                  /**< 半径       */

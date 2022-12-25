@@ -37,11 +37,12 @@ class Disk : public Shape {
 public:
     /**
     * @brief 中心座標と半径から円盤オブジェクトを初期化
-    * @param[in] c :中心座標
-    * @param[in] r :半径
-    * @param[in] m :マテリアル
+    * @param[in] c       :中心座標
+    * @param[in] r       :半径
+    * @param[in] m       :マテリアル
+    * @param[in] is_flip :法線を反転するかどうか
     */
-    Disk(Vec3 c, float r, std::shared_ptr<Material> m);
+    Disk(Vec3 c, float r, std::shared_ptr<Material> m, bool is_flip=false);
 
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
@@ -50,9 +51,11 @@ public:
     intersection sample(const intersection& ref) const override;
 
 private:
-    Vec3 center;                   /**< 中心座標   */
-    float radius;                  /**< 半径       */
-    std::shared_ptr<Material> mat; /**< マテリアル */
+    Vec3 center;                   /**< 中心座標     */
+    float radius;                  /**< 半径         */
+    std::shared_ptr<Material> mat; /**< マテリアル   */
+    bool is_flip_normal;           /**< 法線の反転   */
+    const static Vec3 normal;      /**< 法線(下向き) */
 };
 
 

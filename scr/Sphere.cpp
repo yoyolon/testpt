@@ -37,18 +37,19 @@ float Sphere::area() const {
 }
 
 intersection Sphere::sample(const intersection& ref) const {
-    // 一様サンプリング(TODO: 可視性を考慮)
+    // 一様サンプリング(TODO: 球の裏側が不可視であることを考慮)
     intersection isect;
-    Vec3 normal = Random::uniform_sphere_sample();
-    isect.normal = normal;
-    isect.pos = radius * normal + center;
+    isect.normal = Random::uniform_sphere_sample(); // 球上の一様サンプリングが法線となる
+    isect.pos = radius * isect.normal + center;
     return isect;
 }
 
 
 // *** 円盤 ***
-Disk::Disk(Vec3 c, float r, std::shared_ptr<Material> m)
-    : center(c), radius(r), mat(m) {};
+const Vec3 Disk::normal = Vec3(0.0f, -1.0f, 0.0f);
+
+Disk::Disk(Vec3 c, float r, std::shared_ptr<Material> m, bool is_flip)
+    : center(c), radius(r), mat(m), is_flip_normal(is_flip) {};
 
 bool Disk::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
     // レイとxz平面の交差点が円内部にあるか判定
@@ -70,7 +71,8 @@ bool Disk::intersect(const Ray& r, float t_min, float t_max, intersection& p) co
     // 交差点情報の更新
     p.t = t;
     p.pos = pos;
-    p.normal = unit_vector(Vec3(0.0f,-r.get_dir().get_y(),0.0f));
+    p.normal = normal;
+    if (is_flip_normal) p.normal *= -1; // 法線の反転
     p.mat = mat;
     return true;
 };
@@ -82,10 +84,11 @@ float Disk::area() const {
 intersection Disk::sample(const intersection& ref) const {
     auto disk_sample = Random::concentric_disk_sample();
     auto x = disk_sample.get_x() * radius + center.get_x();
-    auto z = disk_sample.get_y() * radius + center.get_z();
+    auto z = disk_sample.get_z() * radius + center.get_z();
     auto y = center.get_y();
     intersection isect;
-    isect.normal = Vec3(0, -1, 0);
+    isect.normal = normal;
+    if (is_flip_normal) isect.normal *= -1; // 法線の反転
     isect.pos = Vec3(x, y, z);
     return isect;
 }

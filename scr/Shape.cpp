@@ -6,6 +6,10 @@ float Shape::sample_pdf(const intersection& ref, const Vec3& w) const {
     if (!intersect(r, eps_isect, inf, isect)) {
         return 0.0f;
     }
+    // –Ê‚Ì— ‘¤‚Ìê‡pdf‚ğƒ[ƒ‚É‚·‚é
+    if (dot(isect.normal, -w) < 0) {
+        return 0.0f;
+    }
     auto d = ref.pos - isect.pos;
     return d.length2() / (std::abs(dot(isect.normal, -w)) * area());
 }

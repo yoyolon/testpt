@@ -82,10 +82,10 @@ public:
     * @param[out] brdf :入射方向と出射方向に対するBRDFの値
     * @param[out] wo   :出射方向ベクトル(正規化)
     * @param[out] pdf  :立体角に関するサンプリング確率密度
-    * @return bool     :反射材質ならTrue
+    * @return Vec3     :入射方向と出射方向に対するBRDFの値
     * @note: 実際は入射方向をサンプリングするがBRDF相反性により反射方向のサンプリングとして実装した
     */
-    virtual bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const = 0;
+    virtual Vec3 sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const = 0;
 
     /**
     * @brief 入射方向と反射方向に対してBRDFを評価する関数
@@ -131,7 +131,7 @@ public:
 
     Vec3 f(const Vec3& wi, const Vec3& wo) const override;
 
-    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -151,7 +151,7 @@ public:
 
     Vec3 f(const Vec3& wi, const Vec3& wo) const override;
 
-    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -174,7 +174,7 @@ public:
 
     Vec3 f(const Vec3& wi, const Vec3& wo) const override;
 
-    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -201,7 +201,7 @@ public:
 
     Vec3 f(const Vec3& wi, const Vec3& wo) const override;
 
-    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 
@@ -221,7 +221,7 @@ public:
     */
     Emitter(Vec3 _intensity);
 
-    bool sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const override;
+    Vec3 sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const override;
 
     float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
 

@@ -16,11 +16,11 @@ Vec3 Diffuse::f(const Vec3& wi, const Vec3& wo) const {
     return albedo * invpi;
 }
 
-bool Diffuse::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+Vec3 Diffuse::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const {
     wo = Random::cosine_hemisphere_sample();
     pdf = sample_pdf(wi, wo);
-    brdf = f(wi, wo);
-    return true;
+    auto brdf = f(wi, wo);
+    return brdf;
 }
 
 
@@ -36,11 +36,11 @@ Vec3 Mirror::f(const Vec3& wi, const Vec3& wo) const {
     return albedo / dot(Vec3(0, 0, 1), unit_vector(wo));
 }
 
-bool Mirror::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+Vec3 Mirror::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const {
     wo = Vec3(-wi.get_x(), -wi.get_y(), wi.get_z()); // ê≥îΩéÀï˚å¸
     pdf = sample_pdf(wi, wo);
-    brdf = f(wi, wo);
-    return true;
+    auto brdf = f(wi, wo);
+    return brdf;
 }
 
 
@@ -60,11 +60,11 @@ Vec3 Phong::f(const Vec3& wi, const Vec3& wo) const {
     return albedo * (diffuse + specular);
 }
 
-bool Phong::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+Vec3 Phong::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const {
     wo = Random::cosine_hemisphere_sample();
     pdf = sample_pdf(wi, wo);
-    brdf = f(wi, wo);
-    return true;
+    auto brdf = f(wi, wo);
+    return brdf;
 }
 
 
@@ -94,12 +94,12 @@ Vec3 Microfacet::f(const Vec3& wi, const Vec3& wo) const {
     return albedo * (D * G * F) / (4 * cos_wi * cos_wo);
 }
 
-bool Microfacet::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
+Vec3 Microfacet::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const {
     Vec3 h = distribution->sample_halfvector();
     wo = unit_vector(reflect(wi, h)); // reflect()Ç≈ÇÕê≥ãKâªÇµÇ»Ç¢
     pdf = sample_pdf(wi, wo);
-    brdf = f(wi, wo);
-    return true;
+    auto brdf = f(wi, wo);
+    return brdf;
 }
 
 
@@ -110,8 +110,8 @@ float Emitter::sample_pdf(const Vec3& wi, const Vec3& wo) const {
     return 1.0; 
 }
 
-bool Emitter::sample_f(const Vec3& wi, const intersection& p, Vec3& brdf, Vec3& wo, float& pdf) const {
-    return false;
+Vec3 Emitter::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const {
+    return Vec3::zero;
 }
 
 Vec3 Emitter::emitte() const {

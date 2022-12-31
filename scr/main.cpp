@@ -128,6 +128,7 @@ void make_scene_cylinder(Scene& world, Camera& cam) {
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 * @note モデル出典: https://github.com/wjakob/nori/tree/master/scenes/pa5/veach_mi
+*       このソフトウェアに上記モデルは付属しておりません.
 */
 void make_scene_MIS(Scene& world, Camera& cam) {
     world.clear();
@@ -462,6 +463,7 @@ void make_scene_sphere(Scene& world, Camera& cam) {
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 * @note モデル出典: https://polyhaven.com/a/ceramic_vase_01
+*       このソフトウェアに上記モデルは付属しておりません.
 */
 void make_scene_vase(Scene& world, Camera& cam) {
     world.clear();
@@ -627,7 +629,7 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
 * @param[in]  world     :レンダリングするシーンのデータ
 * @param[in]  contrib   :現在のレイの寄与
 * @return Vec3          :レイに沿った放射輝度
-* @note 参考: https://www.pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Path_Tracing
+* @note 参考: pbrt-v3
 */
 Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
     auto L = Vec3::zero, contrib = Vec3::one;

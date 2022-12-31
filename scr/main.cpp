@@ -138,10 +138,6 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     auto dist3 = std::make_shared<GGXDistribution>(0.020f);
     auto dist4 = std::make_shared<GGXDistribution>(0.005f);
     auto fres  = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
-    //auto mat_vrough = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist1, fres);
-    //auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist2, fres);
-    //auto mat_normal = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist3, fres);
-    //auto mat_smooth = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist4, fres);
     auto mat_vrough = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist1, fres);
     auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist2, fres);
     auto mat_normal = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist3, fres);
@@ -184,8 +180,7 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     world.add(plate4);
 
     // カメラ設定
-    //auto film = std::make_shared<Film>(768, 512, 3, "veach_mis.png"); // フィルム
-    auto film = std::make_shared<Film>(1920, 1080, 3, "veach_mis.png"); // フィルム
+    auto film = std::make_shared<Film>(1280, 720, 3, "veach_mis.png"); // フィルム
     auto fd = 4.732f * film->get_aspect();
     Vec3 cam_pos(0.0f, 6.0f, 27.5f);
     Vec3 cam_target(0.0f, -1.5f, 2.5f);
@@ -198,7 +193,6 @@ void make_scene_MIS(Scene& world, Camera& cam) {
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 * @note 参考: http://www.graphics.cornell.edu/online/box/data.html
-*             https://benedikt-bitterli.me/resources/
 */
 void make_scene_cornell(Scene& world, Camera& cam) {
     world.clear();
@@ -206,31 +200,28 @@ void make_scene_cornell(Scene& world, Camera& cam) {
     auto dist_ggx = std::make_shared<GGXDistribution>(0.15f);
     auto fres     = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.71f, 0.29f));
     auto mat_ggx  = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres);
+    auto dist_ggx2 = std::make_shared<GGXDistribution>(0.1f);
+    auto fres2 = std::make_shared<FresnelSchlick>(Vec3(1.00f, 1.00f, 1.00f));
+    auto mat_ggx2 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx2, fres2);
     auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
+
+    // カラーバリエーション1
     //auto mat_red   = std::make_shared<Diffuse>(Vec3( 0.5694f,  0.0430f, 0.0451f));
     //auto mat_green = std::make_shared<Diffuse>(Vec3( 0.1039f,  0.3778f, 0.0768f));
     //auto mat_white = std::make_shared<Diffuse>(Vec3( 0.8860f,  0.6977f, 0.6676f));
     //auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
     //auto radiance = Vec3(20.6904f, 10.8669f, 2.7761f);
 
-    //auto mat_red    = std::make_shared<Diffuse>(Vec3(0.630f, 0.065f, 0.050f));
-    //auto mat_green  = std::make_shared<Diffuse>(Vec3(0.140f, 0.450f, 0.091f));
-    //auto mat_white  = std::make_shared<Diffuse>(Vec3(0.886f, 0.697f, 0.667f));
-    //auto mat_light  = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
-    //auto radiance = Vec3(17.0f, 12.0f, 4.0f);
-
+    // カラーバリエーション2
     auto mat_red   = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
     auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
     auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
     auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
     auto radiance  = Vec3(10.0f, 10.0f, 10.0f);
 
-    auto dist_ggx2 = std::make_shared<GGXDistribution>(0.1f);
-    auto fres2     = std::make_shared<FresnelSchlick>(Vec3(1.00f, 1.00f, 1.00f));
-    auto mat_ggx2  = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx2, fres2);
-
-    auto& mat_tall  = mat_ggx2;
-    auto& mat_short = mat_ggx;
+    // ボックスの色
+    auto& mat_tall  = mat_white;
+    auto& mat_short = mat_white;
 
     // Light sorce
     auto light_shape = std::make_shared<TriangleMesh>(
@@ -471,6 +462,7 @@ void make_scene_vase(Scene& world, Camera& cam) {
     auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
     auto fres     = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
     auto mat_ggx  = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres);
+
     // オブジェクト
     auto obj_pot = std::make_shared<TriangleMesh>("asset/model.obj", mat_ggx);
     world.add(obj_pot);

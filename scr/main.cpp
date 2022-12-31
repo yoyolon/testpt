@@ -1,4 +1,4 @@
-//--------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
 // testpt
 // yoyolon - December 2022
 // 
@@ -7,12 +7,14 @@
 // C++17
 // 
 // External Library
-// stb_image: https://github.com/nothings/stb
-//
-// This software is based on Raytracing in one weekend(https://raytracing.github.io/).
-// Part of this software is based on pbrt(https://pbrt.org/) licensed under the BSD 2-Clause "Simplified" License
-// (https://github.com/mmp/pbrt-v3/blob/master/LICENSE.txt).
-//--------------------------------------------------------------------------------------------------------------------
+// stb: https://github.com/nothings/stb
+// 
+// Reference(this soft ware is based on listed below.)
+// Raytracing in one weekend: https://raytracing.github.io/
+// pbrt-v3: https://pbrt.org/
+// 
+// More information on these licenses can be found in NOTICE.txt
+//---------------------------------------------------------------------------------------
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -50,11 +52,11 @@ enum class Sampling {
 Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
-constexpr bool DEBUG_MODE           = false; // 法線の可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION  = false;  // グローバルイルミネーションを有効にする
-constexpr bool IMAGE_BASED_LIGHTING = false; // Image-based lightingを有効にする
+constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
+constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES = 128;                // 1ピクセル当たりのサンプル数のデフォルト値
+constexpr int  SAMPLES = 128;                // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -135,19 +137,23 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     auto dist3 = std::make_shared<GGXDistribution>(0.020f);
     auto dist4 = std::make_shared<GGXDistribution>(0.005f);
     auto fres  = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
-    auto mat_vrough = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist1, fres);
-    auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist2, fres);
-    auto mat_normal = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist3, fres);
-    auto mat_smooth = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist4, fres);
+    //auto mat_vrough = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist1, fres);
+    //auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist2, fres);
+    //auto mat_normal = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist3, fres);
+    //auto mat_smooth = std::make_shared<Microfacet>(Vec3(0.0175f, 0.0225f, 0.0325f), dist4, fres);
+    auto mat_vrough = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist1, fres);
+    auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist2, fres);
+    auto mat_normal = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist3, fres);
+    auto mat_smooth = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist4, fres);
     auto mat_light  = std::make_shared<Emitter>(Vec3(10.0f,10.0f,10.0f));
     auto mat_diff   = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
     auto mat_mirr   = std::make_shared<Mirror>(Vec3(1.0f, 1.0f, 1.0f));
 
     // 光源
-    auto r = Vec3(1.00f,0.00f,0.00f);
-    auto y = Vec3(1.00f,1.00f,0.00f);
-    auto g = Vec3(0.00f,1.00f,0.00f);
-    auto b = Vec3(0.00f,0.00f,1.00f);
+    auto r = Vec3(1.00f,0.00f,0.00f) * 10;
+    auto y = Vec3(1.00f,1.00f,0.00f) * 10;
+    auto g = Vec3(0.00f,1.00f,0.00f) * 10;
+    auto b = Vec3(0.00f,0.00f,1.00f) * 10;
     auto sphere_XL = std::make_shared<Sphere>(Vec3( 3.75f,0.0f,0.0f), 0.90f, mat_light);
     auto sphere_L  = std::make_shared<Sphere>(Vec3( 1.25f,0.0f,0.0f), 0.30f, mat_light);
     auto sphere_M  = std::make_shared<Sphere>(Vec3(-1.25f,0.0f,0.0f), 0.10f, mat_light);
@@ -177,7 +183,8 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     world.add(plate4);
 
     // カメラ設定
-    auto film = std::make_shared<Film>(768, 512, 3, "veach_mis.png"); // フィルム
+    //auto film = std::make_shared<Film>(768, 512, 3, "veach_mis.png"); // フィルム
+    auto film = std::make_shared<Film>(1920, 1080, 3, "veach_mis.png"); // フィルム
     auto fd = 4.732f * film->get_aspect();
     Vec3 cam_pos(0.0f, 6.0f, 27.5f);
     Vec3 cam_target(0.0f, -1.5f, 2.5f);
@@ -195,20 +202,34 @@ void make_scene_MIS(Scene& world, Camera& cam) {
 void make_scene_cornell(Scene& world, Camera& cam) {
     world.clear();
     //  マテリアル
-    auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
-    auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f, 0.9f, 0.9f));
-    auto mat_ggx   = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres_schlick);
-    auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
+    auto dist_ggx = std::make_shared<GGXDistribution>(0.15f);
+    auto fres     = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.71f, 0.29f));
+    auto mat_ggx  = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres);
+    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
     //auto mat_red   = std::make_shared<Diffuse>(Vec3( 0.5694f,  0.0430f, 0.0451f));
     //auto mat_green = std::make_shared<Diffuse>(Vec3( 0.1039f,  0.3778f, 0.0768f));
     //auto mat_white = std::make_shared<Diffuse>(Vec3( 0.8860f,  0.6977f, 0.6676f));
-    //auto mat_light = std::make_shared<Emitter>(Vec3(20.6904f, 10.8669f, 2.7761f));
+    //auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
     //auto radiance = Vec3(20.6904f, 10.8669f, 2.7761f);
-    auto mat_red   = std::make_shared<Diffuse>(Vec3(0.630f, 0.065f, 0.050f));
-    auto mat_green = std::make_shared<Diffuse>(Vec3(0.140f, 0.450f, 0.091f));
-    auto mat_white = std::make_shared<Diffuse>(Vec3(0.725f, 0.710f, 0.680f));
-    auto mat_light = std::make_shared<Emitter>(Vec3(20.6904f, 10.8669f, 2.7761f));
-    auto radiance = Vec3(17.0f, 12.0f, 4.0f);
+
+    //auto mat_red    = std::make_shared<Diffuse>(Vec3(0.630f, 0.065f, 0.050f));
+    //auto mat_green  = std::make_shared<Diffuse>(Vec3(0.140f, 0.450f, 0.091f));
+    //auto mat_white  = std::make_shared<Diffuse>(Vec3(0.886f, 0.697f, 0.667f));
+    //auto mat_light  = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
+    //auto radiance = Vec3(17.0f, 12.0f, 4.0f);
+
+    auto mat_red   = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
+    auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
+    auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
+    auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
+    auto radiance  = Vec3(10.0f, 10.0f, 10.0f);
+
+    auto dist_ggx2 = std::make_shared<GGXDistribution>(0.1f);
+    auto fres2     = std::make_shared<FresnelSchlick>(Vec3(1.00f, 1.00f, 1.00f));
+    auto mat_ggx2  = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx2, fres2);
+
+    auto& mat_tall  = mat_ggx2;
+    auto& mat_short = mat_ggx;
 
     // Light sorce
     auto light_shape = std::make_shared<TriangleMesh>(
@@ -219,7 +240,6 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-213.0f, 543.7f, -227.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
         mat_light);
-    //light_shape->move(Vec3(0.0f,-5.0f,0.0f));
     auto light = std::make_shared<AreaLight>(radiance, light_shape);
     // Ceiling
     auto ceiling = std::make_shared<TriangleMesh>(
@@ -274,7 +294,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-240.0f, 165.0f, -272.0f),
             Vec3(-290.0f, 165.0f, -114.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_short);
     auto short_rgt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3(-290.0f,   0.0f, -114.0f),
@@ -282,7 +302,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-240.0f, 165.0f, -272.0f),
             Vec3(-240.0f,   0.0f, -272.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_short);
     auto short_frt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3(-130.0f,   0.0f,  -65.0f),
@@ -290,7 +310,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-290.0f, 165.0f, -114.0f),
             Vec3(-290.0f,   0.0f, -114.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_short);
     auto short_lft = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3( -82.0f,   0.0f, -225.0f),
@@ -298,7 +318,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-130.0f, 165.0f,  -65.0f),
             Vec3(-130.0f,   0.0f,  -65.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_short);
     auto short_bck = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3(-240.0f,   0.0f, -272.0f),
@@ -306,7 +326,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3( -82.0f, 165.0f, -225.0f),
             Vec3( -82.0f,   0.0f, -225.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_short);
     // Tall block
     auto tall_top = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
@@ -315,7 +335,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-314.0f, 330.0f, -456.0f),
             Vec3(-472.0f, 330.0f, -406.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_tall);
     auto tall_rgt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3(-423.0f,   0.0f, -247.0f),
@@ -323,7 +343,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-472.0f, 330.0f, -406.0f),
             Vec3(-472.0f,   0.0f, -406.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_tall);
     auto tall_bck = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3(-472.0f,   0.0f, -406.0f),
@@ -331,7 +351,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-314.0f, 330.0f, -456.0f),
             Vec3(-314.0f,   0.0f, -456.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_tall);
     auto tall_lft = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3(-314.0f,   0.0f, -456.0f),
@@ -339,7 +359,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-265.0f, 330.0f, -296.0f),
             Vec3(-265.0f,   0.0f, -296.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_tall);
     auto tall_frt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
             Vec3(-265.0f,   0.0f, -296.0f),
@@ -347,7 +367,7 @@ void make_scene_cornell(Scene& world, Camera& cam) {
             Vec3(-423.0f, 330.0f, -247.0f),
             Vec3(-423.0f,   0.0f, -247.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_white);
+        mat_tall);
     // オブジェクトをシーンに追加
     world.add(left);
     world.add(right);
@@ -764,8 +784,8 @@ int main(int argc, char* argv[]) {
     Camera cam;
     //make_scene_simple(world, cam);
     //make_scene_cylinder(world, cam);
-    make_scene_MIS(world, cam); // TODO: 球光源のサンプリング検証
-    //make_scene_cornell(world, cam);
+    //make_scene_MIS(world, cam);
+    make_scene_cornell(world, cam);
     //make_scene_sphere(world, cam);
     //make_scene_vase(world, cam);
     // 出力画像

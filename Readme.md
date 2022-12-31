@@ -2,13 +2,17 @@
 
 ## 概要
 
-オブジェクト指向プログラミングやレンダリングの勉強のために作成したC++によるパストレーサーです．クラス設計や実装などは[Raytracing in one weekend](https://raytracing.github.io/)と[pbrt-v3](https://github.com/mmp/pbrt-v3)を参考に作成しています．実行すると三角ポリゴンで構成されたシーン(コーネルボックス)をレンダリングします．
+オブジェクト指向プログラミングやレンダリングの勉強のために作成したC++による(ほぼ)スクラッチのパストレーサーです．クラス設計や実装などは[Raytracing in one weekend](https://raytracing.github.io/)と[pbrt-v3](https://github.com/mmp/pbrt-v3)を参考に作成しています．実行すると三角ポリゴンで構成されたシーン(コーネルボックス)をレンダリングします．
 
 ## 開発環境
 
 Windows 10  
 Microsoft Visual Studio 2019  
 C++17
+
+## 外部ライブラリ
+
+[stb](https://github.com/nothings/stb)(画像の入出力)
 
 ## 実行例
 

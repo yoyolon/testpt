@@ -210,23 +210,3 @@ private:
     std::shared_ptr<class Fresnel> fresnel; /**> フレネル項 */
     std::shared_ptr<class MicrofacetDistribution> distribution; /**> マイクロファセット分布 */
 };
-
-
-/** 発光クラス */
-class Emitter : public Material {
-public:
-    /**
-    * @brief コンストラクタ
-    * @param[in] _intensity :放射輝度
-    */
-    Emitter(Vec3 _intensity);
-
-    Vec3 sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const override;
-
-    float sample_pdf(const Vec3& wi, const Vec3& wo) const override;
-
-    Vec3 emitte() const;
-
-private:
-    Vec3 intensity; /**> 放射輝度 */
-};

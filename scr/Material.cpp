@@ -104,19 +104,3 @@ Vec3 Microfacet::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float
     auto brdf = f(wi, wo);
     return brdf;
 }
-
-
-// *** ”­Œõ ***
-Emitter::Emitter(Vec3 _intensity) : Material(MaterialType::Emitter), intensity(_intensity) {}
-
-float Emitter::sample_pdf(const Vec3& wi, const Vec3& wo) const { 
-    return 1.0; 
-}
-
-Vec3 Emitter::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pdf) const {
-    return Vec3::zero;
-}
-
-Vec3 Emitter::emitte() const {
-    return intensity;
-}

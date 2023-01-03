@@ -71,11 +71,10 @@ void make_scene_simple(Scene& world, Camera& cam) {
     auto fres_schlick   = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
     auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_schlick);
     auto mat_mirr       = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
-    auto mat_light      = std::make_shared<Emitter>(Vec3(10.00f,10.00f,10.00f));
 
     // オブジェクト
     auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_microfacet);
-    auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f,20.0f,0.0f), 50.0f, mat_light);
+    auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f,20.0f,0.0f), 50.0f, nullptr);
     auto light_disk       = std::make_shared<AreaLight>(Vec3(1.0f,1.0f,1.0f), light_shape_disk);
     world.add(obj_sphere);
     world.add(light_disk);
@@ -101,13 +100,12 @@ void make_scene_cylinder(Scene& world, Camera& cam) {
     auto fres = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.71f, 0.29f));
     auto mat_gold = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres);
     auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
-    auto mat_light = std::make_shared<Emitter>(Vec3(10.00f,10.00f,10.00f));
 
     // オブジェクト
     auto obj_disk_top = std::make_shared<Disk>(Vec3(0.0f,4.0f,0.0f), 4.0f, mat_gold, true);
     auto obj_disk_btm = std::make_shared<Disk>(Vec3::zero, 4.0f, mat_gold);
     auto obj_cylinder = std::make_shared<Cylinder>(Vec3(0.0f,-4.0f,0.0f), 4.0f, 8.0f, mat_gold);
-    auto light_shape  = std::make_shared<Disk>(Vec3(0.0f,7.5f,0.0f), 4.0f, mat_light);
+    auto light_shape  = std::make_shared<Disk>(Vec3(0.0f,7.5f,0.0f), 4.0f, nullptr);
     auto light        = std::make_shared<AreaLight>(Vec3(10.0f,10.0f,10.0f), light_shape);
     world.add(obj_disk_top);
     world.add(obj_disk_btm);
@@ -142,7 +140,6 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist2, fres);
     auto mat_normal = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist3, fres);
     auto mat_smooth = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist4, fres);
-    auto mat_light  = std::make_shared<Emitter>(Vec3(10.0f,10.0f,10.0f));
     auto mat_diff   = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
     auto mat_mirr   = std::make_shared<Mirror>(Vec3(1.0f, 1.0f, 1.0f));
 
@@ -151,11 +148,11 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     auto y = Vec3(1.00f,1.00f,0.00f) * 10;
     auto g = Vec3(0.00f,1.00f,0.00f) * 10;
     auto b = Vec3(0.00f,0.00f,1.00f) * 10;
-    auto sphere_XL = std::make_shared<Sphere>(Vec3( 3.75f,0.0f,0.0f), 0.90f, mat_light);
-    auto sphere_L  = std::make_shared<Sphere>(Vec3( 1.25f,0.0f,0.0f), 0.30f, mat_light);
-    auto sphere_M  = std::make_shared<Sphere>(Vec3(-1.25f,0.0f,0.0f), 0.10f, mat_light);
-    auto sphere_S  = std::make_shared<Sphere>(Vec3(-3.75f,0.0f,0.0f), 0.03f, mat_light);
-    auto sphere    = std::make_shared<Sphere>(Vec3(  0.0f,4.0f,3.0f), 1.0f, mat_light);
+    auto sphere_XL = std::make_shared<Sphere>(Vec3( 3.75f,0.0f,0.0f), 0.90f, nullptr);
+    auto sphere_L  = std::make_shared<Sphere>(Vec3( 1.25f,0.0f,0.0f), 0.30f, nullptr);
+    auto sphere_M  = std::make_shared<Sphere>(Vec3(-1.25f,0.0f,0.0f), 0.10f, nullptr);
+    auto sphere_S  = std::make_shared<Sphere>(Vec3(-3.75f,0.0f,0.0f), 0.03f, nullptr);
+    auto sphere    = std::make_shared<Sphere>(Vec3(  0.0f,4.0f,3.0f), 1.0f, nullptr);
     auto light_XL  = std::make_shared<AreaLight>(Vec3(  1.2f,  1.2f,  1.2f)*b, sphere_XL);
     auto light_L   = std::make_shared<AreaLight>(Vec3( 11.1f, 11.1f, 11.1f)*g, sphere_L);
     auto light_M   = std::make_shared<AreaLight>(Vec3(100.0f,100.0f,100.0f)*y, sphere_M);
@@ -209,14 +206,12 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     //auto mat_red   = std::make_shared<Diffuse>(Vec3( 0.5694f,  0.0430f, 0.0451f));
     //auto mat_green = std::make_shared<Diffuse>(Vec3( 0.1039f,  0.3778f, 0.0768f));
     //auto mat_white = std::make_shared<Diffuse>(Vec3( 0.8860f,  0.6977f, 0.6676f));
-    //auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
     //auto radiance = Vec3(20.6904f, 10.8669f, 2.7761f);
 
     // カラーバリエーション2
     auto mat_red   = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
     auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
     auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
-    auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
     auto radiance  = Vec3(10.0f, 10.0f, 10.0f);
 
     // ボックスの色
@@ -231,7 +226,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             Vec3(-213.0f, 543.7f, -332.0f),
             Vec3(-213.0f, 543.7f, -227.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_light);
+        nullptr);
     auto light = std::make_shared<AreaLight>(radiance, light_shape);
     // Ceiling
     auto ceiling = std::make_shared<TriangleMesh>(
@@ -471,7 +466,6 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
     auto mat_red = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
     auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
     auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
-    auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
     auto radiance = Vec3(10.0f, 10.0f, 10.0f);
 
     auto sphere1 = std::make_shared<Sphere>(Vec3(-123, 50.0f, -200.0f), 50, mat_ggx1);
@@ -487,7 +481,7 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
             Vec3(-213.0f, 543.7f, -332.0f),
             Vec3(-213.0f, 543.7f, -227.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-            mat_light);
+            nullptr);
     auto light = std::make_shared<AreaLight>(radiance, light_shape);
     // Ceiling
     auto ceiling = std::make_shared<TriangleMesh>(
@@ -885,9 +879,9 @@ int main(int argc, char* argv[]) {
     Camera cam;
     //make_scene_simple(world, cam);
     //make_scene_cylinder(world, cam);
-    //make_scene_MIS(world, cam);
+    make_scene_MIS(world, cam);
     //make_scene_cornell_box(world, cam);
-    make_scene_box_with_sphere(world, cam);
+    //make_scene_box_with_sphere(world, cam);
     //make_scene_sphere(world, cam);
     //make_scene_vase(world, cam);
     // 出力画像

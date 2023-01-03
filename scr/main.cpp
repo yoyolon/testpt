@@ -56,7 +56,7 @@ constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
 constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES = 128;                // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES = 64;                // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -194,7 +194,7 @@ void make_scene_MIS(Scene& world, Camera& cam) {
 * @param[out] cam   :カメラデータ
 * @note 参考: http://www.graphics.cornell.edu/online/box/data.html
 */
-void make_scene_cornell(Scene& world, Camera& cam) {
+void make_scene_cornell_box(Scene& world, Camera& cam) {
     world.clear();
     //  マテリアル
     auto dist_ggx = std::make_shared<GGXDistribution>(0.15f);
@@ -446,6 +446,113 @@ void make_scene_sphere(Scene& world, Camera& cam) {
     Vec3 cam_pos(0.0f,2.0f,10.0f);
     Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
+    cam = Camera(film, fd, cam_pos, cam_forward);
+}
+
+/**
+* @brief コーネルボックスと球のシーンを生成する関数
+* @param[out] world :シーンデータ
+* @param[out] cam   :カメラデータ
+* @note 参考: http://www.graphics.cornell.edu/online/box/data.html
+*/
+void make_scene_box_with_sphere(Scene& world, Camera& cam) {
+    world.clear();
+    //  マテリアル
+    auto dist_ggx1 = std::make_shared<GGXDistribution>(0.10f);
+    auto dist_ggx2 = std::make_shared<GGXDistribution>(0.15f);
+    auto dist_ggx3 = std::make_shared<GGXDistribution>(0.30f);
+    auto fres = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.71f, 0.29f));
+    auto mat_ggx1 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx1, fres);
+    auto mat_ggx2 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx2, fres);
+    auto mat_ggx3 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx3, fres);
+    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
+
+    // カラーバリエーション2
+    auto mat_red = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
+    auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
+    auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
+    auto mat_light = std::make_shared<Emitter>(Vec3(0.000f, 0.000f, 0.000f));
+    auto radiance = Vec3(10.0f, 10.0f, 10.0f);
+
+    auto sphere1 = std::make_shared<Sphere>(Vec3(-123, 50.0f, -200.0f), 50, mat_ggx1);
+    auto sphere2 = std::make_shared<Sphere>(Vec3(-273, 50.0f, -200.0f), 50, mat_ggx2);
+    auto sphere3 = std::make_shared<Sphere>(Vec3(-423, 50.0f, -200.0f), 50, mat_ggx3);
+
+
+    // Light sorce
+    auto light_shape = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3(-343.0f, 543.7f, -227.0f),
+            Vec3(-343.0f, 543.7f, -332.0f),
+            Vec3(-213.0f, 543.7f, -332.0f),
+            Vec3(-213.0f, 543.7f, -227.0f)},
+        std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_light);
+    auto light = std::make_shared<AreaLight>(radiance, light_shape);
+    // Ceiling
+    auto ceiling = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3(-556.0f, 548.8f,    0.0f),
+            Vec3(-556.0f, 548.8f, -559.2f),
+            Vec3(   0.0f, 548.8f, -559.2f),
+            Vec3(   0.0f, 548.8f,    0.0f)},
+        std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_white);
+    // Floor
+    auto floor = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3(-552.8f, 0.0f,    0.0f),
+            Vec3(   0.0f, 0.0f,    0.0f),
+            Vec3(   0.0f, 0.0f, -559.2f),
+            Vec3(-549.6f, 0.0f, -559.2f)},
+        std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_white);
+    // Back wall
+    auto back = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3(-549.6f,   0.0f, -559.2f),
+            Vec3(   0.0f,   0.0f, -559.2f),
+            Vec3(   0.0f, 548.8f, -559.2f),
+            Vec3(-556.0f, 548.8f, -559.2f)},
+        std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_white);
+    // Right wall
+    auto right = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3(0.0f,   0.0f, -559.2f),
+            Vec3(0.0f,   0.0f,    0.0f),
+            Vec3(0.0f, 548.8f,    0.0f),
+            Vec3(0.0f, 548.8f, -559.2f)},
+        std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_green);
+    // Left wall
+    auto left = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3(-552.8f,   0.0f,    0.0f),
+            Vec3(-549.6f,   0.0f, -559.2f),
+            Vec3(-556.0f, 548.8f, -559.2f),
+            Vec3(-556.0f, 548.8f,    0.0f)},
+        std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_red);
+    // オブジェクトをシーンに追加
+    world.add(sphere1);
+    world.add(sphere2);
+    world.add(sphere3);
+    world.add(left);
+    world.add(right);
+    world.add(back);
+    world.add(ceiling);
+    world.add(floor);
+    world.add(light);
+
+    //// カメラ設定
+    auto film = std::make_shared<Film>(1000, 1000, 3, "box_with_sphere.png"); // フィルム
+    auto deg_to_rad = [](float deg) { return deg * pi / 180; };
+    auto fov = deg_to_rad(35.0f);
+    auto fd = 2.0f * std::cos(fov) / std::sin(fov); // 焦点距離
+    Vec3 cam_pos(-278.0f, 273.0f, 700.0f);
+    Vec3 cam_target(-278.0f, 273.0f, 0.0f);
+    Vec3 cam_forward = unit_vector(cam_target - cam_pos); // z軸負の方向がカメラの前方
     cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
@@ -779,7 +886,8 @@ int main(int argc, char* argv[]) {
     //make_scene_simple(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
-    make_scene_cornell(world, cam);
+    //make_scene_cornell_box(world, cam);
+    make_scene_box_with_sphere(world, cam);
     //make_scene_sphere(world, cam);
     //make_scene_vase(world, cam);
     // 出力画像

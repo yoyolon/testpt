@@ -34,7 +34,7 @@ public:
     * @brief シーンにオブジェクトを追加
     * @param[in]  object :オブジェクト
     */
-    void add(std::shared_ptr<Shape> object) { object_list.push_back(object); }
+    void add(std::shared_ptr<Shape> object) { shape_list.push_back(object); }
 
     /**
     * @brief シーンに光源を追加
@@ -45,13 +45,13 @@ public:
     /**
     * @brief シーンからオブジェクトと光源を除去
     */
-    void clear() { object_list.clear(); }
+    void clear() { shape_list.clear(); }
 
     /**
     * @brief シーンのオブジェクトを取得
     * @return std::vector<std::shared_ptr<Shape>> :シーンのオブジェクト
     */
-    std::vector<std::shared_ptr<Shape>> get_shape() const { return object_list; }
+    std::vector<std::shared_ptr<Shape>> get_shape() const { return shape_list; }
 
     /**
     * @brief シーンの光源を取得
@@ -74,7 +74,7 @@ public:
         auto t_first = t_max;
         isect.type = IsectType::None;
         // オブジェクトとの交差判定
-        for (const auto& object : object_list) {
+        for (const auto& object : shape_list) {
             if (object->intersect(r, t_min, t_first, isect)) {
                 is_isect = true;
                 t_first = isect.t;
@@ -108,7 +108,7 @@ public:
         auto t_first = t_max;
         isect.type = IsectType::None;
         // オブジェクトとの交差判定
-        for (const auto& object : object_list) {
+        for (const auto& object : shape_list) {
             if (object->intersect(r, t_min, t_first, isect)) {
                 is_isect = true;
                 t_first = isect.t;
@@ -168,7 +168,7 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<Shape>> object_list; /**< シーン中のオブジェクト */
+    std::vector<std::shared_ptr<Shape>> shape_list; /**< シーン中のオブジェクト */
     std::vector<std::shared_ptr<Light>> light_list;  /**< シーン中の光源         */
     float* envmap;    /**< 環境マップ               */
     int w_envmap = 0; /**< 環境マップの高さ         */

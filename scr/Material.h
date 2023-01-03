@@ -18,7 +18,6 @@ enum class MaterialType {
     Diffuse  = 1, /**< ŠgŽU”½ŽË */
     Specular = 2, /**< ‹¾–Ê”½ŽË */
     Glossy   = 4, /**< Œõ‘ò”½ŽË */
-    Emitter  = 8  /**< ”­Œõ     */
 };
 
 /**

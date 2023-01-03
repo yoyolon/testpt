@@ -178,5 +178,5 @@ inline Vec3 unit_vector(const Vec3& a) { return a / a.length(); }
 * @note •¨‘Ì•\–Ê‚©‚ç—£‚ê‚é•ûŒü‚ğ³‚Æ‚·‚é
 */
 inline Vec3 reflect(const Vec3& w, const Vec3& n) {
-    return -w + 2 * dot(w, n) * n; // ³”½Ë•ûŒü
+    return -w + 2 * dot(w, n) * n;
 }

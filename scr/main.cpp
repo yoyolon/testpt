@@ -56,7 +56,7 @@ constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
 constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES = 64;                // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES = 4;                // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -579,30 +579,30 @@ void make_scene_vase(Scene& world, Camera& cam) {
 
 
 /**
-* @brief BRDFに沿った直接光をサンプリング
-* @pram[in] r             :入射レイ
+* @brief BRDFに沿った直接光の入射方向をサンプリング
+* @pram[in] r             :追跡レイ
 * @pram[in] isect         :交差点情報
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
-* @return Vec3 :光源の重み付き放射輝度
+* @return Vec3 :直接光の重み付き入射放射輝度
 */
 Vec3 explict_brdf(const Ray& r, const intersection& isect, const Scene& world,
                   const ONB& shading_coord) {
     auto Ld = Vec3::zero;
-    Vec3 wo_local;
+    Vec3 wi_local; // 直接光の入射方向
     float pdf_scattering, pdf_light, weight = 1.0f;
 
-    // BRDFのサンプリング
-    auto wi = unit_vector(r.get_dir());          // 入射方向は必ず正規化する
-    auto wi_local = -shading_coord.to_local(wi); // ローカルな入射方向
-    auto brdf = isect.mat->sample_f(wi_local, isect, wo_local, pdf_scattering);
+    // BRDFに基づき直接光の入射方向をサンプリング
+    auto wo = unit_vector(r.get_dir());          // 出射方向は必ず正規化する
+    auto wo_local = -shading_coord.to_local(wo); // ローカルな出射方向
+    auto brdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering);
     if (pdf_scattering == 0 || is_zero(brdf)) {
         return Ld;
     }
 
     // 光源と交差しなければ寄与はゼロ
-    auto wo = shading_coord.to_world(wo_local); // 出射方向は正規化済み
-    auto r_new = Ray(isect.pos, wo);
+    auto wi = shading_coord.to_world(wi_local); // 直接光の入射方向
+    auto r_new = Ray(isect.pos, wi); // 光源へ向かうのレイ
     intersection isect_light;
     if (!world.intersect_light(r_new, eps_isect, inf, isect_light)) {
         return Ld;
@@ -610,12 +610,12 @@ Vec3 explict_brdf(const Ray& r, const intersection& isect, const Scene& world,
 
     // 光源の放射輝度を計算
     auto L = isect_light.light->emitte();
-    pdf_light = isect_light.light->sample_pdf(isect, wo);
+    pdf_light = isect_light.light->sample_pdf(isect, wi);
     if (pdf_light == 0 || is_zero(L)) {
         return Ld;
     }
 
-    // 光源が遮蔽されると寄与はゼロ
+    // 光源へのレイが遮蔽されると寄与はゼロ
     if (world.intersect_object(r_new, eps_isect, isect_light.t)) {
         return Ld;
     }
@@ -624,23 +624,23 @@ Vec3 explict_brdf(const Ray& r, const intersection& isect, const Scene& world,
     if (sampling_strategy == Sampling::MIS) {
         weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
     }
-    auto cos_term = dot(isect.normal, wo);
+    auto cos_term = dot(isect.normal, wi);
     Ld += brdf * cos_term * weight * L / pdf_scattering;
     return Ld;
 }
 
 /**
 * @brief 直接光を一つの光源からサンプリング
-* @pram[in] r             :入射レイ
+* @pram[in] r             :追跡レイ
 * @pram[in] isect         :交差点情報
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
-* @return Vec3 :光源の重み付き放射輝度
+* @return Vec3 :直接光の重み付き入射放射輝度
 */
 Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& world,
                        const ONB& shading_coord) {
     auto Ld = Vec3::zero;
-    Vec3 wo;
+    Vec3 wi;
     float pdf_scattering, pdf_light, weight = 1.0f;
 
     // 光源をランダムに一つ選択
@@ -652,14 +652,14 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     auto light_index = Random::uniform_int(0, num_lights - 1);
     const auto& light = lights[light_index];
 
-    // 光源のサンプリング
-    auto L = light->sample_light(isect, wo, pdf_light);
+    // 光源のジオメトリから入射方向をサンプリング
+    auto L = light->sample_light(isect, wi, pdf_light);
     if (pdf_light == 0 || is_zero(L)) {
         return Ld;
     }
 
     // 光源が遮蔽されると寄与はゼロ
-    auto r_light = Ray(isect.pos, wo);
+    auto r_light = Ray(isect.pos, wi); // 光源への入射方向
     intersection isect_light;
     light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
     if (world.intersect_object(r_light, eps_isect, isect_light.t)) {
@@ -667,11 +667,11 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     }
 
     // BRDFを評価
-    auto wi       = unit_vector(r.get_dir());    // 入射方向は必ず正規化する
-    auto wi_local = -shading_coord.to_local(wi); // サーファイスへのローカルな入射方向
-    auto wo_local =  shading_coord.to_local(unit_vector(wo));
-    auto brdf = isect.mat->f(wi_local, wo_local);
-    pdf_scattering = isect.mat->sample_pdf(wi_local, wo_local);
+    auto wo       = unit_vector(r.get_dir()); // 出射方向は必ず正規化する
+    auto wo_local = -shading_coord.to_local(wo);
+    auto wi_local =  shading_coord.to_local(wi);
+    auto brdf = isect.mat->f(wo_local, wi_local);
+    pdf_scattering = isect.mat->sample_pdf(wo_local, wi_local);
     if (pdf_scattering == 0 || is_zero(brdf)) {
         return Ld;
     }
@@ -680,14 +680,14 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     if (sampling_strategy == Sampling::MIS) {
         weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
     }
-    auto cos_term = std::abs(dot(isect.normal, unit_vector(wo)));
+    auto cos_term = std::abs(dot(isect.normal, wi));
     Ld += brdf * L * cos_term * weight / pdf_light;
     return Ld;
 }
 
 /**
 * @brief 明示的に直接光をサンプリング
-* @pram[in] r             :入射レイ
+* @pram[in] r             :追跡レイ
 * @pram[in] isect         :交差点情報
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
@@ -702,12 +702,12 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
         return Ld;
     }
 
-    // BRDFからサンプリング
+    // BRDFに基づきサンプリング
     if ((sampling_strategy == Sampling::BRDF) || (sampling_strategy == Sampling::MIS)) {
         Ld += contrib * explict_brdf(r, isect, world, shading_coord);
     }
 
-    // 光源からサンプリング
+    // 光源のジオメトリに基づきサンプリング
     if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
         Ld += contrib * explict_one_light(r, isect, world, shading_coord);
     }
@@ -744,7 +744,7 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
                 L += contrib * world.sample_envmap(r);
             }
         }
-        // 光源交差時には寄与を加算しない(明示的に光源サンプリングを行うため)
+        // 光源ジオメトリと交差時には寄与を加算しない(明示的に光源サンプリングを行うため)
         if (isect.type == IsectType::Light) {
             break;
         }
@@ -761,15 +761,15 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
 
         // BRDFに基づく出射方向のサンプリング
         // NOTE: カメラ方向をwi，光源方向をwoにしている
-        Vec3 wi_local = -shading_coord.to_local(unit_vector(r.get_dir()));
-        Vec3 wo_local;
+        Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
+        Vec3 wi_local;
         float pdf;
-        auto brdf = isect.mat->sample_f(wi_local, isect, wo_local, pdf);
-        auto wo = shading_coord.to_world(unit_vector(wo_local));
-        auto cos_term = std::abs(dot(isect.normal, wo));
+        auto brdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf);
+        auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
+        auto cos_term = std::abs(dot(isect.normal, wi));
         contrib = contrib * brdf * cos_term / pdf;
         is_specular_ray = (isect.mat->get_type() == MaterialType::Specular) ? true : false;
-        r = Ray(isect.pos, wo); // 次のレイを生成
+        r = Ray(isect.pos, wi); // 次のレイを生成
 
         //ロシアンルーレット
         if (bounces >= 3) {
@@ -822,7 +822,7 @@ Vec3 L_direct(const Ray& r_in, int max_depth, const Scene& world) {
             Vec3 wo_local;
             float pdf;
             auto brdf = isect.mat->sample_f(wi_local, isect, wo_local, pdf);
-            auto wo = shading_coord.to_world(unit_vector(wo_local));
+            auto wo = shading_coord.to_world(wo_local);
             auto cos_term = std::abs(dot(isect.normal, wo));
             contrib = contrib * brdf * cos_term / pdf;
             r = Ray(isect.pos, wo); // 次のレイを生成

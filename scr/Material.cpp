@@ -1,5 +1,4 @@
 #include "Material.h"
-#include <complex>
 #include "Microfacet.h"
 #include "Shape.h"
 #include "Random.h"

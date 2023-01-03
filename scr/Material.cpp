@@ -45,7 +45,7 @@ Vec3 Mirror::sample_f(const Vec3& wi, const intersection& p, Vec3& wo, float& pd
 
 
 // *** Phongモデル ***
-// TODO: 正規化する & より効率的な重点的サンプリングの実装
+// TODO: 正規化/より効率的な重点的サンプリングの実装
 Phong::Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin) 
     : Material(MaterialType::Glossy), albedo(_albedo), Kd(_Kd), Ks(_Ks), shin(_shin) {}
 
@@ -79,14 +79,17 @@ float Microfacet::sample_pdf(const Vec3& wi, const Vec3& wo) const {
 }
 
 Vec3 Microfacet::f(const Vec3& wi, const Vec3& wo) const {
+    if (wi.get_z() * wo.get_z() < 0) {
+        return Vec3::zero; // 同一半球内に存在しないなら反射しない(単散乱仮定のため)
+    }
     auto h = unit_vector(wi + wo);
     float cos_wi = std::abs(get_cos(wi));
     float cos_wo = std::abs(get_cos(wo));
     if (cos_wi == 0 || cos_wo == 0) {
-        return Vec3(0.0f, 0.0f, 0.0f);
+        return Vec3::zero;
     }
     if (is_zero(h)) {
-        return Vec3(0.0f, 0.0f, 0.0f);
+        return Vec3::zero;
     }
     float D = distribution->D(h);
     float G = distribution->G(wi, wo);

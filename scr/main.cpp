@@ -9,7 +9,7 @@
 // External Library
 // stb: https://github.com/nothings/stb
 // 
-// Reference(this soft ware is based on listed below.)
+// Reference(this software is based on listed below.)
 // Raytracing in one weekend: https://raytracing.github.io/
 // pbrt-v3: https://pbrt.org/
 // 

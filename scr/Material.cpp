@@ -4,6 +4,54 @@
 #include "Random.h"
 #include "Fresnel.h"
 
+// *** マテリアル ***
+
+Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+    // 一つのBxDFから方向をサンプリングして寄与はすべてのBxDFを考慮する
+    auto f = Vec3::zero;
+    auto num_bxdfs = bxdf_list.size();
+    if (num_bxdfs == 0) {
+        return f;
+    }
+    // BxDFをランダムに一つ選択
+    auto bxdf_index = Random::uniform_int(0, num_bxdfs - 1);
+    const auto& bxdf_main = bxdf_list[bxdf_index]; // サンプリングするBxDF
+    // BxDFで方向をサンプリング
+    f = bxdf_main->sample_f(wo, p, wi, pdf);
+    // すべてのBxDFを考慮してBSDFとpdfを計算
+    f = eval_f(wo, wi);
+    pdf = eval_pdf(wo, wi);
+}
+
+Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi) const {
+    // すべてのBxDFの総和を計算
+    // TODO: 反射と透過の区別(内積を利用)
+    //       あるいはBxDFを半球でなく全球範囲で定義する
+    auto f = Vec3::zero;
+    auto num_bxdfs = bxdf_list.size();
+    if (num_bxdfs == 0) {
+        return f;
+    }
+    for (const auto& bxdf : bxdf_list) {
+        f += bxdf->eval_f(wo, wi);
+    }
+    return f;
+}
+
+float Material::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+    // すべてのBxDFのpdfの平均を計算
+    auto num_bxdfs = bxdf_list.size();
+    if (num_bxdfs == 0) {
+        return 0.0f;
+    }
+    auto pdf = 0.0f;
+    for (const auto& bxdf : bxdf_list) {
+        pdf += bxdf->eval_pdf(wo, wi);
+    }
+    return pdf / num_bxdfs;
+}
+
+
 // *** 拡散反射 ***
 Diffuse::Diffuse(Vec3 _albedo) 
     : Material(MaterialType::Diffuse), 

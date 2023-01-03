@@ -49,7 +49,7 @@ public:
     * @param[in] wi :入射方向ベクトル
     * @return Vec3  :BRDFの値
     */
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const { return Vec3::zero; }
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const;
 
     /**
     * @brief 入射方向のサンプリング確率密度を計算する関数
@@ -63,13 +63,13 @@ public:
     * @brief 材質にBxDFを追加する関数
     * @param[in] bxdf: 散乱特性を表すBxDF
     */
-    void add(std::shared_ptr<BxDF> bxdf) { bsdf.push_back(bxdf); }
+    void add(std::shared_ptr<BxDF> bxdf) { bxdf_list.push_back(bxdf); }
 
     /**
     * @brief BxDFの集合を取得
     * @return std::vector<std::shared_ptr<BxDF>> : BxDFの集合
     */
-    std::vector<std::shared_ptr<BxDF>> get_BSDF() const { return bsdf; }
+    std::vector<std::shared_ptr<BxDF>> get_BSDF() const { return bxdf_list; }
 
     /**
     * @brief 材質の反射特性を取得する関数
@@ -78,8 +78,8 @@ public:
     MaterialType get_type() const { return type; }
 
 private:
-    MaterialType type;                       /**> 反射特性   */
-    std::vector<std::shared_ptr<BxDF>> bsdf; /**> BxDFの集合 */
+    MaterialType type; /**> 反射特性 */
+    std::vector<std::shared_ptr<BxDF>> bxdf_list; /**> BxDFの集合 */
 };
 
 

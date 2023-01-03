@@ -29,12 +29,12 @@ Vec3 AreaLight::power() const {
 Vec3 AreaLight::sample_light(const intersection& ref, Vec3& w, float& pdf) {
     auto isect = shape->sample(ref);
     w = unit_vector(isect.pos - ref.pos);
-    pdf = shape->sample_pdf(ref, w);
+    pdf = shape->eval_pdf(ref, w);
     return emitte();
 }
 
-float AreaLight::sample_pdf(const intersection& ref, const Vec3& w) const {
-    return shape->sample_pdf(ref, w);
+float AreaLight::eval_pdf(const intersection& ref, const Vec3& w) const {
+    return shape->eval_pdf(ref, w);
 }
 
 bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {

@@ -54,7 +54,7 @@ public:
     * @detail サンプリングは立体角に関して行う
     * @note: PDFを算出にジオメトリの表面を使うの必要に応じてオーバーライド
     */
-    virtual float sample_pdf(const intersection& ref, const Vec3& w) const;
+    virtual float eval_pdf(const intersection& ref, const Vec3& w) const;
 
     /**
     * @brief ジオメトリサンプリングの確率密度を計算する関数

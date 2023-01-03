@@ -54,7 +54,7 @@ public:
     * @return float   :確率密度
     * @note 光源に到達しない場合は確率密度はゼロになる
     */
-    virtual float sample_pdf(const intersection& ref, const Vec3& w) const = 0;
+    virtual float eval_pdf(const intersection& ref, const Vec3& w) const = 0;
 
     /**
     * @brief レイと光源の交差判定を行う関数
@@ -97,7 +97,7 @@ public:
 
     Vec3 sample_light(const intersection& ref, Vec3& wo, float& pdf) override;
 
-    float sample_pdf(const intersection& ref, const Vec3& w) const override;
+    float eval_pdf(const intersection& ref, const Vec3& w) const override;
 
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 

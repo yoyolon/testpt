@@ -32,7 +32,7 @@ public:
     * @return float :確率密度
     * @note 球の可視領域を考慮して半球方向から一様サンプリング
     */
-    float sample_pdf(const intersection& ref, const Vec3& w) const override;
+    float eval_pdf(const intersection& ref, const Vec3& w) const override;
 
 private:
     Vec3 center;                   /**< 中心座標   */

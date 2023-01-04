@@ -134,31 +134,22 @@ private:
     float alpha;  /**> •\–Ê‘e‚³   */
 };
 
-//
-//
-//// *** Phong”½ŽËƒ‚ƒfƒ‹ƒNƒ‰ƒX ***
-//class Phong : public Material {
-//public:
-//    /**
-//    * @brief ƒRƒ“ƒXƒgƒ‰ƒNƒ^
-//    * @param[in] _albedo :”½ŽËŒW”
-//    * @param[in] _Kd     :ŠgŽU”½ŽËŒW”
-//    * @param[in] _Ks     :‹¾–Ê”½ŽËŒW”
-//    * @param[in] _shin   :Œõ‘ò“x
-//    */
-//    Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin);
-//
-//    Vec3 f(const Vec3& wo, const Vec3& wi) const override;
-//
-//    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
-//
-//    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
-//
-//private:
-//    Vec3 albedo; /**> ”½ŽËŒW”     */
-//    Vec3 Kd;     /**> ŠgŽU”½ŽËŒW” */
-//    Vec3 Ks;     /**> ‹¾–Ê”½ŽËŒW” */
-//    float shin;  /**> Œõ‘ò“x       */
-//};
-//
-//
+
+/** Phongƒ}ƒeƒŠƒAƒ‹ */
+class Phong : public Material {
+public:
+    /**
+    * @brief ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+    * @param[in] _albedo :”½ŽËŒW”
+    * @param[in] _kd     :ŠgŽU”½ŽËŒW”
+    * @param[in] _ks     :‹¾–Ê”½ŽËŒW”
+    * @param[in] _shine  :Œõ‘ò“x
+    */
+    Phong(Vec3 _albedo, Vec3 _kd, Vec3 _ks, float _shine);
+
+private:
+    Vec3  albedo; /**> ”½ŽËŒW”     */
+    Vec3  kd;     /**> ŠgŽU”½ŽËŒW” */
+    Vec3  ks;     /**> ‹¾–Ê”½ŽËŒW” */
+    float shine;  /**> Œõ‘ò“x       */
+};

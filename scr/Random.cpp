@@ -6,19 +6,23 @@ void Random::init() {
     mt.seed(1); // ÉVÅ[ÉhÇå≈íË
 }
 
+
 float Random::uniform_float() {
     return uniform_float(0.0f, 1.0f);
 }
+
 
 float Random::uniform_float(float min, float max) {
     std::uniform_real_distribution<float> dist(min, max);
     return dist(mt);
 }
 
+
 int Random::uniform_int(int min, int max) {
     std::uniform_int_distribution<> dist(min, max);
     return dist(mt);
 }
+
 
 Vec3 Random::uniform_disk_sample() {
     auto u = Random::uniform_float();
@@ -29,6 +33,7 @@ Vec3 Random::uniform_disk_sample() {
     auto y = std::cos(phi) * r;
     return Vec3(x, y, 0.0f);
 }
+
 
 Vec3 Random::concentric_disk_sample() {
     float r, phi;
@@ -50,6 +55,7 @@ Vec3 Random::concentric_disk_sample() {
     return Vec3(x, y, 0.0f);
 }
 
+
 Vec3 Random::uniform_triangle_sample() {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();
@@ -58,6 +64,7 @@ Vec3 Random::uniform_triangle_sample() {
     auto y = v * sqrt_u;
     return Vec3(x, y, 0.0f);
 }
+
 
 Vec3 Random::uniform_sphere_sample() {
     auto u = Random::uniform_float();
@@ -70,6 +77,7 @@ Vec3 Random::uniform_sphere_sample() {
     return Vec3(x, y, z);
 }
 
+
 Vec3 Random::uniform_hemisphere_sample() {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();
@@ -81,13 +89,27 @@ Vec3 Random::uniform_hemisphere_sample() {
     return Vec3(x, y, z);
 }
 
+
 Vec3 Random::cosine_hemisphere_sample() {
     auto d = Random::concentric_disk_sample();
     auto x = d.get_x();
     auto y = d.get_y();
-    auto z = std::sqrt(std::max(1.0f - x * x - y * y, 0.0f));
+    auto z = std::sqrt(std::max(1.0f - x*x - y*y, 0.0f));
     return Vec3(x, y, z);
 }
+
+
+Vec3 Random::phong_sample(float shine) {
+    auto u = Random::uniform_float();
+    auto v = Random::uniform_float();
+    auto z = std::pow(u, 1/(shine + 1.0f));
+    auto r = std::sqrt(std::max(1.0f - z*z, 0.0f));
+    auto phi = 2 * pi * v;
+    auto x = std::cos(phi) * r;
+    auto y = std::sin(phi) * r;
+    return Vec3(x, y, z);
+}
+
 
 Vec3 Random::ggx_sample(float alpha) {
     auto u = Random::uniform_float();
@@ -102,6 +124,7 @@ Vec3 Random::ggx_sample(float alpha) {
     auto y = std::sin(phi) * sin_theta;
     return Vec3(x, y, z);
 }
+
 
 Vec3 Random::beckmann_sample(float alpha) {
     auto u = Random::uniform_float();
@@ -119,9 +142,11 @@ Vec3 Random::beckmann_sample(float alpha) {
     return Vec3(x, y, z);
 }
 
+
 float Random::balance_heuristic(int n1, float pdf1, int n2, float pdf2) {
     return (n1 * pdf1) / (n1 * pdf1 + n2 * pdf2);
 }
+
 
 float Random::power_heuristic(int n1, float pdf1, int n2, float pdf2, float beta) {
     float e1 = std::powf(n1 * pdf1, beta);

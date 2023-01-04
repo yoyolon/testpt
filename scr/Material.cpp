@@ -60,7 +60,7 @@ Diffuse::Diffuse(Vec3 _albedo)
 {
     // ランバートBRDFを追加
     // TODO: オレンナイヤルモデルを実装したら粗さを考慮
-    add(std::make_shared<LambertianReflection>(_albedo));
+    add(std::make_shared<LambertianReflection>(albedo));
 }
 
 
@@ -84,7 +84,7 @@ Metal::Metal(Vec3 _albedo, Vec3 _fr, float _alpha)
     auto fres = std::make_shared<FresnelSchlick>(fr);
     if (alpha == 0) {
         set_type(MaterialType::Specular);
-        add(std::make_shared<SpecularReflection>(_albedo, fres));
+        add(std::make_shared<SpecularReflection>(albedo, fres));
     }
     else {
         auto dist = std::make_shared<GGX>(alpha);
@@ -93,29 +93,18 @@ Metal::Metal(Vec3 _albedo, Vec3 _fr, float _alpha)
 }
 
 
-//
-//
-//// *** Phongモデル ***
-//// TODO: 正規化/より効率的な重点的サンプリングの実装
-//Phong::Phong(Vec3 _albedo, Vec3 _Kd, Vec3 _Ks, float _shin) 
-//    : Material(MaterialType::Glossy), albedo(_albedo), Kd(_Kd), Ks(_Ks), shin(_shin) {}
-//
-//float Phong::eval_pdf(const Vec3& wo, const Vec3& wi) const {
-//    return std::max(std::abs(get_cos(wi)) * invpi, epsilon);
-//}
-//
-//Vec3 Phong::f(const Vec3& wo, const Vec3& wi) const {
-//    auto dir_spec = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
-//    Vec3 diffuse = Kd * invpi;
-//    Vec3 specular = Ks * std::pow(dot(dir_spec, wi), shin) * invpi;
-//    return albedo * (diffuse + specular);
-//}
-//
-//Vec3 Phong::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
-//    wi = Random::cosine_hemisphere_sample();
-//    pdf = eval_pdf(wo, wi);
-//    auto brdf = f(wo, wi);
-//    return brdf;
-//}
-//
-//
+// *** Phongマテリアル ***
+Phong::Phong(Vec3 _albedo, Vec3 _kd, Vec3 _ks, float _shine)
+    : Material(MaterialType::Glossy),
+      albedo(_albedo),
+      kd(_kd),
+      ks(_ks),
+      shine(_shine)
+{
+    if (!is_zero(kd)) {
+        add(std::make_shared<LambertianReflection>(albedo * kd));
+    }
+    if (!is_zero(ks)) {
+        add(std::make_shared<PhongReflection>(albedo * ks, shine));
+    }
+}

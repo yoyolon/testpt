@@ -4,7 +4,7 @@
 #include "Random.h"
 #include "Fresnel.h"
 
-// *** ランバート反射 ***
+// *** Lambert反射 ***
 LambertianReflection::LambertianReflection(const Vec3& _scale)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Diffuse)),
       scale(_scale)
@@ -45,6 +45,45 @@ Vec3 SpecularReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
 
 Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
     wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
+    pdf = eval_pdf(wo, wi);
+    auto brdf = eval_f(wo, wi);
+    return brdf;
+}
+
+
+
+// *** Phong鏡面反射 ***
+/** @note [E.Lafortune and Y.Willems 1994]がベース */
+PhongReflection::PhongReflection(Vec3 _scale, float _shine) 
+    : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)),
+      scale(_scale),
+      shine(_shine) 
+{}
+
+float PhongReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+    //return std::max(std::abs(get_cos(wi)) * invpi, epsilon);
+
+    auto specular = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
+    if (!is_same_hemisphere(specular, wi)) {
+        return 0.0f;
+    }
+    auto cos_term = std::pow(dot(specular, wi), shine);
+    return (shine + 1.0f) / 2 * invpi * std::max(cos_term, epsilon);
+}
+
+Vec3 PhongReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
+    auto specular = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
+    if (!is_same_hemisphere(specular, wi)) {
+        return Vec3::zero;
+    }
+    auto cos_term = std::pow(dot(specular, wi), shine);
+    auto f = (shine + 2.0f) / (2 * pi) * cos_term;
+    return scale * f;
+}
+
+Vec3 PhongReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+    wi = Random::phong_sample(shine);
+    //wi = Random::cosine_hemisphere_sample();
     pdf = eval_pdf(wo, wi);
     auto brdf = eval_f(wo, wi);
     return brdf;

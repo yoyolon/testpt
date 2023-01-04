@@ -70,6 +70,16 @@ inline float get_tan(const Vec3& w) { return get_sin(w) / get_cos(w); }
 */
 inline float get_tan2(const Vec3& w) { return get_sin2(w) / get_cos2(w); }
 
+/**
+* @brief 入出射方向が同一半球内に存在するか判定
+* @param[in]  wo :出射方向ベクトル
+* @param[in]  wi :入射方向ベクトル
+* @return float :同一半球内にあるならtrue
+*/
+inline bool is_same_hemisphere(const Vec3& wo, const Vec3& wi) { 
+    return wo.get_z() * wi.get_z() > 0; 
+}
+
 
 /** BxDFの抽象クラス */
 class BxDF {
@@ -142,7 +152,7 @@ private:
 };
 
 
-/** ランバート反射 */
+/** Lambert反射 */
 class LambertianReflection : public BxDF {
 public:
     /**
@@ -181,6 +191,31 @@ private:
     Vec3 scale; /**> スケールファクター */
     std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
 };
+
+
+
+// *** Phong鏡面反射 ***
+class PhongReflection : public BxDF {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _scale :スケールファクター
+    * @param[in] _shine :光沢度
+    */
+    PhongReflection(Vec3 _scale, float _shine);
+
+    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
+
+
+private:
+    Vec3 scale;  /**> 反射係数 */
+    float shine; /**> 光沢度 */
+};
+
 
 
 /** マイクロファセット反射 */

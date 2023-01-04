@@ -78,6 +78,14 @@ public:
     static Vec3 cosine_hemisphere_sample();
 
     /**
+    * @brief 正規化Phong分布から散乱方向をサンプリング
+    * @param[in] float :分布のパラメータ
+    * @return Vec3     :サンプリング値
+    * @note: [E.Lafortune and Y.Willems 1994]がベース
+    */
+    static Vec3 phong_sample(float shine);
+
+    /**
     * @brief Trowbridge-Reitz(GGX)分布からハーブベクトルをサンプリング
     * @param[in] float :分布のパラメータ
     * @return Vec3     :サンプリング値

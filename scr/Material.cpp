@@ -52,7 +52,7 @@ float Material::eval_pdf(const Vec3& wo, const Vec3& wi) const {
 }
 
 
-// *** 拡散反射 ***
+// *** 拡散反射マテリアル ***
 Diffuse::Diffuse(Vec3 _albedo) 
     : Material(MaterialType::Diffuse), 
       albedo(_albedo) 
@@ -61,25 +61,16 @@ Diffuse::Diffuse(Vec3 _albedo)
     add(std::make_shared<LambertianReflection>(_albedo));
 }
 
-//
-//// *** 完全鏡面反射 ***
-//Mirror::Mirror(Vec3 _albedo) : Material(MaterialType::Specular), albedo(_albedo) {}
-//
-//
-//float Mirror::eval_pdf(const Vec3& wo, const Vec3& wi) const {
-//    return 1.0f;
-//}
-//
-//Vec3 Mirror::f(const Vec3& wo, const Vec3& wi) const {
-//    return albedo / dot(Vec3(0, 0, 1), unit_vector(wi));
-//}
-//
-//Vec3 Mirror::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
-//    wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向(reflectより速い)
-//    pdf = eval_pdf(wo, wi);
-//    auto brdf = f(wo, wi);
-//    return brdf;
-//}
+
+// *** 鏡マテリアル ***
+Mirror::Mirror(Vec3 _albedo)
+    : Material(MaterialType::Specular),
+    albedo(_albedo)
+{
+    // 完全鏡面反射BRDFを追加
+    add(std::make_shared<SpecularReflection>(_albedo));
+}
+
 //
 //
 //// *** Phongモデル ***

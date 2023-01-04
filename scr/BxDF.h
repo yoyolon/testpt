@@ -147,16 +147,63 @@ class LambertianReflection : public BxDF {
 public:
     /**
     * @brief コンストラクタ
-    * @param[in] _albedo :反射係数
+    * @param[in] _scale :スケールファクター
     */
     LambertianReflection(const Vec3& _scale);
+
+    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
     Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
 
+private:
+    Vec3 scale; /**> スケールファクター */
+};
+
+
+/** 完全鏡面反射クラス */
+class SpecularReflection : public BxDF {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _scale :スケールファクター
+    */
+    SpecularReflection(Vec3 _scale);
+
     float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
 private:
     Vec3 scale; /**> スケールファクター */
+};
+
+
+/** マイクロファセット反射モデルクラス */
+/** @note 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models */
+class MicrofacetReflection : public BxDF {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _albedo       :反射係数
+    * @param[in] _distribution :マイクロファセット分布
+    * @param[in] _fresnel      :フレネルの式
+    */
+    MicrofacetReflection(Vec3 _albedo, std::shared_ptr<class MicrofacetDistribution> _distribution, 
+               std::shared_ptr<class Fresnel> _fresnel);
+
+    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
+
+
+private:
+    Vec3 albedo; /**> 反射係数     */
+    std::shared_ptr<class Fresnel> fresnel; /**> フレネル項 */
+    std::shared_ptr<class MicrofacetDistribution> distribution; /**> マイクロファセット分布 */
 };

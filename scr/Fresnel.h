@@ -21,6 +21,23 @@ public:
     virtual Vec3 evaluate(float cos_theta) const = 0;
 };
 
+/** 
+* 一定反射率クラス
+* @note: フレネルの式に従っていないので注意
+*/
+class FresnelConstant : public Fresnel {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in]  _F0 :
+    */
+    FresnelConstant(Vec3 _F0);
+
+    Vec3 evaluate(float cos_theta) const override;
+
+private:
+    Vec3 F0; /**< 反射率 */
+};
 
 /** Schlickフレネルクラス */
 class FresnelSchlick : public Fresnel {
@@ -55,7 +72,7 @@ private:
 };
 
 
-/** 単層薄膜干渉フレネルクラス */
+/** 誘電体単層薄膜干渉フレネルクラス */
 class FresnelThinfilm : public Fresnel {
 public:
     /**

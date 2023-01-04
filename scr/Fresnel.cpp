@@ -120,6 +120,15 @@ Vec3 iridterm(float cos0, float d, float n0, float n1, float n2) {
 Fresnel::~Fresnel() {}
 
 
+// *** ˆê’è”½ŽË—¦ ***
+FresnelConstant::FresnelConstant(Vec3 _F0)
+    : F0(_F0) {}
+
+Vec3 FresnelConstant::evaluate(float cos_theta) const {
+    return F0;
+}
+
+
 // *** SchlickƒtƒŒƒlƒ‹ ***
 FresnelSchlick::FresnelSchlick(Vec3 _F0)
     : F0(_F0) {}

@@ -56,7 +56,7 @@ constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
 constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES = 4;                // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES = 16;                // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -67,7 +67,7 @@ constexpr int  SAMPLES = 4;                // 1ピクセル当たりのサンプル数
 //void make_scene_simple(Scene& world, Camera& cam) {
 //    world.clear();
 //    // マテリアル
-//    auto dist_ggx       = std::make_shared<GGXDistribution>(0.025f);
+//    auto dist_ggx       = std::make_shared<GGX>(0.025f);
 //    auto fres_schlick   = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
 //    auto mat_microfacet = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres_schlick);
 //    auto mat_mirr       = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
@@ -96,7 +96,7 @@ constexpr int  SAMPLES = 4;                // 1ピクセル当たりのサンプル数
 //void make_scene_cylinder(Scene& world, Camera& cam) {
 //    world.clear();
 //    // マテリアル
-//    auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
+//    auto dist_ggx = std::make_shared<GGX>(0.05f);
 //    auto fres = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.71f, 0.29f));
 //    auto mat_gold = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres);
 //    auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
@@ -131,10 +131,10 @@ constexpr int  SAMPLES = 4;                // 1ピクセル当たりのサンプル数
 //void make_scene_MIS(Scene& world, Camera& cam) {
 //    world.clear();
 //    // マテリアル
-//    auto dist1 = std::make_shared<GGXDistribution>(0.100f);
-//    auto dist2 = std::make_shared<GGXDistribution>(0.050f);
-//    auto dist3 = std::make_shared<GGXDistribution>(0.020f);
-//    auto dist4 = std::make_shared<GGXDistribution>(0.005f);
+//    auto dist1 = std::make_shared<GGX>(0.100f);
+//    auto dist2 = std::make_shared<GGX>(0.050f);
+//    auto dist3 = std::make_shared<GGX>(0.020f);
+//    auto dist4 = std::make_shared<GGX>(0.005f);
 //    auto fres  = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
 //    auto mat_vrough = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist1, fres);
 //    auto mat_rough  = std::make_shared<Microfacet>(Vec3(0.03f, 0.03f, 0.03f), dist2, fres);
@@ -194,13 +194,13 @@ constexpr int  SAMPLES = 4;                // 1ピクセル当たりのサンプル数
 void make_scene_cornell_box(Scene& world, Camera& cam) {
     world.clear();
     //  マテリアル
-    //auto dist_ggx = std::make_shared<GGXDistribution>(0.15f);
+    //auto dist_ggx = std::make_shared<GGX>(0.15f);
     //auto fres     = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.71f, 0.29f));
     //auto mat_ggx  = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx, fres);
-    //auto dist_ggx2 = std::make_shared<GGXDistribution>(0.1f);
+    //auto dist_ggx2 = std::make_shared<GGX>(0.1f);
     //auto fres2 = std::make_shared<FresnelSchlick>(Vec3(1.00f, 1.00f, 1.00f));
     //auto mat_ggx2 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx2, fres2);
-    //auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
+    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
 
     // カラーバリエーション1
     //auto mat_red   = std::make_shared<Diffuse>(Vec3( 0.5694f,  0.0430f, 0.0451f));
@@ -215,7 +215,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     auto radiance  = Vec3(10.0f, 10.0f, 10.0f);
 
     // ボックスの色
-    auto& mat_tall  = mat_white;
+    auto& mat_tall  = mat_mirr;
     auto& mat_short = mat_white;
 
     // Light sorce
@@ -393,7 +393,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
 //    world.clear();
 //
 //    // マテリアル
-//    auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
+//    auto dist_ggx = std::make_shared<GGX>(0.05f);
 //    auto fres_schlick = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
 //    auto fres_irid1 = std::make_shared<FresnelThinfilm>(200.f, 1.0f, 1.6f, 1.0f);
 //    auto fres_irid2 = std::make_shared<FresnelThinfilm>(300.f, 1.0f, 1.6f, 1.0f);
@@ -453,9 +453,9 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
 //void make_scene_box_with_sphere(Scene& world, Camera& cam) {
 //    world.clear();
 //    //  マテリアル
-//    auto dist_ggx1 = std::make_shared<GGXDistribution>(0.10f);
-//    auto dist_ggx2 = std::make_shared<GGXDistribution>(0.15f);
-//    auto dist_ggx3 = std::make_shared<GGXDistribution>(0.30f);
+//    auto dist_ggx1 = std::make_shared<GGX>(0.10f);
+//    auto dist_ggx2 = std::make_shared<GGX>(0.15f);
+//    auto dist_ggx3 = std::make_shared<GGX>(0.30f);
 //    auto fres = std::make_shared<FresnelSchlick>(Vec3(1.00f, 0.71f, 0.29f));
 //    auto mat_ggx1 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx1, fres);
 //    auto mat_ggx2 = std::make_shared<Microfacet>(Vec3(1.0f, 1.0f, 1.0f), dist_ggx2, fres);
@@ -560,7 +560,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
 //void make_scene_vase(Scene& world, Camera& cam) {
 //    world.clear();
 //    // マテリアル
-//    auto dist_ggx = std::make_shared<GGXDistribution>(0.05f);
+//    auto dist_ggx = std::make_shared<GGX>(0.05f);
 //    auto fres     = std::make_shared<FresnelSchlick>(Vec3(0.9f,0.9f,0.9f));
 //    auto mat_ggx  = std::make_shared<Microfacet>(Vec3(1.0f,1.0f,1.0f), dist_ggx, fres);
 //

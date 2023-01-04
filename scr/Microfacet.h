@@ -9,9 +9,9 @@
 #include "Vec3.h"
 
 /** マイクロファセット分布クラス */
-class MicrofacetDistribution {
+class NDF {
 public:
-    virtual ~MicrofacetDistribution();
+    virtual ~NDF();
 
     /**
     * @brief NFD(マイクロファセット分布)を評価
@@ -41,9 +41,9 @@ public:
 
 
 /** Beckmann分布クラス */
-class BeckmannDistribution : public MicrofacetDistribution {
+class Beckmann : public NDF {
 public:
-    BeckmannDistribution(float alpha);
+    Beckmann(float alpha);
     float D(const Vec3& h) const override;
     float lambda(const Vec3& h) const override;
     Vec3 sample_halfvector() const override;
@@ -55,9 +55,9 @@ private:
 
 
 /** Trowbridge-Reitz(GGX)分布クラス */
-class GGXDistribution : public MicrofacetDistribution {
+class GGX : public NDF {
 public:
-    GGXDistribution(float alpha);
+    GGX(float alpha);
     float D(const Vec3& h) const override;
     float lambda(const Vec3& h) const override;
     Vec3 sample_halfvector() const override;

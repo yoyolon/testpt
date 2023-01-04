@@ -36,7 +36,7 @@ public:
         return 1 / (1 + lambda(wi) + lambda(wo));
     }
     virtual Vec3 sample_halfvector() const = 0;
-    virtual float eval_pdf(const Vec3& wi, const Vec3& h) const = 0;
+    virtual float eval_pdf(const Vec3& h) const = 0;
 };
 
 
@@ -47,7 +47,7 @@ public:
     float D(const Vec3& h) const override;
     float lambda(const Vec3& h) const override;
     Vec3 sample_halfvector() const override;
-    float eval_pdf(const Vec3& wi, const Vec3& h) const override;
+    float eval_pdf(const Vec3& h) const override;
 
 private: 
     float alpha;
@@ -61,7 +61,7 @@ public:
     float D(const Vec3& h) const override;
     float lambda(const Vec3& h) const override;
     Vec3 sample_halfvector() const override;
-    float eval_pdf(const Vec3& wi, const Vec3& h) const override;
+    float eval_pdf(const Vec3& h) const override;
 
 private:
     float alpha;

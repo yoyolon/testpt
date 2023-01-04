@@ -31,7 +31,7 @@ Vec3 Beckmann::sample_halfvector() const {
     return Random::beckmann_sample(alpha);
 }
 
-float Beckmann::eval_pdf(const Vec3& wi, const Vec3& h) const {
+float Beckmann::eval_pdf(const Vec3& h) const {
     return D(h) * std::abs(get_cos(h));
 }
 
@@ -58,6 +58,6 @@ Vec3 GGX::sample_halfvector() const {
     return Random::ggx_sample(alpha);
 }
 
-float GGX::eval_pdf(const Vec3& wi, const Vec3& h) const {
+float GGX::eval_pdf(const Vec3& h) const {
     return D(h) * std::abs(get_cos(h));
 }

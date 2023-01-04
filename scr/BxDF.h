@@ -117,21 +117,21 @@ public:
     BxDFType get_type() const { return type; }
 
     /**
-    * @brief 完全鏡面であるか判定
+    * @brief 完全鏡面であるか判定する関数
     * @return bool :完全鏡面ならtrue
     * @note enum classは型キャストが必要
     */
     bool is_specular() const { return ((uint8_t)type & (uint8_t)BxDFType::Specular); }
 
     /**
-    * @brief 反射物体であるか判定
+    * @brief 反射物体であるか判定する関数
     * @return bool :反射物体ならtrue
     * @note enum classは型キャストが必要
     */
     bool is_reflection() const { return ((uint8_t)type & (uint8_t)BxDFType::Reflection); }
 
     /**
-    * @brief 透過物体であるか判定
+    * @brief 透過物体であるか判定する関数
     * @return bool :透過物体ならtrue
     * @note enum classは型キャストが必要
     */
@@ -142,7 +142,7 @@ private:
 };
 
 
-/** ランバート反射クラス */
+/** ランバート反射 */
 class LambertianReflection : public BxDF {
 public:
     /**
@@ -162,14 +162,14 @@ private:
 };
 
 
-/** 完全鏡面反射クラス */
+/** 完全鏡面反射 */
 class SpecularReflection : public BxDF {
 public:
     /**
     * @brief コンストラクタ
     * @param[in] _scale :スケールファクター
     */
-    SpecularReflection(Vec3 _scale);
+    SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresnel> _fres);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
 
@@ -179,21 +179,23 @@ public:
 
 private:
     Vec3 scale; /**> スケールファクター */
+    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
 };
 
 
-/** マイクロファセット反射モデルクラス */
+/** マイクロファセット反射 */
 /** @note 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models */
 class MicrofacetReflection : public BxDF {
 public:
     /**
     * @brief コンストラクタ
-    * @param[in] _albedo       :反射係数
-    * @param[in] _distribution :マイクロファセット分布
-    * @param[in] _fresnel      :フレネルの式
+    * @param[in] _scale :スケールファクター
+    * @param[in] _dist  :マイクロファセット分布
+    * @param[in] _fres  :フレネルの式
     */
-    MicrofacetReflection(Vec3 _albedo, std::shared_ptr<class MicrofacetDistribution> _distribution, 
-               std::shared_ptr<class Fresnel> _fresnel);
+    MicrofacetReflection(Vec3 _scale, 
+                         std::shared_ptr<class NDF> _dist, 
+                         std::shared_ptr<class Fresnel> _fres);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
 
@@ -203,7 +205,7 @@ public:
 
 
 private:
-    Vec3 albedo; /**> 反射係数     */
-    std::shared_ptr<class Fresnel> fresnel; /**> フレネル項 */
-    std::shared_ptr<class MicrofacetDistribution> distribution; /**> マイクロファセット分布 */
+    Vec3 scale; /**> スケールファクター */
+    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
+    std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
 };

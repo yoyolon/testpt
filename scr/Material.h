@@ -110,6 +110,24 @@ private:
     Vec3 albedo; /**> 反射係数 */
 };
 
+
+/** 金属マテリアル */
+class Metal : public Material {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _albedo :反射係数
+    * @param[in] _fr     :金属反射率
+    * @param[in] _alpha  :表面粗さ
+    */
+    Metal(Vec3 _albedo, Vec3 fr, float _alpha);
+
+private:
+    Vec3  albedo; /**> 反射係数   */
+    Vec3  fr;     /**> 金属反射率 */
+    float alpha;  /**> 表面粗さ   */
+};
+
 //
 //
 //// *** Phong反射モデルクラス ***

@@ -77,6 +77,12 @@ public:
     */
     MaterialType get_type() const { return type; }
 
+    /**
+    * @brief Ş¿‚Ì”½Ë“Á«‚ğİ’è‚·‚éŠÖ”
+    * @param[in] t :Ş¿‚Ì”½Ë“Á«
+    */
+    void set_type(MaterialType t) { type = t; }
+
 private:
     MaterialType type; /**> ”½Ë“Á« */
     std::vector<std::shared_ptr<BxDF>> bxdf_list; /**> BxDF‚ÌW‡ */

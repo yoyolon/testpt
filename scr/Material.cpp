@@ -83,6 +83,7 @@ Metal::Metal(Vec3 _albedo, Vec3 _fr, float _alpha)
 {
     auto fres = std::make_shared<FresnelSchlick>(fr);
     if (alpha == 0) {
+        set_type(MaterialType::Specular);
         add(std::make_shared<SpecularReflection>(_albedo, fres));
     }
     else {

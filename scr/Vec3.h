@@ -180,3 +180,23 @@ inline Vec3 unit_vector(const Vec3& a) { return a / a.length(); }
 inline Vec3 reflect(const Vec3& w, const Vec3& n) {
     return -w + 2 * dot(w, n) * n;
 }
+
+/**
+* @brief 入射ベクトルの屈折方向ベクトルを計算する関数
+* @param[in]  w   :入射ベクトル
+* @param[in]  n   :法線ベクトル
+* @param[in]  eta :入射側の媒質の相対屈折率
+* @return Vec3    :スネルの法則に従った屈折方向ベクトル
+* @note 物体表面から離れる方向を正とする
+*/
+inline Vec3 refract(const Vec3& w, const Vec3& n, float eta) {
+    auto cos_in   = dot(w, n);
+    auto sin2_in  = std::max(0.0f, 1.0f - cos_in * cos_in);
+    auto sin2_out = eta * eta * sin2_in;
+    // 全反射判定
+    if (sin2_out > 1.0f) {
+        return Vec3::zero;
+    }
+    auto cos_out = std::sqrt(1.0f - sin2_out);
+    return eta * -w + (eta * cos_in - cos_out) * n;
+}

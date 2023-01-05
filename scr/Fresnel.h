@@ -10,7 +10,7 @@
 /** フレネル式の抽象クラス */
 class Fresnel {
 public:
-    virtual ~Fresnel();
+    virtual ~Fresnel() {};
 
     /**
     * @brief 入射角によるフレネル反射率を計算する関数

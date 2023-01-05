@@ -46,7 +46,7 @@
 
 
 enum class Sampling {
-    BRDF  = 1, // BRDFによる重点的サンプリング
+    BSDF  = 1, // BSDFによる重点的サンプリング
     LIGHT = 2, // 光源による重点的サンプリング
     MIS   = 3  // 多重重点的サンプリング
 };
@@ -61,24 +61,26 @@ constexpr int  SAMPLES = 32;                // 1ピクセル当たりのサンプル数
 
 
 /**
-* @brief BRDFに沿った直接光の入射方向をサンプリング
+* @brief BSDFに沿った直接光の入射方向をサンプリング
 * @pram[in] r             :追跡レイ
 * @pram[in] isect         :交差点情報
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
 * @return Vec3 :直接光の重み付き入射放射輝度
+* @note スペキュラレイでは実行されない
 */
-Vec3 explict_brdf(const Ray& r, const intersection& isect, const Scene& world,
+Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
                   const ONB& shading_coord) {
     auto Ld = Vec3::zero;
     Vec3 wi_local; // 直接光の入射方向
     float pdf_scattering, pdf_light, weight = 1.0f;
 
-    // BRDFに基づき直接光の入射方向をサンプリング
+    // BSDFに基づき直接光の入射方向をサンプリング
     auto wo = unit_vector(r.get_dir());          // 出射方向は必ず正規化する
     auto wo_local = -shading_coord.to_local(wo); // ローカルな出射方向
-    auto brdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering);
-    if (pdf_scattering == 0 || is_zero(brdf)) {
+    BxDFType bsdf_type;
+    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, bsdf_type);
+    if (pdf_scattering == 0 || is_zero(bsdf)) {
         return Ld;
     }
 
@@ -107,7 +109,7 @@ Vec3 explict_brdf(const Ray& r, const intersection& isect, const Scene& world,
         weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
     }
     auto cos_term = dot(isect.normal, wi);
-    Ld += brdf * cos_term * weight * L / pdf_scattering;
+    Ld += bsdf * cos_term * weight * L / pdf_scattering;
     return Ld;
 }
 
@@ -118,6 +120,7 @@ Vec3 explict_brdf(const Ray& r, const intersection& isect, const Scene& world,
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
 * @return Vec3 :直接光の重み付き入射放射輝度
+* @note スペキュラレイでは実行されない
 */
 Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& world,
                        const ONB& shading_coord) {
@@ -148,13 +151,13 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
         return Ld;
     }
 
-    // BRDFを評価
+    // BSDFを評価
     auto wo       = unit_vector(r.get_dir()); // 出射方向は必ず正規化する
     auto wo_local = -shading_coord.to_local(wo);
     auto wi_local =  shading_coord.to_local(wi);
-    auto brdf = isect.mat->eval_f(wo_local, wi_local);
+    auto bsdf = isect.mat->eval_f(wo_local, wi_local);
     pdf_scattering = isect.mat->eval_pdf(wo_local, wi_local);
-    if (pdf_scattering == 0 || is_zero(brdf)) {
+    if (pdf_scattering == 0 || is_zero(bsdf)) {
         return Ld;
     }
 
@@ -163,7 +166,7 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
         weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
     }
     auto cos_term = std::abs(dot(isect.normal, wi));
-    Ld += brdf * L * cos_term * weight / pdf_light;
+    Ld += bsdf * L * cos_term * weight / pdf_light;
     return Ld;
 }
 
@@ -184,9 +187,9 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
         return Ld;
     }
 
-    // BRDFに基づきサンプリング
-    if ((sampling_strategy == Sampling::BRDF) || (sampling_strategy == Sampling::MIS)) {
-        Ld += contrib * explict_brdf(r, isect, world, shading_coord);
+    // BSDFに基づきサンプリング
+    if ((sampling_strategy == Sampling::BSDF) || (sampling_strategy == Sampling::MIS)) {
+        Ld += contrib * explict_bsdf(r, isect, world, shading_coord);
     }
 
     // 光源のジオメトリに基づきサンプリング
@@ -241,16 +244,16 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         ONB shading_coord(isect.normal);
         L += contrib * explicit_direct_light(r, isect, world, shading_coord);
 
-        // BRDFに基づく出射方向のサンプリング
-        // NOTE: カメラ方向をwi，光源方向をwoにしている
+        // BSDFに基づく出射方向のサンプリング
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
         float pdf;
-        auto brdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf);
+        BxDFType bsdf_type;
+        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
         auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
         auto cos_term = std::abs(dot(isect.normal, wi));
-        contrib = contrib * brdf * cos_term / pdf;
-        is_specular_ray = (isect.mat->get_type() == MaterialType::Specular) ? true : false;
+        contrib = contrib * bsdf * cos_term / pdf;
+        is_specular_ray = ((uint8_t)bsdf_type == (uint8_t)MaterialType::Specular) ? true : false;
         r = Ray(isect.pos, wi); // 次のレイを生成
 
         //ロシアンルーレット
@@ -273,6 +276,7 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
 * @return Vec3          :レイに沿った放射輝度
 * @note ロシアンルーレットによる打ち切りを実装していないのでmax_depthは小さめにしておく
 */
+// TODO: スペキュラ以外の透過は無視する
 Vec3 L_direct(const Ray& r_in, int max_depth, const Scene& world) {
     auto L = Vec3::zero, contrib = Vec3::one;
     Ray r = Ray(r_in);
@@ -298,16 +302,16 @@ Vec3 L_direct(const Ray& r_in, int max_depth, const Scene& world) {
             break;
         }
         else {
-            // BRDFに基づく出射方向のサンプリング
-            // NOTE: カメラ方向をwi，光源方向をwoにしている
-            Vec3 wi_local = -shading_coord.to_local(unit_vector(r.get_dir()));
-            Vec3 wo_local;
+            // 完全鏡面出射方向のサンプリング
+            Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
+            Vec3 wi_local;
             float pdf;
-            auto brdf = isect.mat->sample_f(wi_local, isect, wo_local, pdf);
-            auto wo = shading_coord.to_world(wo_local);
-            auto cos_term = std::abs(dot(isect.normal, wo));
-            contrib = contrib * brdf * cos_term / pdf;
-            r = Ray(isect.pos, wo); // 次のレイを生成
+            BxDFType bsdf_type;
+            auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
+            auto wi = shading_coord.to_world(wi_local);
+            auto cos_term = std::abs(dot(isect.normal, wi));
+            contrib = contrib * bsdf * cos_term / pdf;
+            r = Ray(isect.pos, wi); // 次のレイを生成
         }
     }
     return L;

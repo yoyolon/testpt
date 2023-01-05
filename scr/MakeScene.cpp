@@ -19,14 +19,15 @@ void make_scene_simple(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
     auto mat_gold = std::make_shared<Metal>(Vec3::one, Vec3(1.00f, 0.71f, 0.29f), 0.05f);
+    auto mat_phong = std::make_shared<Phong>(Vec3::one, Vec3(0.0f, 0.1f, 0.0f), Vec3(0.0f, 0.0f, 0.0f), 150.0f);
     auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
 
     // オブジェクト
-    auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_gold);
+    auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_phong);
     auto light_shape_disk = std::make_shared<Disk>(Vec3(0.0f,20.0f,0.0f), 50.0f, nullptr);
     auto light_disk       = std::make_shared<AreaLight>(Vec3(1.0f,1.0f,1.0f), light_shape_disk);
     world.add(obj_sphere);
-    world.add(light_disk);
+    //world.add(light_disk);
 
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "simple.png"); // フィルム
@@ -315,9 +316,10 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
     auto mat_gold2 = std::make_shared<Metal>(Vec3::one, gold, 0.15f);
     auto mat_gold3 = std::make_shared<Metal>(Vec3::one, gold, 0.30f);
     auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
-    //auto mat_phong = std::make_shared<Phong>(Vec3::one, Vec3(0.0f,0.0f,0.0f), Vec3(0.25f,0.25f,0.25f), 150.0f);
-    auto mat_phong = std::make_shared<Phong>(Vec3::one, Vec3(0.0f,0.0f,0.0f), Vec3(0.25f,0.25f,0.25f), 50.0f);
+    auto mat_phong = std::make_shared<Phong>(Vec3::one, Vec3(0.0f,0.0f,0.0f), Vec3(0.25f,0.25f,0.25f), 150.0f);
     auto mat_diff  = std::make_shared<Diffuse>(Vec3(0.0f,0.1f,0.0f));
+    auto mat_diff2 = std::make_shared<Diffuse>(Vec3::one);
+    auto mat_t = std::make_shared<DiffusePlastic>(Vec3::one, Vec3(0.05,0.75,0.05), Vec3(0.95, 0.25, 0.95));
 
     auto mat_red = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
     auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
@@ -326,7 +328,7 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
 
     auto sphere1 = std::make_shared<Sphere>(Vec3(-123, 50.0f, -200.0f), 50.0f, mat_gold1);
     auto sphere2 = std::make_shared<Sphere>(Vec3(-273, 50.0f, -200.0f), 50.0f, mat_gold2);
-    auto sphere3 = std::make_shared<Sphere>(Vec3(-423, 50.0f, -200.0f), 50.0f, mat_phong);
+    auto sphere3 = std::make_shared<Sphere>(Vec3(-423, 50.0f, -200.0f), 50.0f, mat_t);
 
 
     // Light sorce

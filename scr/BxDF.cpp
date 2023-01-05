@@ -26,6 +26,34 @@ Vec3 LambertianReflection::sample_f(const Vec3& wo, const intersection& p, Vec3&
 }
 
 
+// *** Lambert透過 ***
+LambertianTransmission::LambertianTransmission(const Vec3& _scale)
+    : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Diffuse)),
+    scale(_scale)
+{}
+
+float LambertianTransmission::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+    if (is_same_hemisphere(wo, wi)) {
+        return 0.0f; // BTDFなので同一半球内ならサンプルされない
+    }
+    else {
+        return std::max(std::abs(get_cos(wi)) * invpi, epsilon);
+    }
+}
+
+Vec3 LambertianTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
+    return scale * invpi;
+}
+
+Vec3 LambertianTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+    auto temp = Random::cosine_hemisphere_sample();
+    wi = Vec3(temp.get_x(), temp.get_y(), -temp.get_z()); // 透過方向は半球外
+    pdf = eval_pdf(wo, wi);
+    auto brdf = eval_f(wo, wi);
+    return brdf;
+}
+
+
 // *** 完全鏡面反射 ***
 SpecularReflection::SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresnel> _fres)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Specular)), 
@@ -34,19 +62,20 @@ SpecularReflection::SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresne
 {}
 
 float SpecularReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
-    return 1.0f; // 正反射方向を重点的サンプリングしているためpdfは1.0
+    return 0.0f; // デルタ関数のため
 }
 
 Vec3 SpecularReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
-    auto cos_term = get_cos(wi); // cos(wi)とcos(wo)が等しい
-    auto F = fres->evaluate(cos_term);
-    return scale * F / cos_term;
+    return Vec3::zero; // デルタ関数のため
 }
 
 Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+    // 正反射方向を明示的に重点的サンプリングするのでevalメソッドは使わない
     wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
-    pdf = eval_pdf(wo, wi);
-    auto brdf = eval_f(wo, wi);
+    pdf = 1.0f;
+    auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
+    auto F = fres->evaluate(cos_term);
+    auto brdf = scale * F / std::abs(cos_term);
     return brdf;
 }
 
@@ -61,8 +90,6 @@ PhongReflection::PhongReflection(Vec3 _scale, float _shine)
 {}
 
 float PhongReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
-    //return std::max(std::abs(get_cos(wi)) * invpi, epsilon);
-
     auto specular = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     if (!is_same_hemisphere(specular, wi)) {
         return 0.0f;

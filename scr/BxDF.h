@@ -127,25 +127,39 @@ public:
     BxDFType get_type() const { return type; }
 
     /**
+    * @brief 材質の反射特性が一致するか判定
+    * @param t :チェックする反射特性
+    * @return 一致するならtrue
+    */
+    bool is_same_type(BxDFType t) const { return BxDFType((uint8_t)type & (uint8_t)t) == type; }
+
+    /**
+    * @brief 材質の反射特性が含まれているか判定
+    * @param t :チェックする反射特性
+    * @return 含まれるならtrue
+    */
+    bool is_include_type(BxDFType t) const { return BxDFType((uint8_t)type & (uint8_t)t) == t; }
+
+    /**
     * @brief 完全鏡面であるか判定する関数
     * @return bool :完全鏡面ならtrue
     * @note enum classは型キャストが必要
     */
-    bool is_specular() const { return ((uint8_t)type & (uint8_t)BxDFType::Specular); }
+    bool is_specular() const { return is_include_type(BxDFType::Specular); }
 
     /**
     * @brief 反射物体であるか判定する関数
     * @return bool :反射物体ならtrue
     * @note enum classは型キャストが必要
     */
-    bool is_reflection() const { return ((uint8_t)type & (uint8_t)BxDFType::Reflection); }
+    bool is_reflection() const { return is_include_type(BxDFType::Reflection); }
 
     /**
     * @brief 透過物体であるか判定する関数
     * @return bool :透過物体ならtrue
     * @note enum classは型キャストが必要
     */
-    bool is_transmission() const { return ((uint8_t)type & (uint8_t)BxDFType::Transmission); }
+    bool is_transmission() const { return is_include_type(BxDFType::Transmission); }
 
 private:
     BxDFType type; /**> BxDFの種類 */
@@ -171,6 +185,25 @@ private:
     Vec3 scale; /**> スケールファクター */
 };
 
+
+/** Lambert透過 */
+class LambertianTransmission : public BxDF {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _scale :スケールファクター
+    */
+    LambertianTransmission(const Vec3& _scale);
+
+    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
+
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+
+private:
+    Vec3 scale; /**> スケールファクター */
+};
 
 /** 完全鏡面反射 */
 class SpecularReflection : public BxDF {

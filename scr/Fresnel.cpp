@@ -116,10 +116,6 @@ Vec3 iridterm(float cos0, float d, float n0, float n1, float n2) {
 }
 
 
-// *** フレネルクラス ***
-Fresnel::~Fresnel() {}
-
-
 // *** 一定反射率 ***
 FresnelConstant::FresnelConstant(Vec3 _F0)
     : F0(_F0) {}
@@ -143,12 +139,16 @@ FresnelDielectric::FresnelDielectric(float _ni, float _no)
     : ni(_ni), no(_no) {}
 
 Vec3 FresnelDielectric::evaluate(float cos_theta) const {
+    bool is_inside = cos_theta < 0; // 入射レイが媒質の内側にあるか判定
+    cos_theta = std::abs(cos_theta);
+    auto n_inside  = is_inside ? no : ni;
+    auto n_outside = is_inside ? ni : no;
     float sin_theta = std::sqrt(std::max(0.0f, 1.0f - cos_theta * cos_theta));
-    float sinO = no / ni * sin_theta;
-    if (sinO >= 1.0f) return Vec3::zero;
-    float cosO = std::sqrt(std::max(0.0f, 1.0f - sinO * sinO));
-    float Rs = fresnel_rs(ni, no, cos_theta, cosO);
-    float Rp = fresnel_rp(ni, no, cos_theta, cosO);
+    float sin_out = no / ni * sin_theta;
+    if (sin_out >= 1.0f) return Vec3::zero;
+    float cos_out = std::sqrt(std::max(0.0f, 1.0f - sin_out * sin_out));
+    float Rs = fresnel_rs(ni, no, cos_theta, cos_out);
+    float Rp = fresnel_rp(ni, no, cos_theta, cos_out);
     float R =  (Rs * Rs + Rp * Rp) / 2;
     return Vec3(R, R, R);
 }

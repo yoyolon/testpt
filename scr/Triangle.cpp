@@ -105,6 +105,7 @@ bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p
     p.t = t;
     Vec3 N_lerp = (1.0f - u - v) * N0 + u * N1 + v * N2; // 法線補間
     p.normal = N_lerp;
+    p.is_front = dot(p.normal, r.get_dir()) > 0;
     p.pos = r.at(t);
     p.mat = mat;
     return true;
@@ -220,7 +221,7 @@ float TriangleMesh::area() const {
 }
 
 intersection TriangleMesh::sample(const intersection& p) const {
-    // 面積に無関係に一つのシェイプからサンプリング
+    // 面積に無関係に一つの三角シェイプからサンプリング
     auto index = Random::uniform_int(0, Triangles.size() - 1);
     auto t = Triangles[index];
     return t.sample(p);

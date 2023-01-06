@@ -194,7 +194,7 @@ inline Vec3 refract(const Vec3& w, const Vec3& n, float eta) {
     auto sin2_in  = std::max(0.0f, 1.0f - cos_in * cos_in);
     auto sin2_out = eta * eta * sin2_in;
     // ‘S”½Ë”»’è
-    if (sin2_out > 1.0f) {
+    if (sin2_out >= 1.0f) {
         return Vec3::zero;
     }
     auto cos_out = std::sqrt(1.0f - sin2_out);

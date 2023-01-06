@@ -26,6 +26,17 @@ struct intersection {
 };
 
 
+/**
+* @brief 物体表面の表裏を判定する関数
+* @param[in] r  :オブジェクトへの入射レイ
+* @param[in] n  :オブジェクトの法線
+* @return float :確率密度
+*/
+inline bool is_front(const Ray& r, const Vec3  n) {
+    return dot(n, -r.get_dir()) > 0; // 物体表面から離れる方向を正にするために-1を乗算
+}
+
+
 /** 三次元形状モデル抽象クラス */
 class Shape {
 public:

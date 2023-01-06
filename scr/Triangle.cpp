@@ -105,7 +105,7 @@ bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p
     p.t = t;
     Vec3 N_lerp = (1.0f - u - v) * N0 + u * N1 + v * N2; // –@ü•âŠÔ
     p.normal = N_lerp;
-    p.is_front = dot(p.normal, r.get_dir()) > 0;
+    p.is_front = is_front(r, p.normal);
     p.pos = r.at(t);
     p.mat = mat;
     return true;

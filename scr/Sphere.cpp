@@ -29,7 +29,7 @@ bool Sphere::intersect(const Ray& r, float t_min, float t_max, intersection& p) 
     p.t = t;
     p.pos = r.at(t);
     p.normal = unit_vector(p.pos - center);
-    p.is_front = dot(p.normal, r.get_dir()) > 0;
+    p.is_front = is_front(r, p.normal);
     p.mat = mat;
     return true;
 };
@@ -99,7 +99,7 @@ bool Disk::intersect(const Ray& r, float t_min, float t_max, intersection& p) co
     p.pos = pos;
     p.normal = normal;
     if (is_flip_normal) p.normal *= -1; // –@ü‚Ì”½“]
-    p.is_front = dot(p.normal, r.get_dir()) > 0;
+    p.is_front = is_front(r, p.normal);
     p.mat = mat;
     return true;
 };
@@ -165,7 +165,7 @@ bool Cylinder::intersect(const Ray& r, float t_min, float t_max, intersection& p
     p.pos = r.at(t);
     auto diff = p.pos - center;
     p.normal = unit_vector(Vec3(diff.get_x(), 0.0f, diff.get_z()));
-    p.is_front = dot(p.normal, r.get_dir()) > 0;
+    p.is_front = is_front(r, p.normal);
     p.mat = mat;
     return true;
 }

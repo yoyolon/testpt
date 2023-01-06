@@ -8,9 +8,8 @@
 
 Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf,
                         BxDFType& sampled_type, BxDFType acceptable_type) const {
-    // 一つのBxDFから方向をサンプリングして寄与はすべてのBxDFを考慮する
-    int num_acceptable_bxdfs = 0;
     // 許容可能なBxDFの要素数をカウント
+    int num_acceptable_bxdfs = 0;
     for (const auto& bxdf : bxdf_list) {
         if (bxdf->is_same_type(acceptable_type))
             num_acceptable_bxdfs++;
@@ -30,24 +29,23 @@ Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& 
         bxdf_list_index++;
     }
     const auto& sampled_bxdf = bxdf_list[bxdf_list_index];
-    auto ff = sampled_bxdf->sample_f(wo, p, wi, pdf);
+    float sampled_pdf;
+    auto sampled_f = sampled_bxdf->sample_f(wo, p, wi, sampled_pdf);
     sampled_type = sampled_bxdf->get_type();
     // すべての許容可能なBxDFを考慮してBSDFとpdfを計算
     auto f = eval_f(wo, wi, acceptable_type);
     pdf = eval_pdf(wo, wi, acceptable_type);
-    // スペキュラの場合寄与が無視される
-    // TODO: あくまで救済処置あとで綺麗にする
+    // サンプリングBxDFがスペキュラの場合evalで0寄与となるので補正
+    // TODO: あくまで救済処置あとで修正
     if (sampled_bxdf->is_specular()) {
-        f += ff;
-        pdf += 1.0f / num_acceptable_bxdfs;
+        f += sampled_f;
+        pdf += sampled_pdf / num_acceptable_bxdfs;
     }
     return f;
 }
 
 Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi, BxDFType acceptable_type) const {
     // すべてのBxDFの総和を計算
-    // TODO: 反射と透過の区別(内積を利用)
-    //       あるいはBxDFを半球でなく全球範囲で定義する
     auto f = Vec3::zero;
     bool is_reflect = wo.get_z() * wi.get_z() > 0; // 方向が反射はどうか判定
     for (const auto& bxdf : bxdf_list) {

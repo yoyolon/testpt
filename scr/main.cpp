@@ -54,10 +54,10 @@ Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION  = false;  // 大域照明効果(GI)を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
 constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES =4;                // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES =64;                // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -79,7 +79,8 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
     auto wo = unit_vector(r.get_dir());          // 出射方向は必ず正規化する
     auto wo_local = -shading_coord.to_local(wo); // ローカルな出射方向
     BxDFType bsdf_type;
-    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, bsdf_type);
+    BxDFType type = isect.is_front ? BxDFType::Reflection : BxDFType::Transmission; // 反射か透過
+    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, bsdf_type, type);
     if (pdf_scattering == 0 || is_zero(bsdf)) {
         return Ld;
     }
@@ -237,7 +238,7 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         }
 
         // 直接光のサンプリング
-        ONB shading_coord(isect.normal);
+        ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
         L += contrib * explicit_direct_light(r, isect, world, shading_coord);
 
         // BSDFに基づく出射方向のサンプリング
@@ -246,12 +247,14 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         float pdf;
         BxDFType bsdf_type;
         auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
+        //if (pdf == 0.0f || is_zero(bsdf)) break;
+        if (pdf == 0.0f) break;
+        if (is_zero(bsdf)) break;
         auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
         auto cos_term = std::abs(dot(isect.normal, wi));
         contrib = contrib * bsdf * cos_term / pdf;
         is_specular_ray = is_spacular_type(bsdf_type);
         r = Ray(isect.pos, wi); // 次のレイを生成
-
         //ロシアンルーレット
         if (bounces >= 3) {
             float p_rr = std::max(0.05f, 1.0f - contrib.average()); // 打ち切り確率
@@ -292,7 +295,8 @@ Vec3 L_direct(const Ray& r_in, int max_depth, const Scene& world) {
             break;
         }
         // 出射方向のサンプリング
-        ONB shading_coord(isect.normal);
+        ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
+        //ONB shading_coord(isect.normal);
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
         float pdf;
@@ -333,9 +337,14 @@ Vec3 L_normal(const Ray& r, const Scene& world) {
 * @return Vec3      :ガンマ補正後の色
 */
 Vec3 gamma_correction(const Vec3& color, float gamma) {
+    // ガンマ補正
     float r = std::pow(color.get_x(), gamma);
     float g = std::pow(color.get_y(), gamma);
     float b = std::pow(color.get_z(), gamma);
+    // NaNの除外
+    if (!isfinite(r)) r = 0.0f;
+    if (!isfinite(g)) g = 0.0f;
+    if (!isfinite(b)) b = 0.0f;
     return Vec3(r, g, b);
 }
 

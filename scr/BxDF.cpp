@@ -49,8 +49,8 @@ Vec3 LambertianTransmission::sample_f(const Vec3& wo, const intersection& p, Vec
     auto temp = Random::cosine_hemisphere_sample();
     wi = Vec3(temp.get_x(), temp.get_y(), -temp.get_z()); // 透過方向は半球外
     pdf = eval_pdf(wo, wi);
-    auto brdf = eval_f(wo, wi);
-    return brdf;
+    auto btdf = eval_f(wo, wi);
+    return btdf;
 }
 
 
@@ -107,25 +107,30 @@ Vec3 SpecularTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
 
 Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
     // 透過方向を明示的に重点的サンプリングするのでevalメソッドは使わない
-    // 出射方向(入射レイ)が媒質の内側にあるか判定
-    auto cos_out = get_cos(wo);
-    bool is_inside = cos_out < 0;
+    bool is_inside = !p.is_front; // 現在の媒質が内側か判定
     auto n_inside  = is_inside ? no : ni;
     auto n_outside = is_inside ? ni : no;
-    auto normal = is_inside ? Vec3(0.0f,0.0f,-1.0f) : Vec3(0.0f,0.0f,1.0f);
-    auto eta = n_outside * n_outside; // 相対屈折率
-    wi = refract(wo, normal, eta); // 屈折方向
+    //auto eta = n_inside / n_outside; // 相対屈折率
+    auto eta = n_outside / n_inside; // 相対屈折率
+    wi = refract(wo, Vec3(0.0f,0.0f,1.0f), eta); // 屈折方向
     // 全反射の場合
     if (is_zero(wi)) {
+        // 反射させる
+        //wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
+        //pdf = 1.0f;
+        //auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
+        //auto F = fres->evaluate(cos_term);
+        //auto brdf = scale * F / std::abs(cos_term);
+        //return brdf;
         pdf = 0.0f;
         return Vec3::zero;
 
     }
     pdf = 1.0f;
     auto cos_term = get_cos(wi);
-    auto F = Vec3::one - fres->evaluate(cos_out); // フレネル透過率
-    auto brdf = scale * eta * eta * F / std::abs(cos_term);
-    return brdf;
+    auto F = Vec3::one - fres->evaluate(cos_term); // フレネル透過率
+    auto btdf = scale * eta * eta * F / std::abs(cos_term);
+    return btdf;
 }
 
 

@@ -30,11 +30,17 @@ Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& 
         bxdf_list_index++;
     }
     const auto& sampled_bxdf = bxdf_list[bxdf_list_index];
-    sampled_bxdf->sample_f(wo, p, wi, pdf);
+    auto ff = sampled_bxdf->sample_f(wo, p, wi, pdf);
     sampled_type = sampled_bxdf->get_type();
     // すべての許容可能なBxDFを考慮してBSDFとpdfを計算
     auto f = eval_f(wo, wi, acceptable_type);
     pdf = eval_pdf(wo, wi, acceptable_type);
+    // スペキュラの場合寄与が無視される
+    // TODO: あくまで救済処置あとで綺麗にする
+    if (sampled_bxdf->is_specular()) {
+        f += ff;
+        pdf += 1.0f / num_acceptable_bxdfs;
+    }
     return f;
 }
 
@@ -74,7 +80,7 @@ float Material::eval_pdf(const Vec3& wo, const Vec3& wi, BxDFType acceptable_typ
 
 // *** 拡散反射マテリアル ***
 Diffuse::Diffuse(Vec3 _base) 
-    : Material(MaterialType::Diffuse), 
+    : Material(), 
       base(_base) 
 {
     // ランバートBRDFを追加
@@ -84,13 +90,13 @@ Diffuse::Diffuse(Vec3 _base)
 
 
 // *** 拡散透過マテリアル ***
+// TODO: [要検証]拡散透過って何？？？
 DiffusePlastic::DiffusePlastic(Vec3 _base, Vec3 _r, Vec3 _t)
-    : Material(MaterialType::Diffuse),
+    : Material(),
       base(_base),
       r(_r),
       t(_t)
 {
-    // ランバートBRDFを追加
     if (!is_zero(r)) {
         add(std::make_shared<LambertianReflection>(base * r));
     }
@@ -99,9 +105,10 @@ DiffusePlastic::DiffusePlastic(Vec3 _base, Vec3 _r, Vec3 _t)
     }
 }
 
+
 // *** 鏡マテリアル ***
 Mirror::Mirror(Vec3 _base)
-    : Material(MaterialType::Specular),
+    : Material(),
     base(_base)
 {
     auto fres = std::make_shared<FresnelConstant>(Vec3::one);
@@ -109,16 +116,32 @@ Mirror::Mirror(Vec3 _base)
 }
 
 
+// *** ガラスマテリアル ***
+Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n)
+    : Material(),
+      base(_base),
+      r(_r),
+      t(_t),
+      n(_n)
+{
+    if (!is_zero(r)) {
+        add(std::make_shared<SpecularReflection>(base * r, n));
+    }
+    if (!is_zero(t)) {
+        add(std::make_shared<SpecularTransmission>(base * t, n));
+    }
+}
+
+
 // *** 金属マテリアル ***
 Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
-    : Material(MaterialType::Glossy),
+    : Material(),
       base(_base),
       fr(_fr),
       alpha(_alpha)
 {
     auto fres = std::make_shared<FresnelSchlick>(fr);
     if (alpha == 0) {
-        set_type(MaterialType::Specular);
         add(std::make_shared<SpecularReflection>(base, fres));
     }
     else {
@@ -130,7 +153,7 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
 
 // *** Phongマテリアル ***
 Phong::Phong(Vec3 _base, Vec3 _kd, Vec3 _ks, float _shine)
-    : Material(MaterialType::Glossy),
+    : Material(),
       base(_base),
       kd(_kd),
       ks(_ks),

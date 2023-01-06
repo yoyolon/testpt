@@ -14,13 +14,6 @@
 
 struct intersection;
 
-// TODO: BxDFTypeを利用する
-enum class MaterialType {
-    Diffuse  = 1, /**< 拡散反射 */
-    Specular = 2, /**< 鏡面反射 */
-    Glossy   = 4, /**< 光沢反射 */
-};
-
 
 /** マテリアルの抽象クラス */
 class Material {
@@ -31,7 +24,7 @@ public:
     * @brief コンストラクタ
     * @param[in] _type :反射特性の種類
     */
-    Material(MaterialType _type) : type(_type) {};
+    Material() {};
 
     /**
     * @brief 反射方向に対して入射方向をサンプリングしてBRDFを評価する関数
@@ -77,20 +70,7 @@ public:
     */
     std::vector<std::shared_ptr<BxDF>> get_BSDF() const { return bxdf_list; }
 
-    /**
-    * @brief 材質の反射特性を取得する関数
-    * @return MaterialType :材質の反射特性
-    */
-    MaterialType get_type() const { return type; }
-
-    /**
-    * @brief 材質の反射特性を設定する関数
-    * @param[in] t :材質の反射特性
-    */
-    void set_type(MaterialType t) { type = t; }
-
 private:
-    MaterialType type; /**> 反射特性 */
     std::vector<std::shared_ptr<BxDF>> bxdf_list; /**> BxDFの集合 */
 };
 
@@ -115,6 +95,8 @@ public:
     /**
     * @brief コンストラクタ
     * @param[in] _base :ベースカラー
+    * @param[in] _r    :反射係数
+    * @param[in] _t    :透過係数
     */
     DiffusePlastic(Vec3 _base, Vec3 _r, Vec3 _t);
 
@@ -136,6 +118,26 @@ public:
 
 private:
     Vec3 base; /**> ベースカラー */
+};
+
+
+/** ガラスマテリアル */
+class Glass : public Material {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _base :ベースカラー
+    * @param[in] _r    :反射係数
+    * @param[in] _t    :透過係数
+    * @param[in] _n    :屈折率
+    */
+    Glass(Vec3 _base, Vec3 _r, Vec3 _t, float n);
+
+private:
+    Vec3 base; /**> ベースカラー */
+    Vec3 r;    /**> 反射係数     */
+    Vec3 t;    /**> 透過係数     */
+    float n;   /**> 屈折率       */
 };
 
 

@@ -4,8 +4,8 @@
 * @note  クラス設計参考: https://pbr-book.org/3ed-2018/Reflection_Models/Basic_Interface
 *        ***シェーディング規則***
 *        1.法線をz軸正の方向としたシェーディング座標系で行う
-*        2.入出射方向は物体表面から離れる方向を正とする
-*        3.z軸とベクトルがなす角をthetaとする．
+*        2.法線は常に面の外側を向いている
+*        3.入出射方向は物体表面から離れる方向を正
 *        4.入射/出射方向は正規化されている
 */
 #pragma once
@@ -79,6 +79,21 @@ inline float get_tan2(const Vec3& w) { return get_sin2(w) / get_cos2(w); }
 inline bool is_same_hemisphere(const Vec3& wo, const Vec3& wi) { 
     return wo.get_z() * wi.get_z() > 0; 
 }
+
+/**
+* @brief 材質の反射特性が含まれているか判定
+* @param a : チェックされる材質特性
+* @param b : 
+* @return aにbが含まれるならtrue
+*/
+inline bool is_include_type(BxDFType a, BxDFType b) { return BxDFType((uint8_t)a & (uint8_t)b) == b; }
+
+/**
+* @brief スペキュラ材質特性であるか確認
+* @param t : チェックされる材質
+* @return スペキュラ材質ならtrue
+*/
+inline bool is_spacular_type(BxDFType t) { return is_include_type(t, BxDFType::Specular); }
 
 
 /** BxDFの抽象クラス */
@@ -205,14 +220,23 @@ private:
     Vec3 scale; /**> スケールファクター */
 };
 
+
 /** 完全鏡面反射 */
 class SpecularReflection : public BxDF {
 public:
     /**
     * @brief コンストラクタ
     * @param[in] _scale :スケールファクター
+    * @param[in] _fres  :フレネルの式
     */
     SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresnel> _fres);
+
+    /**
+    * @brief 誘電体用コンストラクタ
+    * @param[in] _scale :スケールファクター
+    * @param[in] _n     :屈折率
+    */
+    SpecularReflection(Vec3 _scale, float _ni, float _no=1.0f);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
 
@@ -225,6 +249,28 @@ private:
     std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
 };
 
+
+/** 完全鏡面透過 */
+class SpecularTransmission : public BxDF {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _scale :スケールファクター
+    */
+    SpecularTransmission(Vec3 _scale, float _ni, float _no=1.0f);
+
+    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
+
+private:
+    Vec3 scale; /**> スケールファクター */
+    float ni;   /**> 内側媒質の屈折率*/
+    float no;   /**> 外側媒質の屈折率*/
+    std::shared_ptr<class FresnelDielectric> fres; /**> フレネル項 */
+};
 
 
 // *** Phong鏡面反射 ***

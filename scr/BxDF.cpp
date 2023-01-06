@@ -61,6 +61,13 @@ SpecularReflection::SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresne
       fres(_fres)
 {}
 
+SpecularReflection::SpecularReflection(Vec3 _scale, float _ni, float _no)
+    : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Specular)),
+    scale(_scale)
+{
+    fres = std::make_shared<FresnelDielectric>(_ni, _no);
+}
+
 float SpecularReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
     return 0.0f; // デルタ関数のため
 }
@@ -80,9 +87,49 @@ Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& w
 }
 
 
+// *** 完全鏡面透過 ***
+SpecularTransmission::SpecularTransmission(Vec3 _scale, float _ni, float _no)
+    : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Specular)),
+    scale(_scale),
+    ni(_ni),
+    no(_no)
+{
+    fres = std::make_shared<FresnelDielectric>(ni, no);
+}
+
+float SpecularTransmission::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+    return 0.0f; // デルタ関数のため
+}
+
+Vec3 SpecularTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
+    return Vec3::zero; // デルタ関数のため
+}
+
+Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+    // 透過方向を明示的に重点的サンプリングするのでevalメソッドは使わない
+    // 出射方向(入射レイ)が媒質の内側にあるか判定
+    auto cos_out = get_cos(wo);
+    bool is_inside = cos_out < 0;
+    auto n_inside  = is_inside ? no : ni;
+    auto n_outside = is_inside ? ni : no;
+    auto normal = is_inside ? Vec3(0.0f,0.0f,-1.0f) : Vec3(0.0f,0.0f,1.0f);
+    auto eta = n_outside * n_outside; // 相対屈折率
+    wi = refract(wo, normal, eta); // 屈折方向
+    // 全反射の場合
+    if (is_zero(wi)) {
+        pdf = 0.0f;
+        return Vec3::zero;
+
+    }
+    pdf = 1.0f;
+    auto cos_term = get_cos(wi);
+    auto F = Vec3::one - fres->evaluate(cos_out); // フレネル透過率
+    auto brdf = scale * eta * eta * F / std::abs(cos_term);
+    return brdf;
+}
+
 
 // *** Phong鏡面反射 ***
-/** @note [E.Lafortune and Y.Willems 1994]がベース */
 PhongReflection::PhongReflection(Vec3 _scale, float _shine) 
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)),
       scale(_scale),

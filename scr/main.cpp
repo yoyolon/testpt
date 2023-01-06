@@ -54,10 +54,10 @@ Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = false;  // 大域照明効果(GI)を有効にする
 constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES = 32;                // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES =4;                // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -152,7 +152,7 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     }
 
     // BSDFを評価
-    auto wo       = unit_vector(r.get_dir()); // 出射方向は必ず正規化する
+    auto wo       = unit_vector(r.get_dir());
     auto wo_local = -shading_coord.to_local(wo);
     auto wi_local =  shading_coord.to_local(wi);
     auto bsdf = isect.mat->eval_f(wo_local, wi_local);
@@ -182,10 +182,6 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
                            const ONB& shading_coord) {
     auto Ld = Vec3::zero;
     auto contrib = Vec3::one;
-    // 完全鏡面反射では直接光を無視
-    if (isect.mat->get_type() == MaterialType::Specular) {
-        return Ld;
-    }
 
     // BSDFに基づきサンプリング
     if ((sampling_strategy == Sampling::BSDF) || (sampling_strategy == Sampling::MIS)) {
@@ -253,7 +249,7 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
         auto cos_term = std::abs(dot(isect.normal, wi));
         contrib = contrib * bsdf * cos_term / pdf;
-        is_specular_ray = ((uint8_t)bsdf_type == (uint8_t)MaterialType::Specular) ? true : false;
+        is_specular_ray = is_spacular_type(bsdf_type);
         r = Ray(isect.pos, wi); // 次のレイを生成
 
         //ロシアンルーレット
@@ -285,34 +281,32 @@ Vec3 L_direct(const Ray& r_in, int max_depth, const Scene& world) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
 
-        // 交差しない場合環境マップをサンプリング
+        // 交差しないなら環境マップをサンプリング
         if (!is_intersect) {
             L += contrib * world.sample_envmap(r);
             break;
         }
-        // 光源の場合寄与を追加
+        // 光源と交差したら寄与を追加
         if (isect.type == IsectType::Light) {
             L += contrib * isect.light->emitte();
             break;
         }
-        // 完全鏡面でなければ直接光をサンプリング
+        // 出射方向のサンプリング
         ONB shading_coord(isect.normal);
-        if (isect.mat->get_type() != MaterialType::Specular) {
+        Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
+        Vec3 wi_local;
+        float pdf;
+        BxDFType bsdf_type;
+        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
+        // 出射方向がスペキュラでないなら光源を明示的にサンプリング
+        if (!is_spacular_type(bsdf_type)) {
             L += contrib * explicit_direct_light(r, isect, world, shading_coord);
             break;
         }
-        else {
-            // 完全鏡面出射方向のサンプリング
-            Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
-            Vec3 wi_local;
-            float pdf;
-            BxDFType bsdf_type;
-            auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
-            auto wi = shading_coord.to_world(wi_local);
-            auto cos_term = std::abs(dot(isect.normal, wi));
-            contrib = contrib * bsdf * cos_term / pdf;
-            r = Ray(isect.pos, wi); // 次のレイを生成
-        }
+        auto wi = shading_coord.to_world(wi_local);
+        auto cos_term = std::abs(dot(isect.normal, wi));
+        contrib = contrib * bsdf * cos_term / pdf;
+        r = Ray(isect.pos, wi); // 次のレイを生成
     }
     return L;
 }

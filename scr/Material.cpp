@@ -131,7 +131,7 @@ Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha)
             add(std::make_shared<MicrofacetReflection>(base, dist, n));
         }
         if (!is_zero(t)) {
-            add(std::make_shared<MicrofacetReflection>(base, dist, n));
+            add(std::make_shared<MicrofacetTransmission>(base, dist, n));
         }
 
     }

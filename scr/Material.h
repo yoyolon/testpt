@@ -47,7 +47,8 @@ public:
     * @oaram[in] acceptable_type :サンプリング可能なBxDFの種類
     * @return Vec3               :BRDFの値
     */
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi, BxDFType acceptable_type=BxDFType::All) const;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p,
+                BxDFType acceptable_type=BxDFType::All) const;
 
     /**
     * @brief 入射方向のサンプリング確率密度を計算する関数
@@ -56,7 +57,8 @@ public:
     * @oaram[in] acceptable_type :サンプリング可能なBxDFの種類
     * @return float              :サンプリング確率密度
     */
-    float eval_pdf(const Vec3& wo, const Vec3& wi, BxDFType acceptable_type=BxDFType::All) const;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p,
+                   BxDFType acceptable_type=BxDFType::All) const;
 
     /**
     * @brief 材質にBxDFを追加する関数

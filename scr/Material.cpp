@@ -33,8 +33,8 @@ Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& 
     auto sampled_f = sampled_bxdf->sample_f(wo, p, wi, sampled_pdf);
     sampled_type = sampled_bxdf->get_type();
     // すべての許容可能なBxDFを考慮してBSDFとpdfを計算
-    auto f = eval_f(wo, wi, acceptable_type);
-    pdf = eval_pdf(wo, wi, acceptable_type);
+    auto f = eval_f(wo, wi, p, acceptable_type);
+    pdf = eval_pdf(wo, wi, p, acceptable_type);
     // サンプリングBxDFがスペキュラの場合evalで0寄与となるので補正
     // TODO: あくまで救済処置あとで修正
     if (sampled_bxdf->is_specular()) {
@@ -44,7 +44,8 @@ Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& 
     return f;
 }
 
-Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi, BxDFType acceptable_type) const {
+Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi, const intersection& p, 
+                      BxDFType acceptable_type) const {
     // すべてのBxDFの総和を計算
     auto f = Vec3::zero;
     bool is_reflect = wo.get_z() * wi.get_z() > 0; // 方向が反射はどうか判定
@@ -52,21 +53,22 @@ Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi, BxDFType acceptable_type) 
         if (bxdf->is_same_type(acceptable_type)) {
             if ((is_reflect && bxdf->is_reflection()) ||
                 (!is_reflect && bxdf->is_transmission())) {
-                f += bxdf->eval_f(wo, wi);
+                f += bxdf->eval_f(wo, wi, p);
             }
         }
     }
     return f;
 }
 
-float Material::eval_pdf(const Vec3& wo, const Vec3& wi, BxDFType acceptable_type) const {
+float Material::eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p,
+                         BxDFType acceptable_type) const {
     auto pdf = 0.0f;
     int num_acceptable_bxdfs = 0;
     // 許容可能なBxDFの要素数をカウント
     for (const auto& bxdf : bxdf_list) {
         if (bxdf->is_same_type(acceptable_type)) {
             num_acceptable_bxdfs++;
-            pdf += bxdf->eval_pdf(wo, wi);
+            pdf += bxdf->eval_pdf(wo, wi, p);
         }
     }
     if (num_acceptable_bxdfs == 0) {

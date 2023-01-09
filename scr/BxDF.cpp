@@ -10,18 +10,21 @@ LambertianReflection::LambertianReflection(const Vec3& _scale)
       scale(_scale)
 {}
 
-float LambertianReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+float LambertianReflection::eval_pdf(const Vec3& wo, const Vec3& wi,
+                                     const intersection& p) const {
     return std::max(std::abs(get_cos(wi)) * invpi, epsilon);
 }
 
-Vec3 LambertianReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
+Vec3 LambertianReflection::eval_f(const Vec3& wo, const Vec3& wi, 
+                                  const intersection& p) const {
     return scale * invpi;
 }
 
-Vec3 LambertianReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+Vec3 LambertianReflection::sample_f(const Vec3& wo, const intersection& p, 
+                                    Vec3& wi, float& pdf) const {
     wi = Random::cosine_hemisphere_sample();
-    pdf = eval_pdf(wo, wi);
-    auto brdf = eval_f(wo, wi);
+    pdf = eval_pdf(wo, wi, p);
+    auto brdf = eval_f(wo, wi, p);
     return brdf;
 }
 
@@ -32,7 +35,8 @@ LambertianTransmission::LambertianTransmission(const Vec3& _scale)
     scale(_scale)
 {}
 
-float LambertianTransmission::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+float LambertianTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
+                                       const intersection& p) const {
     if (is_same_hemisphere(wo, wi)) {
         return 0.0f; // BTDFなので同一半球内ならサンプルされない
     }
@@ -41,15 +45,17 @@ float LambertianTransmission::eval_pdf(const Vec3& wo, const Vec3& wi) const {
     }
 }
 
-Vec3 LambertianTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
+Vec3 LambertianTransmission::eval_f(const Vec3& wo, const Vec3& wi, 
+                                    const intersection& p) const {
     return scale * invpi;
 }
 
-Vec3 LambertianTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+Vec3 LambertianTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, 
+                                      float& pdf) const {
     auto temp = Random::cosine_hemisphere_sample();
     wi = Vec3(temp.get_x(), temp.get_y(), -temp.get_z()); // 透過方向は半球外
-    pdf = eval_pdf(wo, wi);
-    auto btdf = eval_f(wo, wi);
+    pdf = eval_pdf(wo, wi, p);
+    auto btdf = eval_f(wo, wi, p);
     return btdf;
 }
 
@@ -68,15 +74,18 @@ SpecularReflection::SpecularReflection(Vec3 _scale, float _ni, float _no)
     fres = std::make_shared<FresnelDielectric>(_ni, _no);
 }
 
-float SpecularReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+float SpecularReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 
+                                   const intersection& p) const {
     return 0.0f; // デルタ関数のため
 }
 
-Vec3 SpecularReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
+Vec3 SpecularReflection::eval_f(const Vec3& wo, const Vec3& wi, 
+                                const intersection& p) const {
     return Vec3::zero; // デルタ関数のため
 }
 
-Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p, 
+                                  Vec3& wi, float& pdf) const {
     // 正反射方向を明示的に重点的サンプリングするのでevalメソッドは使わない
     wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     pdf = 1.0f;
@@ -97,20 +106,22 @@ SpecularTransmission::SpecularTransmission(Vec3 _scale, float _ni, float _no)
     fres = std::make_shared<FresnelDielectric>(ni, no);
 }
 
-float SpecularTransmission::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+float SpecularTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
+                                     const intersection& p) const {
     return 0.0f; // デルタ関数のため
 }
 
-Vec3 SpecularTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
+Vec3 SpecularTransmission::eval_f(const Vec3& wo, const Vec3& wi, 
+                                  const intersection& p) const {
     return Vec3::zero; // デルタ関数のため
 }
 
-Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p, 
+                                    Vec3& wi, float& pdf) const {
     // 透過方向を明示的に重点的サンプリングするのでevalメソッドは使わない
     bool is_inside = !p.is_front; // 現在の媒質が内側か判定
     auto n_inside  = is_inside ? no : ni;
     auto n_outside = is_inside ? ni : no;
-    //auto eta = n_inside / n_outside; // 相対屈折率
     auto eta = n_outside / n_inside; // 相対屈折率
     wi = refract(wo, Vec3(0.0f,0.0f,1.0f), eta); // 屈折方向
     // 全反射の場合
@@ -134,7 +145,8 @@ PhongReflection::PhongReflection(Vec3 _scale, float _shine)
       shine(_shine) 
 {}
 
-float PhongReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+float PhongReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 
+                                const intersection& p) const {
     auto specular = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     if (!is_same_hemisphere(specular, wi)) {
         return 0.0f;
@@ -143,7 +155,8 @@ float PhongReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
     return (shine + 1.0f) / 2 * invpi * std::max(cos_term, epsilon);
 }
 
-Vec3 PhongReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
+Vec3 PhongReflection::eval_f(const Vec3& wo, const Vec3& wi, 
+                             const intersection& p) const {
     auto specular = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     if (!is_same_hemisphere(specular, wi)) {
         return Vec3::zero;
@@ -153,11 +166,11 @@ Vec3 PhongReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
     return scale * f;
 }
 
-Vec3 PhongReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+Vec3 PhongReflection::sample_f(const Vec3& wo, const intersection& p, 
+                               Vec3& wi, float& pdf) const {
     wi = Random::phong_sample(shine);
-    //wi = Random::cosine_hemisphere_sample();
-    pdf = eval_pdf(wo, wi);
-    auto brdf = eval_f(wo, wi);
+    pdf = eval_pdf(wo, wi, p);
+    auto brdf = eval_f(wo, wi, p);
     return brdf;
 }
 
@@ -181,14 +194,19 @@ MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _di
     fres = std::make_shared<FresnelDielectric>(_ni, _no);
 }
 
-float MicrofacetReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+float MicrofacetReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 
+                                     const intersection& p) const {
+    if (!is_same_hemisphere(wo, wi)) {
+        return 0.0f;
+    }
     auto h = unit_vector(wo + wi);
     return dist->eval_pdf(h) / (4 * dot(wo, h)); // 確率密度の変換
 }
 
-Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
-    if (wo.get_z() * wi.get_z() < 0) {
-        return Vec3::zero; // 同一半球内に存在しないなら反射しない(単散乱仮定のため)
+Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi, 
+                                  const intersection& p) const {
+    if (!is_same_hemisphere(wo, wi)) {
+        return Vec3::zero; // 同一半球内に存在するなら透過しない(単散乱仮定のため)
     }
     auto h = unit_vector(wo + wi);
     float cos_wo = std::abs(get_cos(wo));
@@ -205,11 +223,12 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
     return scale * (D * G * F) / (4 * cos_wo * cos_wi);
 }
 
-Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p, 
+                                    Vec3& wi, float& pdf) const {
     Vec3 h = dist->sample_halfvector();
     wi = unit_vector(reflect(wo, h)); // reflect()では正規化しないので明示的に正規化
-    pdf = eval_pdf(wo, wi);
-    auto brdf = eval_f(wo, wi);
+    pdf = eval_pdf(wo, wi, p);
+    auto brdf = eval_f(wo, wi, p);
     return brdf;
 }
 
@@ -227,20 +246,31 @@ MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF>
     fres = std::make_shared<FresnelDielectric>(_ni, _no);
 }
 
-float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi) const {
-    bool is_inside = true;
+float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
+                                       const intersection& p) const {
+    if (is_same_hemisphere(wo, wi)) {
+        return 0.0f;
+    }
+    bool is_inside = !p.is_front; // 現在の媒質が内側か判定
     auto n_inside = is_inside ? no : ni;
     auto n_outside = is_inside ? ni : no;
-    auto h = -unit_vector(n_outside * wo + n_inside * wi);
-    return dist->eval_pdf(h) / (4 * dot(wo, h)); // 確率密度の変換
+    auto eta = n_outside / n_inside; // 相対屈折率
+    auto h = -unit_vector(wo + eta * wi);
+    float cos_wo = std::abs(get_cos(wo));
+    float cos_wi = std::abs(get_cos(wi));
+    float cos_hi = std::abs(dot(wi, h));
+    float cos_ho = std::abs(dot(wo, h));
+    float cos_factor = cos_hi * cos_ho / cos_wi * cos_wo;
+    float eta_factor = n_inside / (n_outside * cos_ho + n_inside * cos_hi);
+    return dist->eval_pdf(h) * cos_factor * eta_factor * eta_factor; // 確率密度の変換
 }
 
-Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
+Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi, 
+                                    const intersection& p) const {
     if (is_same_hemisphere(wo, wi)) {
         return Vec3::zero; // 同一半球内に存在するなら透過しない(単散乱仮定のため)
     }
-    //bool is_inside = !p.is_front; // 現在の媒質が内側か判定
-    bool is_inside = true;
+    bool is_inside = !p.is_front; // 現在の媒質が内側か判定
     auto n_inside = is_inside ? no : ni;
     auto n_outside = is_inside ? ni : no;
     float cos_wo = std::abs(get_cos(wo));
@@ -268,7 +298,8 @@ Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
     return scale * cos_factor * (D * G * F) * eta_factor * eta_factor;
 }
 
-Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p, 
+                                      Vec3& wi, float& pdf) const {
     bool is_inside = !p.is_front; // 現在の媒質が内側か判定
     auto n_inside = is_inside ? no : ni;
     auto n_outside = is_inside ? ni : no;
@@ -281,7 +312,7 @@ Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p, Vec
         return Vec3::zero;
 
     }
-    pdf = eval_pdf(wo, wi);
-    auto brdf = eval_f(wo, wi);
+    pdf = eval_pdf(wo, wi, p);
+    auto brdf = eval_f(wo, wi, p);
     return brdf;
 }

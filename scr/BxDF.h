@@ -125,7 +125,7 @@ public:
     * @param[in] wi :入射方向ベクトル
     * @return Vec3  :BxDFの値
     */
-    virtual Vec3 eval_f(const Vec3& wo, const Vec3& wi) const { return Vec3::zero; }
+    virtual Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const { return Vec3::zero; }
 
     /**
     * @brief 散乱方向のサンプリング確率密度を評価する関数
@@ -133,7 +133,7 @@ public:
     * @param[in] wi :入射方向ベクトル
     * @return float :サンプリング確率密度
     */
-    virtual float eval_pdf(const Vec3& wo, const Vec3& wi) const = 0;
+    virtual float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const = 0;
 
     /**
     * @brief 材質の反射特性を取得する関数
@@ -190,11 +190,11 @@ public:
     */
     LambertianReflection(const Vec3& _scale);
 
-    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
 private:
     Vec3 scale; /**> スケールファクター */
@@ -210,11 +210,11 @@ public:
     */
     LambertianTransmission(const Vec3& _scale);
 
-    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
 private:
     Vec3 scale; /**> スケールファクター */
@@ -238,9 +238,9 @@ public:
     */
     SpecularReflection(Vec3 _scale, float _ni, float _no=1.0f);
 
-    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
@@ -259,9 +259,9 @@ public:
     */
     SpecularTransmission(Vec3 _scale, float _ni, float _no=1.0f);
 
-    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
@@ -283,9 +283,9 @@ public:
     */
     PhongReflection(Vec3 _scale, float _shine);
 
-    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
@@ -318,9 +318,9 @@ public:
     MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
                          float _ni, float _no = 1.0f);
 
-    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
@@ -345,9 +345,9 @@ public:
     MicrofacetTransmission(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
                            float _ni, float _no = 1.0f);
 
-    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 

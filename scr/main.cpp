@@ -50,7 +50,7 @@ enum class Sampling {
     LIGHT = 2, // 光源による重点的サンプリング
     MIS   = 3  // 多重重点的サンプリング
 };
-Sampling sampling_strategy = Sampling::MIS;
+Sampling sampling_strategy = Sampling::BSDF;
 
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
@@ -156,8 +156,8 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     auto wo       = unit_vector(r.get_dir());
     auto wo_local = -shading_coord.to_local(wo);
     auto wi_local =  shading_coord.to_local(wi);
-    auto bsdf = isect.mat->eval_f(wo_local, wi_local);
-    pdf_scattering = isect.mat->eval_pdf(wo_local, wi_local);
+    auto bsdf = isect.mat->eval_f(wo_local, wi_local, isect);
+    pdf_scattering = isect.mat->eval_pdf(wo_local, wi_local, isect);
     if (pdf_scattering == 0 || is_zero(bsdf)) {
         return Ld;
     }

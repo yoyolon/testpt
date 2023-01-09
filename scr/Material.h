@@ -131,13 +131,14 @@ public:
     * @param[in] _t    :“§‰ßŒW”
     * @param[in] _n    :‹üÜ—¦
     */
-    Glass(Vec3 _base, Vec3 _r, Vec3 _t, float n);
+    Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha=0.0f);
 
 private:
-    Vec3 base; /**> ƒx[ƒXƒJƒ‰[ */
-    Vec3 r;    /**> ”½ŽËŒW”     */
-    Vec3 t;    /**> “§‰ßŒW”     */
-    float n;   /**> ‹üÜ—¦       */
+    Vec3 base;   /**> ƒx[ƒXƒJƒ‰[ */
+    Vec3 r;      /**> ”½ŽËŒW”     */
+    Vec3 t;      /**> “§‰ßŒW”     */
+    float n;     /**> ‹üÜ—¦       */
+    float alpha; /**> •\–Ê‘e‚³     */
 };
 
 

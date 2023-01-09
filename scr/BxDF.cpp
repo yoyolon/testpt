@@ -115,13 +115,6 @@ Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3&
     wi = refract(wo, Vec3(0.0f,0.0f,1.0f), eta); // 屈折方向
     // 全反射の場合
     if (is_zero(wi)) {
-        // 反射させる
-        //wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
-        //pdf = 1.0f;
-        //auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
-        //auto F = fres->evaluate(cos_term);
-        //auto brdf = scale * F / std::abs(cos_term);
-        //return brdf;
         pdf = 0.0f;
         return Vec3::zero;
 
@@ -172,12 +165,21 @@ Vec3 PhongReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, 
 // *** マイクロファセットモデル ***
 /** @note 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models */
 MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist, 
-                       std::shared_ptr<Fresnel> _fres)
+                                           std::shared_ptr<Fresnel> _fres)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)), 
       scale(_scale),
       dist(_dist), 
       fres(_fres) 
 {}
+
+MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist,
+                                           float _ni, float _no)
+    : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)),
+      scale(_scale),
+      dist(_dist)
+{
+    fres = std::make_shared<FresnelDielectric>(_ni, _no);
+}
 
 float MicrofacetReflection::eval_pdf(const Vec3& wo, const Vec3& wi) const {
     auto h = unit_vector(wo + wi);
@@ -206,6 +208,79 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi) const {
 Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
     Vec3 h = dist->sample_halfvector();
     wi = unit_vector(reflect(wo, h)); // reflect()では正規化しないので明示的に正規化
+    pdf = eval_pdf(wo, wi);
+    auto brdf = eval_f(wo, wi);
+    return brdf;
+}
+
+
+// *** マイクロファセットモデル ***
+/** @note 参考: https://www.pbr-book.org/3ed-2018/Transmission_Models/Microfacet_Models */
+MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF> _dist,
+                                               float _no, float _ni)
+    : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Glossy)),
+    scale(_scale),
+    dist(_dist),
+    no(_no),
+    ni(_ni)
+{
+    fres = std::make_shared<FresnelDielectric>(_ni, _no);
+}
+
+float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi) const {
+    bool is_inside = true;
+    auto n_inside = is_inside ? no : ni;
+    auto n_outside = is_inside ? ni : no;
+    auto h = -unit_vector(n_outside * wo + n_inside * wi);
+    return dist->eval_pdf(h) / (4 * dot(wo, h)); // 確率密度の変換
+}
+
+Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi) const {
+    if (is_same_hemisphere(wo, wi)) {
+        return Vec3::zero; // 同一半球内に存在するなら透過しない(単散乱仮定のため)
+    }
+    //bool is_inside = !p.is_front; // 現在の媒質が内側か判定
+    bool is_inside = true;
+    auto n_inside = is_inside ? no : ni;
+    auto n_outside = is_inside ? ni : no;
+    float cos_wo = std::abs(get_cos(wo));
+    float cos_wi = std::abs(get_cos(wi));
+    if (cos_wo == 0 || cos_wi == 0) {
+        return Vec3::zero;
+    }
+    // 全反射の場合
+    if (1 - cos_wo >= n_inside * n_inside / n_outside * n_outside) {
+        return Vec3::zero;
+
+    }
+    // ハーフ方向の取得
+    auto h = -unit_vector(n_outside * wo + n_inside * wi);
+    if (is_zero(h)) {
+        return Vec3::zero;
+    }
+    float cos_hi = std::abs(dot(wi, h));
+    float cos_ho = std::abs(dot(wo, h));
+    float D = dist->D(h);
+    float G = dist->G(wo, wi);
+    Vec3 F = Vec3(1.0f) - fres->evaluate(dot(wo, h));
+    float cos_factor = cos_hi * cos_ho / cos_wi * cos_wo;
+    float eta_factor = n_inside / (n_outside * cos_ho + n_inside * cos_hi);
+    return scale * cos_factor * (D * G * F) * eta_factor * eta_factor;
+}
+
+Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const {
+    bool is_inside = !p.is_front; // 現在の媒質が内側か判定
+    auto n_inside = is_inside ? no : ni;
+    auto n_outside = is_inside ? ni : no;
+    auto eta = n_outside / n_inside; // 相対屈折率
+    Vec3 h = dist->sample_halfvector();
+    wi = unit_vector(refract(wo, h, eta)); // reflect()では正規化しないので明示的に正規化
+    // 全反射の場合
+    if (is_zero(wi)) {
+        pdf = 0.0f;
+        return Vec3::zero;
+
+    }
     pdf = eval_pdf(wo, wi);
     auto brdf = eval_f(wo, wi);
     return brdf;

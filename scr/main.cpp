@@ -55,9 +55,9 @@ Sampling sampling_strategy = Sampling::MIS;
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
+constexpr bool IMAGE_BASED_LIGHTING = true; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES =64;                // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES =32;                // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -366,11 +366,11 @@ int main(int argc, char* argv[]) {
         world = Scene(envmap, w_envmap, h_envmap, c_envmap);
     }
     Camera cam;
-    //make_scene_simple(world, cam);
+    make_scene_simple(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
     //make_scene_cornell_box(world, cam);
-    make_scene_box_with_sphere(world, cam);
+    //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_sphere(world, cam); // 未実装
     // 出力画像

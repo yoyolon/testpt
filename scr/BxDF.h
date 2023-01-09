@@ -307,9 +307,16 @@ public:
     * @param[in] _dist  :マイクロファセット分布
     * @param[in] _fres  :フレネルの式
     */
-    MicrofacetReflection(Vec3 _scale, 
-                         std::shared_ptr<class NDF> _dist, 
+    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
                          std::shared_ptr<class Fresnel> _fres);
+
+    /**
+    * @brief 誘電体用コンストラクタ
+    * @param[in] _scale :スケールファクター
+    * @param[in] _n     :屈折率
+    */
+    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
+                         float _ni, float _no = 1.0f);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
 
@@ -322,4 +329,33 @@ private:
     Vec3 scale; /**> スケールファクター */
     std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
     std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
+};
+
+
+/** マイクロファセット透過 */
+/** @note 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models */
+class MicrofacetTransmission : public BxDF {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _scale :スケールファクター
+    * @param[in] _dist  :マイクロファセット分布
+    * @param[in] _fres  :フレネルの式
+    */
+    MicrofacetTransmission(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
+                           float _ni, float _no = 1.0f);
+
+    float eval_pdf(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi) const override;
+
+    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
+
+
+private:
+    Vec3 scale; /**> スケールファクター */
+    float ni;   /**> 内側媒質の屈折率   */
+    float no;   /**> 外側媒質の屈折率   */
+    std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
+    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
 };

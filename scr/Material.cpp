@@ -115,18 +115,31 @@ Mirror::Mirror(Vec3 _base)
 
 
 // *** ガラスマテリアル ***
-Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n)
+Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha)
     : Material(),
       base(_base),
       r(_r),
       t(_t),
-      n(_n)
-{
-    if (!is_zero(r)) {
-        add(std::make_shared<SpecularReflection>(base * r, n));
+      n(_n),
+      alpha(_alpha)
+{   
+    if (alpha != 0) {
+        auto dist = std::make_shared<GGX>(alpha);
+        if (!is_zero(r)) {
+            add(std::make_shared<MicrofacetReflection>(base, dist, n));
+        }
+        if (!is_zero(t)) {
+            add(std::make_shared<MicrofacetReflection>(base, dist, n));
+        }
+
     }
-    if (!is_zero(t)) {
-        add(std::make_shared<SpecularTransmission>(base * t, n));
+    else { // 粗さが0の場合完全鏡面
+        if (!is_zero(r)) {
+            add(std::make_shared<SpecularReflection>(base * r, n));
+        }
+        if (!is_zero(t)) {
+            add(std::make_shared<SpecularTransmission>(base * t, n));
+        }
     }
 }
 

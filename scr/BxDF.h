@@ -257,7 +257,7 @@ public:
     * @brief コンストラクタ
     * @param[in] _scale :スケールファクター
     */
-    SpecularTransmission(Vec3 _scale, float _ni, float _no=1.0f);
+    SpecularTransmission(Vec3 _scale, float _n_inside, float _n_outside=1.0f);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
@@ -267,8 +267,8 @@ public:
 
 private:
     Vec3 scale; /**> スケールファクター */
-    float ni;   /**> 内側媒質の屈折率*/
-    float no;   /**> 外側媒質の屈折率*/
+    float n_inside;  /**> 内側媒質の屈折率 */
+    float n_outside; /**> 外側媒質の屈折率 */
     std::shared_ptr<class FresnelDielectric> fres; /**> フレネル項 */
 };
 
@@ -343,7 +343,7 @@ public:
     * @param[in] _fres  :フレネルの式
     */
     MicrofacetTransmission(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
-                           float _ni, float _no = 1.0f);
+                           float _n_inside, float _n_outside = 1.0f);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
@@ -354,8 +354,8 @@ public:
 
 private:
     Vec3 scale; /**> スケールファクター */
-    float ni;   /**> 内側媒質の屈折率   */
-    float no;   /**> 外側媒質の屈折率   */
+    float n_inside;  /**> 内側媒質の屈折率 */
+    float n_outside; /**> 外側媒質の屈折率 */
     std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
     std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
 };

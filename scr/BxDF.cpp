@@ -90,20 +90,20 @@ Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p,
     wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     pdf = 1.0f;
     auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
-    auto F = fres->evaluate(cos_term);
+    auto F = fres->eval(cos_term, p);
     auto brdf = scale * F / std::abs(cos_term);
     return brdf;
 }
 
 
 // *** 完全鏡面透過 ***
-SpecularTransmission::SpecularTransmission(Vec3 _scale, float _ni, float _no)
+SpecularTransmission::SpecularTransmission(Vec3 _scale, float _n_inside, float _n_outside)
     : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Specular)),
     scale(_scale),
-    ni(_ni),
-    no(_no)
+    n_inside(_n_inside),
+    n_outside(_n_outside)
 {
-    fres = std::make_shared<FresnelDielectric>(ni, no);
+    fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
 }
 
 float SpecularTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -120,9 +120,9 @@ Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p,
                                     Vec3& wi, float& pdf) const {
     // 透過方向を明示的に重点的サンプリングするのでevalメソッドは使わない
     bool is_inside = !p.is_front; // 現在の媒質が内側か判定
-    auto n_inside  = is_inside ? no : ni;
-    auto n_outside = is_inside ? ni : no;
-    auto eta = n_outside / n_inside; // 相対屈折率
+    auto n_coming = is_inside ? n_inside : n_outside;
+    auto n_going  = is_inside ? n_outside : n_inside;
+    auto eta = n_coming / n_going; // 相対屈折率
     wi = refract(wo, Vec3(0.0f,0.0f,1.0f), eta); // 屈折方向
     // 全反射の場合
     if (is_zero(wi)) {
@@ -132,7 +132,7 @@ Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p,
     }
     pdf = 1.0f;
     auto cos_term = get_cos(wi);
-    auto F = Vec3::one - fres->evaluate(cos_term); // フレネル透過率
+    auto F = Vec3::one - fres->eval(cos_term, p); // フレネル透過率
     auto btdf = scale * eta * eta * F / std::abs(cos_term);
     return btdf;
 }
@@ -219,7 +219,7 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
     }
     float D = dist->D(h);
     float G = dist->G(wo, wi);
-    Vec3 F = fres->evaluate(dot(wo, h));
+    Vec3 F = fres->eval(dot(wo, h), p);
     return scale * (D * G * F) / (4 * cos_wo * cos_wi);
 }
 
@@ -236,14 +236,14 @@ Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p,
 // *** マイクロファセットモデル ***
 /** @note 参考: https://www.pbr-book.org/3ed-2018/Transmission_Models/Microfacet_Models */
 MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF> _dist,
-                                               float _no, float _ni)
+                                               float _n_inside, float _n_outside)
     : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Glossy)),
     scale(_scale),
     dist(_dist),
-    no(_no),
-    ni(_ni)
+    n_inside(_n_inside),
+    n_outside(_n_outside)
 {
-    fres = std::make_shared<FresnelDielectric>(_ni, _no);
+    fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
 }
 
 float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -252,16 +252,16 @@ float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi,
         return 0.0f;
     }
     bool is_inside = !p.is_front; // 現在の媒質が内側か判定
-    auto n_inside = is_inside ? no : ni;
-    auto n_outside = is_inside ? ni : no;
-    auto eta = n_outside / n_inside; // 相対屈折率
+    auto n_coming = is_inside ? n_inside : n_outside;
+    auto n_going  = is_inside ? n_outside : n_inside;
+    auto eta = n_coming / n_going; // 相対屈折率
     auto h = -unit_vector(wo + eta * wi);
     float cos_wo = std::abs(get_cos(wo));
     float cos_wi = std::abs(get_cos(wi));
     float cos_hi = std::abs(dot(wi, h));
     float cos_ho = std::abs(dot(wo, h));
-    float cos_factor = cos_hi * cos_ho / cos_wi * cos_wo;
-    float eta_factor = n_inside / (n_outside * cos_ho + n_inside * cos_hi);
+    float cos_factor = eta * eta * cos_hi;
+    float eta_factor = 1 / (cos_ho + eta * cos_hi);
     return dist->eval_pdf(h) * cos_factor * eta_factor * eta_factor; // 確率密度の変換
 }
 
@@ -270,21 +270,24 @@ Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi,
     if (is_same_hemisphere(wo, wi)) {
         return Vec3::zero; // 同一半球内に存在するなら透過しない(単散乱仮定のため)
     }
-    bool is_inside = !p.is_front; // 現在の媒質が内側か判定
-    auto n_inside = is_inside ? no : ni;
-    auto n_outside = is_inside ? ni : no;
+    // 屈折率の反転
+    bool is_inside = !p.is_front;
+    auto n_coming = is_inside ? n_inside : n_outside;
+    auto n_going = is_inside ? n_outside : n_inside;
+    float eta = n_coming / n_going;
+    // BTDFの計算
     float cos_wo = std::abs(get_cos(wo));
     float cos_wi = std::abs(get_cos(wi));
     if (cos_wo == 0 || cos_wi == 0) {
         return Vec3::zero;
     }
     // 全反射の場合
-    if (1 - cos_wo >= n_inside * n_inside / n_outside * n_outside) {
+    if (1 - cos_wo >= n_going * n_going / n_coming * n_coming) {
         return Vec3::zero;
 
     }
     // ハーフ方向の取得
-    auto h = -unit_vector(n_outside * wo + n_inside * wi);
+    auto h = unit_vector(wo + eta * wi);
     if (is_zero(h)) {
         return Vec3::zero;
     }
@@ -292,18 +295,18 @@ Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi,
     float cos_ho = std::abs(dot(wo, h));
     float D = dist->D(h);
     float G = dist->G(wo, wi);
-    Vec3 F = Vec3(1.0f) - fres->evaluate(dot(wo, h));
-    float cos_factor = cos_hi * cos_ho / cos_wi * cos_wo;
-    float eta_factor = n_inside / (n_outside * cos_ho + n_inside * cos_hi);
+    Vec3 F = Vec3::one - fres->eval(cos_ho, p);
+    float cos_factor = cos_hi * cos_ho / cos_wi / cos_wo;
+    float eta_factor = 1 / (cos_ho + eta * cos_hi);
     return scale * cos_factor * (D * G * F) * eta_factor * eta_factor;
 }
 
 Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p, 
                                       Vec3& wi, float& pdf) const {
     bool is_inside = !p.is_front; // 現在の媒質が内側か判定
-    auto n_inside = is_inside ? no : ni;
-    auto n_outside = is_inside ? ni : no;
-    auto eta = n_outside / n_inside; // 相対屈折率
+    auto n_coming = is_inside ? n_inside : n_outside;
+    auto n_going = is_inside ? n_outside : n_inside;
+    auto eta = n_coming / n_going; // 相対屈折率
     Vec3 h = dist->sample_halfvector();
     wi = unit_vector(refract(wo, h, eta)); // reflect()では正規化しないので明示的に正規化
     // 全反射の場合

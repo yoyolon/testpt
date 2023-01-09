@@ -18,7 +18,7 @@ public:
     * @return Vec          :フレネル反射率
     * @note: 入射角は法線ベクトルと入射方向ベクトルがなす角
     */
-    virtual Vec3 evaluate(float cos_theta) const = 0;
+    virtual Vec3 eval(float cos_theta, const struct intersection& p) const = 0;
 };
 
 /** 
@@ -33,7 +33,7 @@ public:
     */
     FresnelConstant(Vec3 _F0);
 
-    Vec3 evaluate(float cos_theta) const override;
+    Vec3 eval(float cos_theta, const struct intersection& p) const override;
 
 private:
     Vec3 F0; /**< 反射率 */
@@ -48,7 +48,7 @@ public:
     */
     FresnelSchlick(Vec3 _F0);
 
-    Vec3 evaluate(float cos_theta) const override;
+    Vec3 eval(float cos_theta, const struct intersection& p) const override;
 
 private:
     Vec3 F0; /**< 垂直入射でのフレネル反射率 */
@@ -60,15 +60,15 @@ class FresnelDielectric : public Fresnel {
 public:
     /**
     * @brief コンストラクタ
-    * @param[in]  _ni :入射方向媒質の屈折率
-    * @param[in]  _no :出射方向媒質の屈折率
+    * @param[in]  _n_inside  :内側媒質の屈折率
+    * @param[in]  _n_outside :外側媒質の屈折率
     */
-    FresnelDielectric(float _ni, float _no);
+    FresnelDielectric(float _n_inside, float _n_outisde=1.0f);
 
-    Vec3 evaluate(float cos_theta) const override;
+    Vec3 eval(float cos_theta, const struct intersection& p) const override;
 
 private:
-    float ni, no; /**< 屈折率 */
+    float n_inside, n_outside; /**< 屈折率 */
 };
 
 
@@ -84,7 +84,7 @@ public:
     */
     FresnelThinfilm(float _d, float _ni, float _nf, float _no);
 
-    Vec3 evaluate(float cos_theta) const override;
+    Vec3 eval(float cos_theta, const struct intersection& p) const override;
 
 private:
     float d;          /**< 膜厚   */

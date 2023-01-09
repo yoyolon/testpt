@@ -1,4 +1,5 @@
 #include "Fresnel.h"
+#include "Shape.h"
 #include <complex>
 
 /**
@@ -87,7 +88,7 @@ static std::complex<float> composit_t(float r, float R, float t, float T, float 
 * @return Vec3    :薄膜干渉を考慮した反射率
 * @note: 参考: Hirayama+. "Visualization of optical phenomena caused by multilayer films based on wave optics". 2001.
 */
-Vec3 iridterm(float cos0, float d, float n0, float n1, float n2) {
+Vec3 irid_reflectance(float cos0, float d, float n0, float n1, float n2) {
     // 透過角計算
     float sin0 = std::sqrt(std::max(0.0f, 1.0f - cos0 * cos0));
     float sin1 = n0 / n1 * sin0;
@@ -120,7 +121,7 @@ Vec3 iridterm(float cos0, float d, float n0, float n1, float n2) {
 FresnelConstant::FresnelConstant(Vec3 _F0)
     : F0(_F0) {}
 
-Vec3 FresnelConstant::evaluate(float cos_theta) const {
+Vec3 FresnelConstant::eval(float cos_theta, const intersection& p) const {
     return F0;
 }
 
@@ -129,26 +130,28 @@ Vec3 FresnelConstant::evaluate(float cos_theta) const {
 FresnelSchlick::FresnelSchlick(Vec3 _F0)
     : F0(_F0) {}
 
-Vec3 FresnelSchlick::evaluate(float cos_theta) const {
+Vec3 FresnelSchlick::eval(float cos_theta, const intersection& p) const {
     return F0 + (Vec3(1.0f,1.0f,1.0f) - F0) * (float)std::pow(1.0f - cos_theta, 5);
 }
 
 
 // *** 誘電体フレネル ***
-FresnelDielectric::FresnelDielectric(float _ni, float _no) 
-    : ni(_ni), no(_no) {}
+FresnelDielectric::FresnelDielectric(float _n_inside, float _n_outside) 
+    : n_inside(_n_inside), n_outside(_n_outside) {}
 
-Vec3 FresnelDielectric::evaluate(float cos_theta) const {
-    bool is_inside = cos_theta < 0; // 入射レイが媒質の内側にあるか判定
+Vec3 FresnelDielectric::eval(float cos_theta, const intersection& p) const {
+    bool is_inside = !p.is_front; // 入射レイが媒質の内側にあるか判定
     cos_theta = std::abs(cos_theta);
-    auto n_inside  = is_inside ? no : ni;
-    auto n_outside = is_inside ? ni : no;
+    auto n_coming = is_inside ? n_inside : n_outside;
+    auto n_going  = is_inside ? n_outside : n_inside;
     float sin_theta = std::sqrt(std::max(0.0f, 1.0f - cos_theta * cos_theta));
-    float sin_out = no / ni * sin_theta;
-    if (sin_out >= 1.0f) return Vec3::zero;
-    float cos_out = std::sqrt(std::max(0.0f, 1.0f - sin_out * sin_out));
-    float Rs = fresnel_rs(ni, no, cos_theta, cos_out);
-    float Rp = fresnel_rp(ni, no, cos_theta, cos_out);
+    float sin_refract = n_outside / n_inside * sin_theta;
+    if (sin_refract >= 1.0f) { // 全反射
+        return Vec3::zero;
+    }
+    float cos_refract = std::sqrt(std::max(0.0f, 1.0f - sin_refract * sin_refract));
+    float Rs = fresnel_rs(n_coming, n_going, cos_theta, cos_refract);
+    float Rp = fresnel_rp(n_coming, n_going, cos_theta, cos_refract);
     float R =  (Rs * Rs + Rp * Rp) / 2;
     return Vec3(R, R, R);
 }
@@ -158,6 +161,6 @@ Vec3 FresnelDielectric::evaluate(float cos_theta) const {
 FresnelThinfilm::FresnelThinfilm(float _d, float _ni, float _nf, float _no)
     : d(_d), ni(_ni), nf(_nf), no(_no) {}
 
-Vec3 FresnelThinfilm::evaluate(float cos_theta) const {
-    return iridterm(cos_theta, d, ni, nf, no);
+Vec3 FresnelThinfilm::eval(float cos_theta, const intersection& p) const {
+    return irid_reflectance(cos_theta, d, ni, nf, no);
 }

@@ -269,7 +269,7 @@ private:
     Vec3 scale; /**> スケールファクター */
     float n_inside;  /**> 内側媒質の屈折率 */
     float n_outside; /**> 外側媒質の屈折率 */
-    std::shared_ptr<class FresnelDielectric> fres; /**> フレネル項 */
+    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
 };
 
 

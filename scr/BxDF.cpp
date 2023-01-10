@@ -72,6 +72,7 @@ SpecularReflection::SpecularReflection(Vec3 _scale, float _ni, float _no)
     scale(_scale)
 {
     fres = std::make_shared<FresnelDielectric>(_ni, _no);
+    //fres = std::make_shared<FresnelConstant>(Vec3::one * 0.5);
 }
 
 float SpecularReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -104,6 +105,7 @@ SpecularTransmission::SpecularTransmission(Vec3 _scale, float _n_inside, float _
     n_outside(_n_outside)
 {
     fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
+    //fres = std::make_shared<FresnelConstant>(Vec3::one * 0.5);
 }
 
 float SpecularTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -192,6 +194,7 @@ MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _di
       dist(_dist)
 {
     fres = std::make_shared<FresnelDielectric>(_ni, _no);
+    //fres = std::make_shared<FresnelConstant>(Vec3::one*0.5);
 }
 
 float MicrofacetReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -244,6 +247,7 @@ MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF>
     n_outside(_n_outside)
 {
     fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
+    //fres = std::make_shared<FresnelConstant>(Vec3::one*0.5);
 }
 
 float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -251,13 +255,12 @@ float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi,
     if (is_same_hemisphere(wo, wi)) {
         return 0.0f;
     }
-    bool is_inside = !p.is_front; // Œ»İ‚Ì”}¿‚ª“à‘¤‚©”»’è
-    auto n_coming = is_inside ? n_inside : n_outside;
-    auto n_going  = is_inside ? n_outside : n_inside;
-    auto eta = n_coming / n_going; // ‘Š‘Î‹üÜ—¦
-    auto h = -unit_vector(wo + eta * wi);
-    float cos_wo = std::abs(get_cos(wo));
-    float cos_wi = std::abs(get_cos(wi));
+    auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // ‘Š‘Î‹üÜ
+    auto h = unit_vector(wo + eta * wi);
+    // ‘S”½Ë‚Ìê‡
+    if (is_zero(refract(wo, h, eta))) {
+        return 0.0f;
+    }
     float cos_hi = std::abs(dot(wi, h));
     float cos_ho = std::abs(dot(wo, h));
     float cos_factor = eta * eta * cos_hi;
@@ -268,27 +271,21 @@ float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi,
 Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi, 
                                     const intersection& p) const {
     if (is_same_hemisphere(wo, wi)) {
-        return Vec3::zero; // “¯ˆê”¼‹…“à‚É‘¶İ‚·‚é‚È‚ç“§‰ß‚µ‚È‚¢(’PU—‰¼’è‚Ì‚½‚ß)
+        return Vec3::zero;
     }
-    // ‹üÜ—¦‚Ì”½“]
-    bool is_inside = !p.is_front;
-    auto n_coming = is_inside ? n_inside : n_outside;
-    auto n_going = is_inside ? n_outside : n_inside;
-    float eta = n_coming / n_going;
-    // BTDF‚ÌŒvZ
+    auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // ‘Š‘Î‹üÜ
     float cos_wo = std::abs(get_cos(wo));
     float cos_wi = std::abs(get_cos(wi));
     if (cos_wo == 0 || cos_wi == 0) {
         return Vec3::zero;
     }
-    // ‘S”½Ë‚Ìê‡
-    if (1 - cos_wo >= n_going * n_going / n_coming * n_coming) {
-        return Vec3::zero;
-
-    }
     // ƒn[ƒt•ûŒü‚Ìæ“¾
     auto h = unit_vector(wo + eta * wi);
     if (is_zero(h)) {
+        return Vec3::zero;
+    }
+    // ‘S”½Ë‚Ìê‡
+    if (is_zero(refract(wo, h, eta))) {
         return Vec3::zero;
     }
     float cos_hi = std::abs(dot(wi, h));
@@ -303,11 +300,8 @@ Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi,
 
 Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p, 
                                       Vec3& wi, float& pdf) const {
-    bool is_inside = !p.is_front; // Œ»İ‚Ì”}¿‚ª“à‘¤‚©”»’è
-    auto n_coming = is_inside ? n_inside : n_outside;
-    auto n_going = is_inside ? n_outside : n_inside;
-    auto eta = n_coming / n_going; // ‘Š‘Î‹üÜ—¦
     Vec3 h = dist->sample_halfvector();
+    auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // ‘Š‘Î‹üÜ
     wi = unit_vector(refract(wo, h, eta)); // reflect()‚Å‚Í³‹K‰»‚µ‚È‚¢‚Ì‚Å–¾¦“I‚É³‹K‰»
     // ‘S”½Ë‚Ìê‡
     if (is_zero(wi)) {

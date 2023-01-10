@@ -50,14 +50,15 @@ enum class Sampling {
     LIGHT = 2, // 光源による重点的サンプリング
     MIS   = 3  // 多重重点的サンプリング
 };
-Sampling sampling_strategy = Sampling::BSDF;
+Sampling sampling_strategy = Sampling::LIGHT;
 
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = true; // IBLを有効にする
+constexpr bool IMAGE_BASED_LIGHTING = true;  // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  SAMPLES =32;                // 1ピクセル当たりのサンプル数
+constexpr int  RUSSIAN_ROULETTE     = 5;     // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 1024;   // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -197,12 +198,10 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
 }
 
 /**
-* @brief レイに沿った放射輝度伝搬を計算する関数
+* @brief 光源サンプリングを行うパストレーシング
 * @param[in]  r_in      :カメラ方向からのレイ
-* @param[in]  bouunce   :現在のレイのバウンス回数
 * @param[in]  max_depth :レイの最大バウンス回数
 * @param[in]  world     :レンダリングするシーンのデータ
-* @param[in]  contrib   :現在のレイの寄与
 * @return Vec3          :レイに沿った放射輝度
 * @note 参考: pbrt-v3
 */
@@ -214,7 +213,7 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
     for (int bounces = 0; bounces < max_depth; bounces++) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
-        // カメラレイとスペキュラレイは光源をの寄与を加算
+        // カメラレイとスペキュラレイは光源の寄与を加算
         if (bounces == 0 || is_specular_ray) {
             if (is_intersect) {
                 if (isect.type == IsectType::Light) {
@@ -238,7 +237,7 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         }
 
         // 直接光のサンプリング
-        ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
+        ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);// 法線を反転
         L += contrib * explicit_direct_light(r, isect, world, shading_coord);
 
         // BSDFに基づく出射方向のサンプリング
@@ -247,16 +246,14 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         float pdf;
         BxDFType bsdf_type;
         auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
-        //if (pdf == 0.0f || is_zero(bsdf)) break;
-        if (pdf == 0.0f) break;
-        if (is_zero(bsdf)) break;
+        if (pdf == 0.0f || is_zero(bsdf)) break;
         auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
         auto cos_term = std::abs(dot(isect.normal, wi));
         contrib = contrib * bsdf * cos_term / pdf;
         is_specular_ray = is_spacular_type(bsdf_type);
         r = Ray(isect.pos, wi); // 次のレイを生成
         //ロシアンルーレット
-        if (bounces >= 3) {
+        if (bounces >= RUSSIAN_ROULETTE) {
             float p_rr = std::max(0.05f, 1.0f - contrib.average()); // 打ち切り確率
             if (p_rr > Random::uniform_float()) break;
             contrib /= std::max(epsilon, 1.0f - p_rr);
@@ -265,18 +262,66 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
     return L;
 }
 
+
 /**
-* @brief レイに沿った放射輝度伝搬を計算する関数
+* @brief ナイーブなパストレーシングを実行する関数
 * @param[in]  r_in      :カメラ方向からのレイ
-* @param[in]  bouunce   :現在のレイのバウンス回数
 * @param[in]  max_depth :レイの最大バウンス回数
 * @param[in]  world     :レンダリングするシーンのデータ
-* @param[in]  contrib   :現在のレイの寄与
+* @return Vec3          :レイに沿った放射輝度
+*/
+Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
+    auto L = Vec3::zero, contrib = Vec3::one;
+    Ray r = Ray(r_in);
+    bool is_specular_ray = false;
+    // パストレーシング
+    for (int bounces = 0; bounces < max_depth; bounces++) {
+        intersection isect; // 交差点情報
+        bool is_intersect = world.intersect(r, eps_isect, inf, isect);
+        // カメラレイとスペキュラレイは光源をの寄与を加算
+        if (!is_intersect) {
+            L += contrib * world.sample_envmap(r);
+            break;
+        }
+        if (isect.type == IsectType::Light) {
+            L += contrib * isect.light->emitte();
+            break;
+        }
+
+        // BSDFに基づく出射方向のサンプリング
+        ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
+        Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
+        Vec3 wi_local;
+        float pdf;
+        BxDFType bsdf_type;
+        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
+        if (pdf == 0.0f || is_zero(bsdf)) break;
+        auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
+        auto cos_term = std::abs(dot(isect.normal, wi));
+        contrib = contrib * bsdf * cos_term / pdf;
+        is_specular_ray = is_spacular_type(bsdf_type);
+        r = Ray(isect.pos, wi); // 次のレイを生成
+        //ロシアンルーレット
+        if (bounces >= RUSSIAN_ROULETTE) {
+            float p_rr = std::max(0.05f, 1.0f - contrib.average()); // 打ち切り確率
+            if (p_rr > Random::uniform_float()) break;
+            contrib /= std::max(epsilon, 1.0f - p_rr);
+        }
+    }
+    return L;
+}
+
+
+/**
+* @brief 確率的レイトレーシング
+* @param[in]  r_in      :カメラ方向からのレイ
+* @param[in]  max_depth :レイの最大バウンス回数
+* @param[in]  world     :レンダリングするシーンのデータ
 * @return Vec3          :レイに沿った放射輝度
 * @note ロシアンルーレットによる打ち切りを実装していないのでmax_depthは小さめにしておく
 */
 // TODO: スペキュラ以外の透過は無視する
-Vec3 L_direct(const Ray& r_in, int max_depth, const Scene& world) {
+Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
     auto L = Vec3::zero, contrib = Vec3::one;
     Ray r = Ray(r_in);
     // スペキュラレイのみを追跡する
@@ -296,7 +341,6 @@ Vec3 L_direct(const Ray& r_in, int max_depth, const Scene& world) {
         }
         // 出射方向のサンプリング
         ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
-        //ONB shading_coord(isect.normal);
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
         float pdf;
@@ -362,7 +406,7 @@ int main(int argc, char* argv[]) {
     Scene world;
     if (IMAGE_BASED_LIGHTING) {
         int w_envmap, h_envmap, c_envmap;
-        float* envmap = stbi_loadf("asset/envmap3.hdr", &w_envmap, &h_envmap, &c_envmap, 0);
+        float* envmap = stbi_loadf("asset/envmap.hdr", &w_envmap, &h_envmap, &c_envmap, 0);
         world = Scene(envmap, w_envmap, h_envmap, c_envmap);
     }
     Camera cam;
@@ -395,10 +439,13 @@ int main(int argc, char* argv[]) {
                     I += L_normal(r, world);
                 }
                 else {
-                    if (GLOBAL_ILLUMINATION)
+                    if (GLOBAL_ILLUMINATION) {
                         I += L_pathtracing(r, max_depth, world);
-                    else 
-                        I += L_direct(r, max_depth, world);
+                        //I += L_naive_pathtracing(r, max_depth, world);
+                    }
+                    else {
+                        I += L_raytracing(r, max_depth, world);
+                    }
                 }
             }
             I *= 1.0f / nsample;

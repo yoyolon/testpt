@@ -164,6 +164,26 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
 }
 
 
+// *** プラスチックマテリアル ***
+Plastic::Plastic(Vec3 _base, Vec3 _kd, Vec3 _ks, float _alpha)
+    : Material(),
+    base(_base),
+    kd(_kd),
+    ks(_ks),
+    alpha(_alpha)
+{
+    auto fres = std::make_shared<FresnelSchlick>(ks);
+    if (alpha == 0) {
+        add(std::make_shared<SpecularReflection>(base, fres));
+    }
+    else {
+        auto dist = std::make_shared<GGX>(alpha);
+        add(std::make_shared<MicrofacetReflection>(base, dist, fres));
+    }
+    add(std::make_shared<LambertianReflection>(base * kd));
+}
+
+
 // *** Phongマテリアル ***
 Phong::Phong(Vec3 _base, Vec3 _kd, Vec3 _ks, float _shine)
     : Material(),

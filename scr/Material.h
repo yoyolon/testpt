@@ -162,6 +162,26 @@ private:
 };
 
 
+/** プラスチックマテリアル */
+class Plastic : public Material {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _base  :ベースカラー
+    * @param[in] _kd    :拡散反射係数
+    * @param[in] _ks    :鏡面反射係数
+    * @param[in] _alpha :表面粗さ
+    */
+    Plastic(Vec3 _base, Vec3 _kd, Vec3 _ks, float _alpha);
+
+private:
+    Vec3  base;  /**> ベースカラー */
+    Vec3  kd;    /**> 拡散反射係数 */
+    Vec3  ks;    /**> 鏡面反射係数 */
+    float alpha; /**> 表面粗さ     */
+};
+
+
 /** Phongマテリアル */
 class Phong : public Material {
 public:

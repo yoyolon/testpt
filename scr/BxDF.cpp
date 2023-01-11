@@ -24,8 +24,7 @@ Vec3 LambertianReflection::sample_f(const Vec3& wo, const intersection& p,
                                     Vec3& wi, float& pdf) const {
     wi = Random::cosine_hemisphere_sample();
     pdf = eval_pdf(wo, wi, p);
-    auto brdf = eval_f(wo, wi, p);
-    return brdf;
+    return eval_f(wo, wi, p);
 }
 
 
@@ -55,8 +54,7 @@ Vec3 LambertianTransmission::sample_f(const Vec3& wo, const intersection& p, Vec
     auto temp = Random::cosine_hemisphere_sample();
     wi = Vec3(temp.get_x(), temp.get_y(), -temp.get_z()); // “§‰ß•ûŒü‚Í”¼‹…ŠO
     pdf = eval_pdf(wo, wi, p);
-    auto btdf = eval_f(wo, wi, p);
-    return btdf;
+    return eval_f(wo, wi, p);
 }
 
 
@@ -72,7 +70,6 @@ SpecularReflection::SpecularReflection(Vec3 _scale, float _ni, float _no)
     scale(_scale)
 {
     fres = std::make_shared<FresnelDielectric>(_ni, _no);
-    //fres = std::make_shared<FresnelConstant>(Vec3::one * 0.5);
 }
 
 float SpecularReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -171,8 +168,7 @@ Vec3 PhongReflection::sample_f(const Vec3& wo, const intersection& p,
                                Vec3& wi, float& pdf) const {
     wi = Random::phong_sample(shine);
     pdf = eval_pdf(wo, wi, p);
-    auto brdf = eval_f(wo, wi, p);
-    return brdf;
+    return eval_f(wo, wi, p);
 }
 
 
@@ -193,7 +189,6 @@ MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _di
       dist(_dist)
 {
     fres = std::make_shared<FresnelDielectric>(_ni, _no);
-    //fres = std::make_shared<FresnelConstant>(Vec3::one*0.5);
 }
 
 float MicrofacetReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 

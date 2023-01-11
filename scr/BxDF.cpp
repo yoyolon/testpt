@@ -87,7 +87,7 @@ Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p,
     // 正反射方向を明示的に重点的サンプリングするのでevalメソッドは使わない
     wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     pdf = 1.0f;
-    auto cos_term = get_cos(wo); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
+    auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
     auto F = fres->eval(cos_term, p);
     auto brdf = scale * F / std::abs(cos_term);
     return brdf;
@@ -116,17 +116,14 @@ Vec3 SpecularTransmission::eval_f(const Vec3& wo, const Vec3& wi,
 
 Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p, 
                                     Vec3& wi, float& pdf) const {
-    // 透過方向を明示的に重点的サンプリングするのでevalメソッドは使わない
-    bool is_inside = !p.is_front; // 現在の媒質が内側か判定
-    auto n_coming = is_inside ? n_inside : n_outside;
-    auto n_going  = is_inside ? n_outside : n_inside;
-    auto eta = n_coming / n_going; // 相対屈折率
+    // 透過方向を明示的に重点的サンプリングする
+    // note: woを入射方向としたBTDFを計算してwiが入射方向になるように変換
+    auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // 相対屈折
     wi = refract(wo, Vec3(0.0f,0.0f,1.0f), eta); // 屈折方向
     // 全反射の場合
     if (is_zero(wi)) {
         pdf = 0.0f;
         return Vec3::zero;
-
     }
     pdf = 1.0f;
     auto cos_term = get_cos(wo);
@@ -248,10 +245,11 @@ float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi,
         return 0.0f;
     }
     auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // 相対屈折
-    auto h = unit_vector(wo + eta * wi);
+    //auto h = unit_vector(wo + eta * wi);
+    auto h = unit_vector(eta * wo + wi);
     // 全反射の場合
     if (is_zero(refract(wo, h, eta))) {
-        return 0.0f;
+        return 1.0f;
     }
     float cos_hi = std::abs(dot(wi, h));
     float cos_ho = std::abs(dot(wo, h));
@@ -262,23 +260,25 @@ float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi,
 
 Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi, 
                                     const intersection& p) const {
+    // note: woを入射方向としたBTDFを計算してwiが入射方向になるように変換
     if (is_same_hemisphere(wo, wi)) {
         return Vec3::zero;
     }
     auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // 相対屈折
+
     float cos_wo = std::abs(get_cos(wo));
     float cos_wi = std::abs(get_cos(wi));
     if (cos_wo == 0 || cos_wi == 0) {
         return Vec3::zero;
     }
     // ハーフ方向の取得
-    auto h = unit_vector(wo + eta * wi);
+    auto h = unit_vector(eta * wo + wi);
     if (is_zero(h)) {
         return Vec3::zero;
     }
     // 全反射の場合
     if (is_zero(refract(wo, h, eta))) {
-        return Vec3::zero;
+        return Vec3::green;
     }
     float cos_hi = std::abs(dot(wi, h));
     float cos_ho = std::abs(dot(wo, h));
@@ -299,7 +299,6 @@ Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p,
     if (is_zero(wi)) {
         pdf = 0.0f;
         return Vec3::zero;
-
     }
     pdf = eval_pdf(wo, wi, p);
     return eval_f(wo, wi, p);

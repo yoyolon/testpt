@@ -90,7 +90,7 @@ Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p,
     // 正反射方向を明示的に重点的サンプリングするのでevalメソッドは使わない
     wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     pdf = 1.0f;
-    auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
+    auto cos_term = get_cos(wo); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
     auto F = fres->eval(cos_term, p);
     auto brdf = scale * F / std::abs(cos_term);
     return brdf;
@@ -105,7 +105,6 @@ SpecularTransmission::SpecularTransmission(Vec3 _scale, float _n_inside, float _
     n_outside(_n_outside)
 {
     fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
-    //fres = std::make_shared<FresnelConstant>(Vec3::one * 0.5);
 }
 
 float SpecularTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -133,7 +132,7 @@ Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p,
 
     }
     pdf = 1.0f;
-    auto cos_term = get_cos(wi);
+    auto cos_term = get_cos(wo);
     auto F = Vec3::one - fres->eval(cos_term, p); // フレネル透過率
     auto btdf = scale * eta * eta * F / std::abs(cos_term);
     return btdf;
@@ -231,8 +230,7 @@ Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p,
     Vec3 h = dist->sample_halfvector();
     wi = unit_vector(reflect(wo, h)); // reflect()では正規化しないので明示的に正規化
     pdf = eval_pdf(wo, wi, p);
-    auto brdf = eval_f(wo, wi, p);
-    return brdf;
+    return eval_f(wo, wi, p);
 }
 
 
@@ -247,7 +245,6 @@ MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF>
     n_outside(_n_outside)
 {
     fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
-    //fres = std::make_shared<FresnelConstant>(Vec3::one*0.5);
 }
 
 float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -310,6 +307,5 @@ Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p,
 
     }
     pdf = eval_pdf(wo, wi, p);
-    auto brdf = eval_f(wo, wi, p);
-    return brdf;
+    return eval_f(wo, wi, p);
 }

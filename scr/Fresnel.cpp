@@ -145,9 +145,9 @@ Vec3 FresnelDielectric::eval(float cos_theta, const intersection& p) const {
     auto n_coming = is_inside ? n_inside : n_outside;
     auto n_going  = is_inside ? n_outside : n_inside;
     float sin_theta = std::sqrt(std::max(0.0f, 1.0f - cos_theta * cos_theta));
-    float sin_refract = n_outside / n_inside * sin_theta;
+    float sin_refract = n_coming / n_going * sin_theta;
     if (sin_refract >= 1.0f) { // ‘S”½ŽË
-        return Vec3::zero;
+        return Vec3::one;
     }
     float cos_refract = std::sqrt(std::max(0.0f, 1.0f - sin_refract * sin_refract));
     float Rs = fresnel_rs(n_coming, n_going, cos_theta, cos_refract);

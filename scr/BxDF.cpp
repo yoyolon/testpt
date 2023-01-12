@@ -245,7 +245,6 @@ float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi,
         return 0.0f;
     }
     auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // ‘Š‘Î‹üÜ
-    //auto h = unit_vector(wo + eta * wi);
     auto h = unit_vector(eta * wo + wi);
     // ‘S”½Ë‚Ìê‡
     if (is_zero(refract(wo, h, eta))) {

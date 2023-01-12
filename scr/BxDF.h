@@ -4,9 +4,8 @@
 * @note  クラス設計参考: https://pbr-book.org/3ed-2018/Reflection_Models/Basic_Interface
 *        ***シェーディング規則***
 *        1.法線をz軸正の方向としたシェーディング座標系で行う
-*        2.法線は常に面の外側を向いている
-*        3.入出射方向は物体表面から離れる方向を正
-*        4.入射/出射方向は正規化されている
+*        2.入出射方向は物体表面から離れる方向を正
+*        3.入出射方向は正規化されている
 */
 #pragma once
 
@@ -27,6 +26,7 @@ enum class BxDFType : uint8_t {
     Glossy       = 1 << 4,  /**< 光沢面 */
     All          = Reflection | Transmission | Specular | Diffuse | Glossy
 };
+
 
 /**
 * @brief 方向ベクトルと法線のなす角の余弦を計算する関数
@@ -142,14 +142,14 @@ public:
     BxDFType get_type() const { return type; }
 
     /**
-    * @brief 材質の反射特性が一致するか判定
+    * @brief 材質の反射特性がtと一致するか判定
     * @param t :チェックする反射特性
     * @return 一致するならtrue
     */
     bool is_same_type(BxDFType t) const { return BxDFType((uint8_t)type & (uint8_t)t) == type; }
 
     /**
-    * @brief 材質の反射特性が含まれているか判定
+    * @brief 材質の反射特性にtが含まれているか判定
     * @param t :チェックする反射特性
     * @return 含まれるならtrue
     */

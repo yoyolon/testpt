@@ -111,7 +111,7 @@ float Disk::area() const {
 intersection Disk::sample(const intersection& ref) const {
     auto disk_sample = Random::concentric_disk_sample();
     auto x = disk_sample.get_x() * radius + center.get_x();
-    auto z = disk_sample.get_z() * radius + center.get_z();
+    auto z = disk_sample.get_y() * radius + center.get_z();
     auto y = center.get_y();
     intersection isect;
     isect.normal = normal;

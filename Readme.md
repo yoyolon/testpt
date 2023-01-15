@@ -32,8 +32,8 @@ testpt.exe 128
 Raytracing in one weekendにない機能として以下のものがあります．
 
 - Wavefront OBJ形式の3Dポリゴンモデルの読み込み
-- 三角ポリゴンとレイの交差判定 [Moller & Trumbore 1997]
-- マイクロファセットBRDFと重点的サンプリング [Walter et al. 07] [Pharr et al. 2016]
+- 三角ポリゴンとレイの交差判定 [Moller and Trumbore 1997]
+- マイクロファセットBSDFと重点的サンプリング [Walter et al. 07] [Pharr et al. 2016]
 - 明示的な光源サンプリングでの多重重点的サンプリング [Pharr et al. 2016]
 - 薄膜干渉マテリアル
 - 簡単なイメージベーストライティング

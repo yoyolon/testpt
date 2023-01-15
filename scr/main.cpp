@@ -50,15 +50,15 @@ enum class Sampling {
     LIGHT = 2, // 光源による重点的サンプリング
     MIS   = 3  // 多重重点的サンプリング
 };
-Sampling sampling_strategy = Sampling::LIGHT;
+Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = false;  // IBLを有効にする
+constexpr bool IMAGE_BASED_LIGHTING = true; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr int  RUSSIAN_ROULETTE     = 5;     // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 128;   // 1ピクセル当たりのサンプル数
+constexpr int  RUSSIAN_ROULETTE     = 3;     // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 4;   // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -79,9 +79,9 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
     // BSDFに基づき直接光の入射方向をサンプリング
     auto wo = unit_vector(r.get_dir());          // 出射方向は必ず正規化する
     auto wo_local = -shading_coord.to_local(wo); // ローカルな出射方向
-    BxDFType bsdf_type;
-    BxDFType type = isect.is_front ? BxDFType::Reflection : BxDFType::Transmission; // 反射か透過
-    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, bsdf_type, type);
+    BxDFType sampled_type;
+    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, 
+                                    sampled_type);
     if (pdf_scattering == 0 || is_zero(bsdf)) {
         return Ld;
     }
@@ -148,7 +148,7 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     // 光源が遮蔽されると寄与はゼロ
     auto r_light = Ray(isect.pos, wi); // 光源への入射方向
     intersection isect_light;
-    light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点情報を取得
+    light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点を取得
     if (world.intersect_object(r_light, eps_isect, isect_light.t)) {
         return Ld;
     }
@@ -183,16 +183,15 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
 Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene& world,
                            const ONB& shading_coord) {
     auto Ld = Vec3::zero;
-    auto contrib = Vec3::one;
 
     // BSDFに基づきサンプリング
     if ((sampling_strategy == Sampling::BSDF) || (sampling_strategy == Sampling::MIS)) {
-        Ld += contrib * explict_bsdf(r, isect, world, shading_coord);
+        Ld += explict_bsdf(r, isect, world, shading_coord);
     }
 
     // 光源のジオメトリに基づきサンプリング
     if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
-        Ld += contrib * explict_one_light(r, isect, world, shading_coord);
+        Ld += explict_one_light(r, isect, world, shading_coord);
     }
     return Ld;
 }
@@ -239,18 +238,17 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         // 直接光のサンプリング
         ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);// 法線を反転
         L += contrib * explicit_direct_light(r, isect, world, shading_coord);
-
         // BSDFに基づく出射方向のサンプリング
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
         float pdf;
-        BxDFType bsdf_type;
-        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
+        BxDFType sampled_type;
+        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, sampled_type);
         if (pdf == 0.0f || is_zero(bsdf)) break;
         auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
         auto cos_term = std::abs(dot(isect.normal, wi));
         contrib = contrib * bsdf * cos_term / pdf;
-        is_specular_ray = is_spacular_type(bsdf_type);
+        is_specular_ray = is_spacular_type(sampled_type);
         r = Ray(isect.pos, wi); // 次のレイを生成
         //ロシアンルーレット
         if (bounces >= RUSSIAN_ROULETTE) {
@@ -284,7 +282,13 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
             break;
         }
         if (isect.type == IsectType::Light) {
-            L += contrib * isect.light->emitte();
+            // 面の裏側をサンプルした場合は寄与をゼロにする
+            if (dot(isect.normal, -r.get_dir()) < 0) {
+                L = 0.0f;
+            }
+            else {
+                L += contrib * isect.light->emitte();
+            }
             break;
         }
 
@@ -293,13 +297,13 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
         float pdf;
-        BxDFType bsdf_type;
-        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
+        BxDFType sampled_type;
+        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, sampled_type);
         if (pdf == 0.0f || is_zero(bsdf)) break;
         auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
         auto cos_term = std::abs(dot(isect.normal, wi));
         contrib = contrib * bsdf * cos_term / pdf;
-        is_specular_ray = is_spacular_type(bsdf_type);
+        is_specular_ray = is_spacular_type(sampled_type);
         r = Ray(isect.pos, wi); // 次のレイを生成
         //ロシアンルーレット
         if (bounces >= RUSSIAN_ROULETTE) {
@@ -320,7 +324,6 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
 * @return Vec3          :レイに沿った放射輝度
 * @note ロシアンルーレットによる打ち切りを実装していないのでmax_depthは小さめにしておく
 */
-// TODO: スペキュラ以外の透過は無視する
 Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
     auto L = Vec3::zero, contrib = Vec3::one;
     Ray r = Ray(r_in);
@@ -344,10 +347,10 @@ Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
         float pdf;
-        BxDFType bsdf_type;
-        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, bsdf_type);
+        BxDFType sampled_type;
+        auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, sampled_type);
         // 出射方向がスペキュラでないなら光源を明示的にサンプリング
-        if (!is_spacular_type(bsdf_type)) {
+        if (!is_spacular_type(sampled_type)) {
             L += contrib * explicit_direct_light(r, isect, world, shading_coord);
             break;
         }
@@ -374,6 +377,24 @@ Vec3 L_normal(const Ray& r, const Scene& world) {
     return Vec3(1.0f, 1.0f, 1.0f);
 }
 
+
+/**
+* @brief 無効な値(NaNやinf)を除外
+* @param[in]  color :輝度
+* @return Vec3      :有効値に変換後の値
+*/
+Vec3 exclude_invalid(const Vec3& color) {
+    float r = color.get_x();
+    float g = color.get_y();
+    float b = color.get_z();
+    // 無効な値をゼロにする
+    if (!isfinite(r)) r = 0.0f;
+    if (!isfinite(g)) g = 0.0f;
+    if (!isfinite(b)) b = 0.0f;
+    return Vec3(r, g, b);
+}
+
+
 /**
 * @brief 色をガンマ補正
 * @param[in]  color :ガンマ補正前の色
@@ -385,10 +406,6 @@ Vec3 gamma_correction(const Vec3& color, float gamma) {
     float r = std::pow(color.get_x(), gamma);
     float g = std::pow(color.get_y(), gamma);
     float b = std::pow(color.get_z(), gamma);
-    // NaNの除外
-    if (!isfinite(r)) r = 0.0f;
-    if (!isfinite(g)) g = 0.0f;
-    if (!isfinite(b)) b = 0.0f;
     return Vec3(r, g, b);
 }
 
@@ -416,7 +433,7 @@ int main(int argc, char* argv[]) {
     //make_scene_cornell_box(world, cam);
     make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
-    //make_scene_sphere(world, cam); // 未実装
+    //make_scene_thinfilm(world, cam);
     // 出力画像
     const auto w = cam.get_w(); // 高さ
     const auto h = cam.get_h(); // 幅
@@ -435,18 +452,20 @@ int main(int argc, char* argv[]) {
                 auto v = (i + Random::uniform_float()) / (h - 1);
                 auto u = (j + Random::uniform_float()) / (w - 1);
                 Ray r = cam.generate_ray(u, v);
+                Vec3 L;
                 if (DEBUG_MODE) {
-                    I += L_normal(r, world);
+                    L = L_normal(r, world);
                 }
                 else {
                     if (GLOBAL_ILLUMINATION) {
-                        I += L_pathtracing(r, max_depth, world);
-                        //I += L_naive_pathtracing(r, max_depth, world);
+                        L = L_pathtracing(r, max_depth, world);
+                        //L = L_naive_pathtracing(r, max_depth, world);
                     }
                     else {
-                        I += L_raytracing(r, max_depth, world);
+                        L = L_raytracing(r, max_depth, world);
                     }
                 }
+                I += exclude_invalid(L);
             }
             I *= 1.0f / nsample;
             if (IS_GAMMA_CORRECTION) I = gamma_correction(I, gamma);

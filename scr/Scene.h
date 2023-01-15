@@ -17,7 +17,7 @@ public:
     Scene() : envmap(nullptr) {}
 
     /**
-    * @brief デフォルトコンストラクタ
+    * @brief コンストラクタ
     * @param[in]  map : 環境マップ
     * @param[in]  w   : 環境マップの幅
     * @param[in]  h   : 環境マップの高さ
@@ -169,7 +169,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Shape>> shape_list; /**< シーン中のオブジェクト */
-    std::vector<std::shared_ptr<Light>> light_list;  /**< シーン中の光源         */
+    std::vector<std::shared_ptr<Light>> light_list; /**< シーン中の光源         */
     float* envmap;    /**< 環境マップ               */
     int w_envmap = 0; /**< 環境マップの高さ         */
     int h_envmap = 0; /**< 環境マップの幅           */

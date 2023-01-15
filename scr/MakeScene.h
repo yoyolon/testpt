@@ -24,7 +24,7 @@ void make_scene_cylinder(class Scene& world, class Camera& cam);
 * @brief 重点的サンプリング検証用シーン
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
-* @note モデル出典: https://github.com/wjakob/nori/tree/master/scenes/pa5/veach_mi
+* @note モデル出典: https://pbrt.org/scenes-v3
 *       このソフトウェアに上記モデルは付属しておりません.
 */
 void make_scene_MIS(class Scene& world, class Camera& cam);

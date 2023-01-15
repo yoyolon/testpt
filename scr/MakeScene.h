@@ -56,3 +56,11 @@ void make_scene_box_with_sphere(class Scene& world, class Camera& cam);
 *       このソフトウェアに上記モデルは付属しておりません.
 */
 void make_scene_vase(class Scene& world, class Camera& cam);
+
+
+/**
+* @brief 薄膜干渉を含むシーンを生成する関数
+* @param[out] world :シーンデータ
+* @param[out] cam   :カメラデータ
+*/
+void make_scene_thinfilm(class Scene& world, class Camera& cam);

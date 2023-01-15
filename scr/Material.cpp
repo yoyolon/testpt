@@ -126,7 +126,7 @@ Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha)
       alpha(_alpha)
 {   
     if (alpha != 0) {
-        auto dist = std::make_shared<GGX>(alpha);
+        auto dist = std::make_shared<Beckmann>(alpha);
         if (!is_zero(r)) {
             add(std::make_shared<MicrofacetReflection>(base, dist, n));
         }
@@ -197,5 +197,24 @@ Phong::Phong(Vec3 _base, Vec3 _kd, Vec3 _ks, float _shine)
     }
     if (!is_zero(ks)) {
         add(std::make_shared<PhongReflection>(base * ks, shine));
+    }
+}
+
+
+// *** Thinfilmƒ}ƒeƒŠƒAƒ‹ ***
+Thinfilm::Thinfilm(Vec3 _base, float _d, float _n, float _alpha)
+    : Material(),
+    base(_base),
+    d(_d),
+    n(_n),
+    alpha(_alpha)
+{
+    auto fres = std::make_shared<FresnelThinfilm>(d, 1.0f, n, 1.0f);
+    if (alpha == 0) {
+        add(std::make_shared<SpecularReflection>(base, fres));
+    }
+    else {
+        auto dist = std::make_shared<GGX>(alpha);
+        add(std::make_shared<MicrofacetReflection>(base, dist, fres));
     }
 }

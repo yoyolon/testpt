@@ -33,7 +33,7 @@ public:
     * @param[out] brdf            :入射方向と出射方向に対するBRDFの値
     * @param[out] wi              :出射方向ベクトル
     * @param[out] pdf             :立体角に関する入射方向サンプリング確率密度
-    * @oaram[out] sampled_type    :サンプリングしたなBxDFの種類
+    * @oaram[out] sampled_type    :サンプリングしたBxDFの種類
     * @oaram[in]  acceptable_type :サンプリング可能なBxDFの種類
     * @return Vec3                :入射方向と出射方向に対するBRDFの値
     */
@@ -199,4 +199,24 @@ private:
     Vec3  kd;    /**> 拡散反射係数 */
     Vec3  ks;    /**> 鏡面反射係数 */
     float shine; /**> 光沢度       */
+};
+
+
+/** 薄膜マテリアル */
+class Thinfilm : public Material {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _base  :ベースカラー
+    * @param[in] _d     :膜厚
+    * @param[in] _n     :屈折率
+    * @param[in] _alpha :表面粗さ
+    */
+    Thinfilm(Vec3 _base, float _d, float _n, float _alpha);
+
+private:
+    Vec3 base;   /**> ベースカラー */
+    float d;     /**> 膜厚         */
+    float n;     /**> 屈折率       */
+    float alpha; /**> 表面粗さ     */
 };

@@ -171,6 +171,20 @@ inline bool is_zero(const Vec3& a) { return a.length2() > 0 ? false : true; }
 inline Vec3 unit_vector(const Vec3& a) { return a / a.length(); }
 
 /**
+* @brief 各成分を指定した数値でクランプする関数
+* @param[in]  a   :クランプされるベクトル
+* @param[in]  min :最小値
+* @param[in]  max :最大値
+* @return Vec3  :クランプされたベクトル
+*/
+inline Vec3 clamp(const Vec3& a, float min=0.0f, float max=1.0f) { 
+    auto x = std::clamp(a.get_x(), min, max);
+    auto y = std::clamp(a.get_y(), min, max);
+    auto z = std::clamp(a.get_z(), min, max);
+    return Vec3(x, y, z); 
+}
+
+/**
 * @brief 入射ベクトルの正反射方向ベクトルを計算する関数
 * @param[in]  w :入射ベクトル
 * @param[in]  n :法線ベクトル

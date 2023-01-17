@@ -46,5 +46,5 @@ private:
     Vec3 right;       /**< 右ベクトル           */
     Vec3 up;          /**< 上ベクトル           */
     Vec3 film_corner; /**< フィルム左下端の座標 */
-    std::shared_ptr<class Film> film; /**< フィルム             */
+    std::shared_ptr<class Film> film; /**< フィルム */
 };

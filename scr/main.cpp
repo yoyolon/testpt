@@ -53,12 +53,30 @@ enum class Sampling {
 Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
-constexpr bool DEBUG_MODE           = false; // 法線可視化を有効にする
+constexpr bool DEBUG_MODE           = false; // (デバッグモード)法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = true; // IBLを有効にする
+constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
+constexpr bool BIASED_DENOISING     = false; // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;     // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 4;   // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES              = 128;   // 1ピクセル当たりのサンプル数
+
+
+/**
+* @brief 無効な値(NaNやinf)を除外
+* @param[in]  color :輝度
+* @return Vec3      :有効値に変換後の値
+*/
+Vec3 exclude_invalid(const Vec3& color) {
+    float r = color.get_x();
+    float g = color.get_y();
+    float b = color.get_z();
+    // 無効な値をゼロにする
+    if (!isfinite(r)) r = 0.0f;
+    if (!isfinite(g)) g = 0.0f;
+    if (!isfinite(b)) b = 0.0f;
+    return Vec3(r, g, b);
+}
 
 
 /**
@@ -186,12 +204,14 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
 
     // BSDFに基づきサンプリング
     if ((sampling_strategy == Sampling::BSDF) || (sampling_strategy == Sampling::MIS)) {
-        Ld += explict_bsdf(r, isect, world, shading_coord);
+        auto L = explict_bsdf(r, isect, world, shading_coord);
+        Ld += exclude_invalid(L);
     }
 
     // 光源のジオメトリに基づきサンプリング
     if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
-        Ld += explict_one_light(r, isect, world, shading_coord);
+        auto L = explict_one_light(r, isect, world, shading_coord);
+        Ld += exclude_invalid(L);
     }
     return Ld;
 }
@@ -379,23 +399,6 @@ Vec3 L_normal(const Ray& r, const Scene& world) {
 
 
 /**
-* @brief 無効な値(NaNやinf)を除外
-* @param[in]  color :輝度
-* @return Vec3      :有効値に変換後の値
-*/
-Vec3 exclude_invalid(const Vec3& color) {
-    float r = color.get_x();
-    float g = color.get_y();
-    float b = color.get_z();
-    // 無効な値をゼロにする
-    if (!isfinite(r)) r = 0.0f;
-    if (!isfinite(g)) g = 0.0f;
-    if (!isfinite(b)) b = 0.0f;
-    return Vec3(r, g, b);
-}
-
-
-/**
 * @brief 色をガンマ補正
 * @param[in]  color :ガンマ補正前の色
 * @param[in]  gamma :ガンマ値
@@ -430,8 +433,8 @@ int main(int argc, char* argv[]) {
     //make_scene_simple(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
-    //make_scene_cornell_box(world, cam);
-    make_scene_box_with_sphere(world, cam);
+    make_scene_cornell_box(world, cam);
+    //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);
     // 出力画像
@@ -465,13 +468,19 @@ int main(int argc, char* argv[]) {
                         L = L_raytracing(r, max_depth, world);
                     }
                 }
-                I += exclude_invalid(L);
+                if (BIASED_DENOISING) {
+                    I += clamp(exclude_invalid(L)); // ノイズが減るが物理ベースでない
+                }
+                else {
+                    I += exclude_invalid(L);
+                }
             }
             I *= 1.0f / nsample;
             if (IS_GAMMA_CORRECTION) I = gamma_correction(I, gamma);
-            img[index++] = static_cast<uint8_t>(std::clamp(I.get_x(), 0.0f, 1.0f) * 255);
-            img[index++] = static_cast<uint8_t>(std::clamp(I.get_y(), 0.0f, 1.0f) * 255);
-            img[index++] = static_cast<uint8_t>(std::clamp(I.get_z(), 0.0f, 1.0f) * 255);
+            I = clamp(I); // [0, 1]でクランプ
+            img[index++] = static_cast<uint8_t>(I.get_x() * 255);
+            img[index++] = static_cast<uint8_t>(I.get_y() * 255);
+            img[index++] = static_cast<uint8_t>(I.get_z() * 255);
         }
     }
 

@@ -18,10 +18,10 @@
 void make_scene_simple(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
-    auto mat_gold = std::make_shared<Metal>(Vec3::one, Vec3(1.00f, 0.71f, 0.29f), 0.05f);
-    auto mat_phong = std::make_shared<Phong>(Vec3::one, Vec3(0.0f, 0.1f, 0.0f), Vec3(0.0f, 0.0f, 0.0f), 150.0f);
-    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f, 0.9f, 0.9f));
-    auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.3f, 0.05f);
+    auto mat_gold = std::make_shared<Metal>(Vec3::one, Vec3(1.00f,0.71f,0.29f), 0.05f);
+    auto mat_phong = std::make_shared<Phong>(Vec3::one, Vec3(0.0f,0.1f,0.0f), Vec3(0.0f,0.0f,0.0f), 150.0f);
+    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
     // オブジェクト
     auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_glass);
     world.add(obj_sphere);
@@ -49,7 +49,7 @@ void make_scene_cylinder(Scene& world, Camera& cam) {
     world.add(obj_disk_top);
     world.add(obj_disk_btm);
     world.add(obj_cylinder);
-    world.add(light);
+    //world.add(light);
     // カメラ設定
     auto film = std::make_shared<Film>(768, 512, 3, "cylinder.png");
     auto fd = 2.5f; // 焦点距離
@@ -113,17 +113,11 @@ void make_scene_MIS(Scene& world, Camera& cam) {
 
 void make_scene_cornell_box(Scene& world, Camera& cam) {
     world.clear();
-    // カラーバリエーション1
+    // マテリアル
     auto mat_red   = std::make_shared<Diffuse>(Vec3( 0.5694f,  0.0430f, 0.0451f));
     auto mat_green = std::make_shared<Diffuse>(Vec3( 0.1039f,  0.3778f, 0.0768f));
     auto mat_white = std::make_shared<Diffuse>(Vec3( 0.8860f,  0.6977f, 0.6676f));
     auto radiance = Vec3(20.0f, 15.0f, 6.0f);
-    //// カラーバリエーション2
-    //auto mat_red = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
-    //auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
-    //auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
-    //auto radiance = Vec3(10.0f, 10.0f, 10.0f);
-    // ボックスの色
     auto& mat_tall = mat_white;
     auto& mat_short = mat_white;
 
@@ -297,17 +291,17 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
     world.clear();
     //  マテリアル
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
-    auto mat_gold   = std::make_shared<Metal>(Vec3::one, gold, 0.10f);
-    auto mat_plastic = std::make_shared<Plastic>(Vec3::red, Vec3(0.5f,0.5f,0.5f), Vec3(0.5f,0.5f,0.5f), 0.05f);
-    auto mat_glass    = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.3f, 0.0f);
+    auto mat_gold   = std::make_shared<Metal>(Vec3::one, gold, 0.20f);
+    auto mat_plastic = std::make_shared<Plastic>(Vec3::one, Vec3(0.5f,0.0f,0.0f), Vec3(0.5f,0.5f,0.5f), 0.05f);
+    auto mat_glass    = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.6f, 0.0f);
     auto mat_red   = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
     auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
     auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
     auto radiance = Vec3(10.0f, 10.0f, 10.0f);
     // 3つの球
-    auto sphere1 = std::make_shared<Sphere>(Vec3(-123, 50.0f, -200.0f), 50.0f, mat_gold);
-    auto sphere2 = std::make_shared<Sphere>(Vec3(-273, 50.0f, -200.0f), 50.0f, mat_plastic);
-    auto sphere3 = std::make_shared<Sphere>(Vec3(-423, 50.0f, -200.0f), 50.0f, mat_glass);
+    auto sphere1 = std::make_shared<Sphere>(Vec3(-123, 50.0f, -200.0f), 50.0f, mat_plastic);
+    auto sphere2 = std::make_shared<Sphere>(Vec3(-273, 50.0f, -200.0f), 50.0f, mat_glass);
+    auto sphere3 = std::make_shared<Sphere>(Vec3(-423, 50.0f, -200.0f), 50.0f, mat_gold);
     // 1つの球
     //auto large_spehre = std::make_shared<Sphere>(Vec3(-273, 274.4f, -200.0f), 150.0f, mat_glass);
     // Light sorce

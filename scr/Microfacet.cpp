@@ -1,4 +1,3 @@
-
 #include "Microfacet.h"
 #include "Material.h"
 #include "Random.h"

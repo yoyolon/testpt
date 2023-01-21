@@ -1,20 +1,37 @@
 #include "Vcabvty.h"
 #include "Microfacet.h"
+#include "Random.h"
+
+/**
+* @brief 法線選択の確率密度を評価する関数
+* @param[in] h  :ハーフ方向ベクトル1
+* @param[in] hd :ハーフ方向ベクトル2
+* @param[in] wo :出射方向ベクトル
+* @return float :サンプリング確率密度
+*/
+float eval_dual_normal_pdf(const Vec3& h, const Vec3& hd, const Vec3& wo) {
+    auto hd_term = std::max(0.0f, dot(hd, wo));
+    auto h_term = std::max(0.0f, dot(h, wo));
+    if (hd_term == 0 && h_term == 0) {
+        return 0.0f;
+    }
+    return hd_term / (hd_term + h_term);
+}
 
 Vcavity::Vcavity(float _alpha, NDFType _type) 
-    : ndf(nullptr)
+    : dist(nullptr)
 {
     // 分布で場合分け
     if (_type == NDFType::Beckmann) {
-        ndf = std::make_shared<Beckmann>(_alpha);
+        dist = std::make_shared<Beckmann>(_alpha);
     }
     else if (_type == NDFType::GGX) {
-        ndf = std::make_shared<GGX>(_alpha);
+        dist = std::make_shared<GGX>(_alpha);
     }
 }
 
 float Vcavity::D(const Vec3& h) const{
-    return ndf->D(h);
+    return dist->D(h);
 }
 
 float Vcavity::G1(const Vec3& w, const Vec3& h, const Vec3& n) const {
@@ -36,10 +53,18 @@ float Vcavity::G(const Vec3& wo, const Vec3& wi, const Vec3& h, const Vec3& n) c
     return std::max(G1_wo + G1_wi - 1.0f, 0.0f);
 }
 
-Vec3 Vcavity::sample_halfvector() const {
-    ndf->sample_halfvector();
+Vec3 Vcavity::sample_halfvector(const Vec3& wo) const {
+    auto h = dist->sample_halfvector();
+    auto hd = Vec3(-h.get_x(), -h.get_y(), h.get_z()); // 二つ目の法線
+    auto u = eval_dual_normal_pdf(h, hd, wo);
+    if (Random::uniform_float() < u) {
+        h = hd;
+    }
+    return h;
 }
 
-float Vcavity::eval_pdf(const Vec3& h) const {
-    ndf->eval_pdf(h);
+float Vcavity::eval_pdf(const Vec3& h, const Vec3& wo) const {
+    auto hd = Vec3(-h.get_x(), -h.get_y(), h.get_z()); // 二つ目の法線
+    auto u = eval_dual_normal_pdf(h, hd, wo);
+    return u * dist->eval_pdf(h);
 }

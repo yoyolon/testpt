@@ -296,6 +296,31 @@ private:
 };
 
 
+/** v-cavityマイクロファセット反射 */
+class VcavityReflection : public BxDF {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _scale :スケールファクター
+    * @param[in] _dist  :マイクロファセット分布
+    * @param[in] _fres  :フレネルの式
+    */
+    VcavityReflection(Vec3 _scale, std::shared_ptr<class Vcavity> _dist,
+                      std::shared_ptr<class Fresnel> _fres);
+
+    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
+
+    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
+
+    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
+
+
+private:
+    Vec3 scale; /**> スケールファクター */
+    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
+    std::shared_ptr<class Vcavity> dist; /**> マイクロファセット分布(v-cavity用) */
+};
+
 
 /** マイクロファセット反射 */
 /** @note 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models */

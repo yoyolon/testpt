@@ -1,8 +1,9 @@
 #include "BxDF.h"
+#include "Fresnel.h"
 #include "Microfacet.h"
 #include "Shape.h"
 #include "Random.h"
-#include "Fresnel.h"
+#include "Vcabvty.h"
 
 // *** Lambert反射 ***
 LambertianReflection::LambertianReflection(const Vec3& _scale)
@@ -169,7 +170,55 @@ Vec3 PhongReflection::sample_f(const Vec3& wo, const intersection& p,
 }
 
 
-// *** マイクロファセットモデル ***
+// *** v-cavityマイクロファセット反射 ***
+VcavityReflection::VcavityReflection(Vec3 _scale, std::shared_ptr<Vcavity> _dist, 
+                                     std::shared_ptr<Fresnel> _fres)
+    : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)), 
+      scale(_scale),
+      dist(_dist), 
+      fres(_fres) 
+{}
+
+float VcavityReflection::eval_pdf(const Vec3& wo, const Vec3& wi, 
+                                     const intersection& p) const {
+    if (!is_same_hemisphere(wo, wi)) {
+        return 0.0f;
+    }
+    auto h = unit_vector(wo + wi);
+    return dist->eval_pdf(h, wo) / (4 * dot(wo, h)); // 確率密度の変換
+}
+
+Vec3 VcavityReflection::eval_f(const Vec3& wo, const Vec3& wi, 
+                                  const intersection& p) const {
+    if (!is_same_hemisphere(wo, wi)) {
+        return Vec3::zero;
+    }
+    float cos_wo = std::abs(get_cos(wo));
+    float cos_wi = std::abs(get_cos(wi));
+    if (cos_wo == 0 || cos_wi == 0) {
+        return Vec3::zero;
+    }
+    // ハーフ方向の取得
+    auto h = unit_vector(wo + wi);
+    if (is_zero(h)) {
+        return Vec3::zero;
+    }
+    float D = dist->D(h);
+    float G = dist->G(wo, wi, h, p.normal); // v-cavity用
+    Vec3 F = fres->eval(dot(wo, h), p);
+    return scale * (D * G * F) / (4 * cos_wo * cos_wi);
+}
+
+Vec3 VcavityReflection::sample_f(const Vec3& wo, const intersection& p, 
+                                 Vec3& wi, float& pdf) const {
+    Vec3 h = dist->sample_halfvector(wo);
+    wi = unit_vector(reflect(wo, h)); // reflect()では正規化しないので明示的に正規化
+    pdf = eval_pdf(wo, wi, p);
+    return eval_f(wo, wi, p);
+}
+
+
+// *** マイクロファセットBRDF ***
 /** @note 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models */
 MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist, 
                                            std::shared_ptr<Fresnel> _fres)
@@ -227,7 +276,7 @@ Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p,
 }
 
 
-// *** マイクロファセットモデル ***
+// *** マイクロファセットBTDF ***
 /** @note 参考: https://www.pbr-book.org/3ed-2018/Transmission_Models/Microfacet_Models */
 MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF> _dist,
                                                float _n_inside, float _n_outside)

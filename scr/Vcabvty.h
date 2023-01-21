@@ -55,17 +55,19 @@ public:
 
     /**
     * @brief ハーフ方向のサンプリングを行う関数
+    * @param[in] wo :出射方向ベクトル
     * @return float :ハーフ方向ベクトル
     */
-    Vec3 sample_halfvector() const;
+    Vec3 sample_halfvector(const Vec3& wo) const;
 
     /**
     * @brief ハーフ方向のサンプリング確率密度を評価する関数
     * @param[in] h  :ハーフ方向ベクトル
+    * @param[in] wo :出射方向ベクトル
     * @return float :サンプリング確率密度
     */
-    float eval_pdf(const Vec3& h) const;
+    float eval_pdf(const Vec3& h, const Vec3& wo) const;
 
 private:
-    std::shared_ptr<class NDF> ndf; // NDF
+    std::shared_ptr<class NDF> dist; // NDF
 };

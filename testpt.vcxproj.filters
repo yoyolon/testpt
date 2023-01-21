@@ -66,6 +66,9 @@
     <ClInclude Include="scr\MakeScene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="scr\Vcabvty.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scr\Fresnel.cpp">
@@ -111,6 +114,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="scr\MakeScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="scr\Vcavity.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

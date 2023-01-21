@@ -35,6 +35,7 @@
     <ClInclude Include="scr\Sphere.h" />
     <ClInclude Include="scr\Triangle.h" />
     <ClInclude Include="scr\utility.h" />
+    <ClInclude Include="scr\Vcabvty.h" />
     <ClInclude Include="scr\Vec3.h" />
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +53,7 @@
     <ClCompile Include="scr\Shape.cpp" />
     <ClCompile Include="scr\Sphere.cpp" />
     <ClCompile Include="scr\Triangle.cpp" />
+    <ClCompile Include="scr\Vcavity.cpp" />
     <ClCompile Include="scr\Vec3.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

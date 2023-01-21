@@ -202,12 +202,13 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
     if (!is_same_hemisphere(wo, wi)) {
         return Vec3::zero; // 同一半球内に存在するなら透過しない(単散乱仮定のため)
     }
-    auto h = unit_vector(wo + wi);
     float cos_wo = std::abs(get_cos(wo));
     float cos_wi = std::abs(get_cos(wi));
     if (cos_wo == 0 || cos_wi == 0) {
         return Vec3::zero;
     }
+    // ハーフ方向の取得
+    auto h = unit_vector(wo + wi);
     if (is_zero(h)) {
         return Vec3::zero;
     }
@@ -263,13 +264,12 @@ Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi,
     if (is_same_hemisphere(wo, wi)) {
         return Vec3::zero;
     }
-    auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // 相対屈折
-
     float cos_wo = std::abs(get_cos(wo));
     float cos_wi = std::abs(get_cos(wi));
     if (cos_wo == 0 || cos_wi == 0) {
         return Vec3::zero;
     }
+    auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // 相対屈折
     // ハーフ方向の取得
     auto h = unit_vector(eta * wo + wi);
     if (is_zero(h)) {

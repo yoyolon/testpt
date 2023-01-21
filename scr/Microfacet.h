@@ -21,21 +21,33 @@ public:
     virtual float D(const Vec3& h) const = 0;
 
     /**
-    * @brief レイとオブジェクトの交差判定を行う関数
-    * @param[in]  r     :入射レイ
-    * @param[in]  t_min :入射レイのパラメータ制限
-    * @param[in]  t_max :入射レイのパラメータ制限
-    * @param[out] p     :交差点情報
-    * @return bool      :交差判定の結果
+    * @brief Smithラムダ関数
+    * @param[in] w  :入出射方向
+    * @return float :評価値(Smithマスキング関数で使用)
     */
     virtual float lambda(const Vec3& w) const = 0;
+
+    /**
+    * @brief Smithマスキング関数
+    * @param[in] w  :出射方向
+    * @return float :マスキング量
+    */
     float G1(const Vec3& w) const {
         return 1 / (1 + lambda(w));
     }
-    float G(const Vec3& wi, const Vec3& wo) const {
-        return 1 / (1 + lambda(wi) + lambda(wo));
+
+    /**
+    * @brief Smithシャドウイング-マスキング関数
+    * @param[in] wo  :出射方向
+    * @param[in] wi  :入射方向
+    * @return float :シャドウイング-マスキング量
+    */
+    float G(const Vec3& wo, const Vec3& wi) const {
+        return 1 / (1 + lambda(wo) + lambda(wi));
     }
+
     virtual Vec3 sample_halfvector() const = 0;
+
     virtual float eval_pdf(const Vec3& h) const = 0;
 };
 

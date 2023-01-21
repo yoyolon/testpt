@@ -162,6 +162,23 @@ private:
 };
 
 
+/** 金属マテリアル(v-cavity) */
+class VcavityMetal : public Material {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _base  :ベースカラー
+    * @param[in] _fr    :金属反射率
+    * @param[in] _alpha :表面粗さ
+    */
+    VcavityMetal(Vec3 _base, Vec3 fr, float _alpha);
+
+private:
+    Vec3  base;  /**> ベースカラー */
+    Vec3  fr;    /**> 金属反射率   */
+    float alpha; /**> 表面粗さ     */
+};
+
 /** プラスチックマテリアル */
 class Plastic : public Material {
 public:

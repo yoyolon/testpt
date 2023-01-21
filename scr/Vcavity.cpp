@@ -66,5 +66,5 @@ Vec3 Vcavity::sample_halfvector(const Vec3& wo) const {
 float Vcavity::eval_pdf(const Vec3& h, const Vec3& wo) const {
     auto hd = Vec3(-h.get_x(), -h.get_y(), h.get_z()); // “ñ‚Â–Ú‚Ì–@ü
     auto u = eval_dual_normal_pdf(h, hd, wo);
-    return u * dist->eval_pdf(h);
+    return (1 - u) * dist->eval_pdf(h);
 }

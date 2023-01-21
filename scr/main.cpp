@@ -55,7 +55,7 @@ Sampling sampling_strategy = Sampling::MIS;
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // (デバッグモード)法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
+constexpr bool IMAGE_BASED_LIGHTING = true; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false; // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;     // ロシアンルーレット適用までのレイのバウンス数
@@ -430,10 +430,10 @@ int main(int argc, char* argv[]) {
         world = Scene(envmap, w_envmap, h_envmap, c_envmap);
     }
     Camera cam;
-    //make_scene_simple(world, cam);
+    make_scene_simple(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
-    make_scene_cornell_box(world, cam);
+    //make_scene_cornell_box(world, cam);
     //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);

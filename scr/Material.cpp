@@ -1,8 +1,9 @@
 #include "Material.h"
+#include "Fresnel.h"
 #include "Microfacet.h"
 #include "Shape.h"
 #include "Random.h"
-#include "Fresnel.h"
+#include "Vcabvty.h"
 
 // *** マテリアル ***
 
@@ -160,6 +161,24 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
     else {
         auto dist = std::make_shared<GGX>(alpha);
         add(std::make_shared<MicrofacetReflection>(base, dist, fres));
+    }
+}
+
+
+// *** 金属マテリアル(v-cavity) ***
+VcavityMetal::VcavityMetal(Vec3 _base, Vec3 _fr, float _alpha)
+    : Material(),
+    base(_base),
+    fr(_fr),
+    alpha(_alpha)
+{
+    auto fres = std::make_shared<FresnelSchlick>(fr);
+    if (alpha == 0) {
+        add(std::make_shared<SpecularReflection>(base, fres));
+    }
+    else {
+        auto dist = std::make_shared<Vcavity>(alpha, NDFType::Beckmann);
+        add(std::make_shared<VcavityReflection>(base, dist, fres));
     }
 }
 

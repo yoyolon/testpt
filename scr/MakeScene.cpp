@@ -18,12 +18,13 @@
 void make_scene_simple(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
-    auto mat_gold = std::make_shared<Metal>(Vec3::one, Vec3(1.00f,0.71f,0.29f), 0.05f);
+    auto mat_gold  = std::make_shared<Metal>(Vec3::one, Vec3(1.00f, 0.71f, 0.29f), 0.05f);
+    auto mat_goldv = std::make_shared<VcavityMetal>(Vec3::one, Vec3(1.00f,0.71f,0.29f), 0.05f);
     auto mat_phong = std::make_shared<Phong>(Vec3::one, Vec3(0.0f,0.1f,0.0f), Vec3(0.0f,0.0f,0.0f), 150.0f);
-    auto mat_mirr = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
     auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
     // オブジェクト
-    auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_glass);
+    auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_gold);
     world.add(obj_sphere);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "simple.png");

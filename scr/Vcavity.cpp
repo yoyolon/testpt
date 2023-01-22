@@ -34,20 +34,22 @@ float Vcavity::D(const Vec3& h) const{
     return dist->D(h);
 }
 
-float Vcavity::G1(const Vec3& w, const Vec3& h, const Vec3& n) const {
-    auto geo_term = dot(w, n);
+float Vcavity::G1(const Vec3& w, const Vec3& h) const {
+    auto n = Vec3(0.0f, 0.0f, 1.0f);
     auto micro_term = dot(w, h);
-    if (micro_term == 0 || geo_term == 0 || micro_term / geo_term < 0) {
+    auto geo_term = dot(w, n);
+    if (micro_term == 0 || geo_term == 0 || geo_term / micro_term < 0) {
         return 0.0f;
     }
     auto amount = std::abs(dot(h, n)) * std::abs(geo_term) / std::abs(micro_term);
     return std::min(1.0f, 2 * amount);
 }
 
-float Vcavity::G(const Vec3& wo, const Vec3& wi, const Vec3& h, const Vec3& n) const {
-    auto G1_wo = G1(wo, h, n);
-    auto G1_wi = G1(wi, h, n);
-    if (dot(wo, n) > 0) {
+float Vcavity::G(const Vec3& wo, const Vec3& wi, const Vec3& h) const {
+    auto n = Vec3(0.0f, 0.0f, 1.0f);
+    auto G1_wo = G1(wo, h);
+    auto G1_wi = G1(wi, h);
+    if (dot(wi, n) > 0) {
         return std::min(G1_wo, G1_wi);
     }
     return std::max(G1_wo + G1_wi - 1.0f, 0.0f);

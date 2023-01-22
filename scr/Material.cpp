@@ -113,6 +113,7 @@ Mirror::Mirror(Vec3 _base)
     base(_base)
 {
     auto fres = std::make_shared<FresnelConstant>(Vec3::one);
+    //auto fres = std::make_shared<FresnelLUT>("asset/LUT.csv"); // LUTテスト
     add(std::make_shared<SpecularReflection>(base, fres));
 }
 
@@ -155,7 +156,6 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
       alpha(_alpha)
 {
     auto fres = std::make_shared<FresnelSchlick>(fr);
-    //auto fres = std::make_shared<FresnelLUT>("asset/LUT.csv"); // テスト
     if (alpha == 0) {
         add(std::make_shared<SpecularReflection>(base, fres));
     }

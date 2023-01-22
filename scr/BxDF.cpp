@@ -203,8 +203,8 @@ Vec3 VcavityReflection::eval_f(const Vec3& wo, const Vec3& wi,
     if (is_zero(h)) {
         return Vec3::zero;
     }
-    float D = dist->D(h);
-    float G = dist->G(wo, wi, h, p.normal); // v-cavity—p
+    auto D = dist->D(h);
+    auto G = dist->G(wo, wi, h); // v-cavity—p
     Vec3 F = fres->eval(dot(wo, h), p);
     return scale * (D * G * F) / (4 * cos_wo * cos_wi);
 }

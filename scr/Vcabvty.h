@@ -41,7 +41,7 @@ public:
     * @param[in] n  :ジオメトリ法線
     * @return float :マスキング量
     */
-    float G1(const Vec3& w, const Vec3& h, const Vec3& n) const;
+    float G1(const Vec3& w, const Vec3& h) const;
 
     /**
     * @brief V-cavityシャドウイング-マスキング関数
@@ -51,7 +51,7 @@ public:
     * @param[in] n  :ジオメトリ法線
     * @return float :シャドウイング-マスキング量
     */
-    float G(const Vec3& wo, const Vec3& wi, const Vec3& h, const Vec3& n) const;
+    float G(const Vec3& wo, const Vec3& wi, const Vec3& h) const;
 
     /**
     * @brief ハーフ方向のサンプリングを行う関数

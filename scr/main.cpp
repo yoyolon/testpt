@@ -53,13 +53,14 @@ enum class Sampling {
 Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
-constexpr bool DEBUG_MODE           = false; // (デバッグモード)法線可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
-constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
-constexpr bool BIASED_DENOISING     = false; // 寄与に上限値を設定することで
-constexpr int  RUSSIAN_ROULETTE     = 3;     // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 128;   // 1ピクセル当たりのサンプル数
+constexpr bool DEBUG_MODE           = false;  // (デバッグモード)法線可視化を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = true;   // 大域照明効果(GI)を有効にする
+constexpr bool IMAGE_BASED_LIGHTING = true;  // IBLを有効にする
+constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
+constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
+constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 128;    // 1ピクセル当たりのサンプル数
+constexpr auto GAMMA                = 1/2.2f; // ガンマ補正用
 
 
 /**
@@ -421,7 +422,6 @@ int main(int argc, char* argv[]) {
     // パラメータ
     const int nsample = (argc == 2) ? atoi(argv[1]) : SAMPLES; // レイのサンプル数
     constexpr auto max_depth = 100;  // レイの最大追跡数
-    constexpr auto gamma = 1 / 2.2f; // ガンマ補正用
     // シーン
     Scene world;
     if (IMAGE_BASED_LIGHTING) {
@@ -476,7 +476,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             I *= 1.0f / nsample;
-            if (IS_GAMMA_CORRECTION) I = gamma_correction(I, gamma);
+            if (IS_GAMMA_CORRECTION) I = gamma_correction(I, GAMMA);
             I = clamp(I); // [0, 1]でクランプ
             img[index++] = static_cast<uint8_t>(I.get_x() * 255);
             img[index++] = static_cast<uint8_t>(I.get_y() * 255);

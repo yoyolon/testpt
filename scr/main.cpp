@@ -60,7 +60,6 @@ constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
 constexpr int  SAMPLES              = 128;    // 1ピクセル当たりのサンプル数
-constexpr auto GAMMA                = 1/2.2f; // ガンマ補正用
 
 
 /**
@@ -400,16 +399,28 @@ Vec3 L_normal(const Ray& r, const Scene& world) {
 
 
 /**
-* @brief 色をガンマ補正
+* @brief ガンマ補正のヘルパー関数
+* @param[in]  c  :ガンマ補正前の色の要素
+* @return Vfloat :ガンマ補正後の色の要素
+*/
+float gamma_correction_element(float c) {
+    // ガンマ補正
+    if (c < 0.0031308f) {
+        return 12.92f * c;
+    }
+    return 1.055 * std::powf(c, 1 / 2.4) - 0.055f;
+}
+
+/**
+* @brief ガンマ補正
 * @param[in]  color :ガンマ補正前の色
-* @param[in]  gamma :ガンマ値
 * @return Vec3      :ガンマ補正後の色
 */
-Vec3 gamma_correction(const Vec3& color, float gamma) {
+Vec3 gamma_correction(const Vec3& color) {
     // ガンマ補正
-    float r = std::pow(color.get_x(), gamma);
-    float g = std::pow(color.get_y(), gamma);
-    float b = std::pow(color.get_z(), gamma);
+    auto r = gamma_correction_element(color.get_x());
+    auto g = gamma_correction_element(color.get_y());
+    auto b = gamma_correction_element(color.get_z());
     return Vec3(r, g, b);
 }
 
@@ -476,8 +487,8 @@ int main(int argc, char* argv[]) {
                 }
             }
             I *= 1.0f / nsample;
-            if (IS_GAMMA_CORRECTION) I = gamma_correction(I, GAMMA);
-            I = clamp(I); // [0, 1]でクランプ
+            I = clamp(I); // [0, 1]でクランプ(TODO: トーンマッピングの実装)
+            if (IS_GAMMA_CORRECTION) I = gamma_correction(I);
             img[index++] = static_cast<uint8_t>(I.get_x() * 255);
             img[index++] = static_cast<uint8_t>(I.get_y() * 255);
             img[index++] = static_cast<uint8_t>(I.get_z() * 255);

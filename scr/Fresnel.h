@@ -90,3 +90,25 @@ private:
     float d;          /**< 膜厚   */
     float ni, nf, no; /**< 屈折率 */
 };
+
+
+/** LUTフレネルクラス */
+class FresnelLUT : public Fresnel {
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in]  _filename :反射率テーブルのパス
+    */
+    FresnelLUT(std::string filename);
+
+    /**
+    * @brief コンストラクタ
+    * @param[in]  _filename :反射率テーブルのパス
+    */
+    void load_LUT(std::string filename);
+
+    Vec3 eval(float cos_theta, const struct intersection& p) const override;
+
+private:
+    std::vector<Vec3> table; /**< フレネル反射率テーブル */
+};

@@ -155,6 +155,7 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
       alpha(_alpha)
 {
     auto fres = std::make_shared<FresnelSchlick>(fr);
+    //auto fres = std::make_shared<FresnelLUT>("asset/LUT.csv"); // ƒeƒXƒg
     if (alpha == 0) {
         add(std::make_shared<SpecularReflection>(base, fres));
     }
@@ -177,7 +178,7 @@ VcavityMetal::VcavityMetal(Vec3 _base, Vec3 _fr, float _alpha)
         add(std::make_shared<SpecularReflection>(base, fres));
     }
     else {
-        auto dist = std::make_shared<Vcavity>(alpha, NDFType::Beckmann);
+        auto dist = std::make_shared<Vcavity>(alpha, NDFType::GGX);
         add(std::make_shared<VcavityReflection>(base, dist, fres));
     }
 }

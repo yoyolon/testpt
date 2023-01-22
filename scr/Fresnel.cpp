@@ -1,6 +1,8 @@
 #include "Fresnel.h"
 #include "Shape.h"
 #include <complex>
+#include <fstream>
+#include <iostream>
 
 /**
 * @brief s偏光のフレネル反射係数を計算する関数
@@ -163,4 +165,49 @@ FresnelThinfilm::FresnelThinfilm(float _d, float _ni, float _nf, float _no)
 
 Vec3 FresnelThinfilm::eval(float cos_theta, const intersection& p) const {
     return irid_reflectance(cos_theta, d, ni, nf, no);
+}
+
+
+/**
+* @brief 文字列を指定した文字で区切る
+* @param[in]  line      :区切りたい文字列
+* @param[in]  delimiter :区切り文字
+* @return std::vector<std::string> 文字列配列
+* @note TODO: Triangle.cppと同じなので後で統一する
+*/
+std::vector<std::string> split_row(const std::string& line, char delimiter = ',') {
+    std::stringstream ss(line);
+    std::string temp;
+    std::vector<std::string> ret;
+    while (std::getline(ss, temp, delimiter)) {
+        ret.push_back(temp);
+    }
+    return ret;
+}
+
+// *** LUTフレネル ***
+FresnelLUT::FresnelLUT(std::string filename) 
+{
+    load_LUT(filename);
+}
+
+void FresnelLUT::load_LUT(std::string filename) {
+    // Read csv file
+    std::ifstream ifs(filename, std::ios::in);
+    if (!ifs) {
+        std::cerr << "failed to open " << filename << '\n';
+        exit(1);
+    }
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::vector<std::string> row = split_row(line);
+        Vec3 rgb(std::stof(row[0]), std::stof(row[1]), std::stof(row[2]));
+        table.push_back(rgb);
+    }
+}
+
+Vec3 FresnelLUT::eval(float cos_theta, const intersection& p) const {
+    auto theta_rad = std::acos(cos_theta);
+    auto theta = std::clamp(int(theta_rad / pi * 180), 0, 89);
+    return table[theta];
 }

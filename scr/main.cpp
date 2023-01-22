@@ -55,7 +55,7 @@ Sampling sampling_strategy = Sampling::MIS;
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // (デバッグモード)法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = true; // IBLを有効にする
+constexpr bool IMAGE_BASED_LIGHTING = false; // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false; // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;     // ロシアンルーレット適用までのレイのバウンス数

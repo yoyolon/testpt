@@ -84,7 +84,8 @@ testptでは，明示的な光源サンプリングでMISを，経路構築に�
 ## 参考文献
 
 - [Moller and Trumbore 1997] "Fast, minimum storage ray-triangle intersection" JGT. 1997.
-- [Walter et al. 07] "Microfacet Models for Refraction through Rough Surfaces". EGSR 2007.
+- [Walter et al. 2007] "Microfacet Models for Refraction through Rough Surfaces". EGSR 2007.
 - [Shirley and Morley 2008] "Realistic Ray Tracing". 2008.
+- [Heitz. 2014] "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs". JCGT 2014.
 - [Pharr et al. 2016] "Physically Based Rendering: From Theory To Implementation" 2016.
 - [Shirley 2020]. "Raytracing in one weekend" 2020.

@@ -160,7 +160,8 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
         add(std::make_shared<SpecularReflection>(base, fres));
     }
     else {
-        auto dist = std::make_shared<GGX>(alpha);
+        //auto dist = std::make_shared<GGX>(alpha);
+        auto dist = std::make_shared<Beckmann>(alpha);
         add(std::make_shared<MicrofacetReflection>(base, dist, fres));
     }
 }
@@ -178,7 +179,7 @@ VcavityMetal::VcavityMetal(Vec3 _base, Vec3 _fr, float _alpha)
         add(std::make_shared<SpecularReflection>(base, fres));
     }
     else {
-        auto dist = std::make_shared<Vcavity>(alpha, NDFType::GGX);
+        auto dist = std::make_shared<Vcavity>(alpha, NDFType::Beckmann);
         add(std::make_shared<VcavityReflection>(base, dist, fres));
     }
 }

@@ -18,18 +18,23 @@
 void make_scene_simple(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
-    auto mat_gold   = std::make_shared<Metal>(Vec3::one, Vec3(1.00f, 0.71f, 0.29f), 0.05f);
-    auto mat_goldv  = std::make_shared<VcavityMetal>(Vec3::one, Vec3(1.00f,0.71f,0.29f), 0.2f);
-    auto mat_phong  = std::make_shared<Phong>(Vec3::one, Vec3(0.0f,0.1f,0.0f), Vec3(0.0f,0.0f,0.0f), 150.0f);
-    auto mat_mirr   = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
-    auto mat_glass  = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
-    auto mat_bubble = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.34f, 0.0f);
+    auto gold = Vec3(1.00f, 0.71f, 0.29f);
+    auto copper = Vec3(0.95f, 0.64f, 0.54f);
+    auto mat_smith   = std::make_shared<Metal>(Vec3::one, copper, 0.00f);
+    auto mat_vcavity = std::make_shared<VcavityMetal>(Vec3::one, copper, 0.5f);
+    auto mat_phong   = std::make_shared<Phong>(Vec3::one, Vec3(0.0f,0.1f,0.0f), Vec3(0.0f,0.0f,0.0f), 150.0f);
+    auto mat_mirr    = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_glass   = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
+    auto mat_bubble  = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.34f, 0.0f);
     // オブジェクト
-    auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_goldv);
+    auto obj_sphere       = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_vcavity);
     world.add(obj_sphere);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "simple.png");
-    auto fd = 2.5f; // 焦点距離
+    //auto fd = 2.5f; // 焦点距離
+    auto deg_to_rad = [](float deg) { return deg * pi / 180; };
+    auto fov = deg_to_rad(30.0f);
+    auto fd = 2.0f * std::cos(fov) / std::sin(fov); // 焦点距離
     Vec3 cam_pos(0.0f,2.0f,15.0f);
     Vec3 cam_target(0.0f,2.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);

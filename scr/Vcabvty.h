@@ -35,15 +35,6 @@ public:
     float D(const Vec3& h) const;
 
     /**
-    * @brief V-cavityマスキング関数
-    * @param[in] w  :方向ベクトル
-    * @param[in] h  :マイクロファセット法線
-    * @param[in] n  :ジオメトリ法線
-    * @return float :マスキング量
-    */
-    float G1(const Vec3& w, const Vec3& h) const;
-
-    /**
     * @brief V-cavityシャドウイング-マスキング関数
     * @param[in] wo :出射方向ベクトル
     * @param[in] wi :入射方向ベクトル

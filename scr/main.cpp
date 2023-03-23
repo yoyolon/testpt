@@ -148,7 +148,7 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
 
     // ŒõŒ¹‚ðƒ‰ƒ“ƒ_ƒ€‚Éˆê‚Â‘I‘ð
     const auto& lights = world.get_light();
-    auto num_lights = lights.size();
+    int num_lights = (int)lights.size();
     if (num_lights == 0) {
         return Ld;
     }
@@ -406,7 +406,7 @@ float gamma_correction_element(float c) {
     if (c < 0.0031308f) {
         return 12.92f * c;
     }
-    return 1.055 * std::powf(c, 1 / 2.4) - 0.055f;
+    return 1.055f * std::powf(c, 1/2.4f) - 0.055f;
 }
 
 /**

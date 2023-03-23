@@ -1,6 +1,6 @@
 /**
-* @file  Camera.h
-* @brief カメラクラス
+* @file  Film.h
+* @brief カメラのフィルムクラス
 */
 
 #pragma once
@@ -17,9 +17,9 @@ public:
 	const char* get_filename() const { return filename; }
 
 private:
-	int w;
-	int h;
-	int c;
-	float aspect;
-	const char* filename;
+	int w;         /**< 幅           */
+	int h;         /**< 高さ         */
+	int c;         /**< チャンネル数 */
+	float aspect;  /**< アスペクト比 */
+	const char* filename;  /**< 出力ファイル名 */
 };

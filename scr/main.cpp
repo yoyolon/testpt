@@ -433,6 +433,7 @@ int main(int argc, char* argv[]) {
     // パラメータ
     const int nsample = (argc == 2) ? atoi(argv[1]) : SAMPLES; // レイのサンプル数
     constexpr auto max_depth = 100;  // レイの最大追跡数
+
     // シーン
     Scene world;
     if (IMAGE_BASED_LIGHTING) {
@@ -448,6 +449,7 @@ int main(int argc, char* argv[]) {
     //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);
+ 
     // 出力画像
     const auto w = cam.get_w(); // 高さ
     const auto h = cam.get_h(); // 幅

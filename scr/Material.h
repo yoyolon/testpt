@@ -11,9 +11,7 @@
 
 #include "BxDF.h"
 
-
 struct intersection;
-
 
 /** マテリアルの抽象クラス */
 class Material {

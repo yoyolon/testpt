@@ -6,7 +6,8 @@
 #pragma once
 
 #include "Ray.h"
-#include <iostream>
+
+class Film;
 
 /** カメラクラス */
 class Camera {
@@ -24,7 +25,7 @@ public:
     * @param[in] _pos     :カメラの原点
     * @param[in] _forward :カメラの方向ベクトル
     */
-    Camera(std::shared_ptr<class Film> _film, float _fd,  Vec3 _pos, Vec3 _forward);
+    Camera(std::shared_ptr<Film> _film, float _fd,  Vec3 _pos, Vec3 _forward);
 
     int get_h() const;
     int get_w() const;
@@ -46,5 +47,5 @@ private:
     Vec3 right;       /**< 右ベクトル           */
     Vec3 up;          /**< 上ベクトル           */
     Vec3 film_corner; /**< フィルム左下端の座標 */
-    std::shared_ptr<class Film> film; /**< フィルム */
+    std::shared_ptr<Film> film; /**< フィルム */
 };

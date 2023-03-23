@@ -17,7 +17,7 @@ Camera::Camera(std::shared_ptr<Film> _film, float _fd, Vec3 _pos, Vec3 _forward)
     forward *= -1;
     right = unit_vector(cross(Vec3(0.0, 1.0, 0.0), forward));
     up = unit_vector(cross(right, forward));
-    // note: 仮想フィルムの高さは2.0で固定
+    // NOTE: フィルムの高さは2.0で固定
     auto film_h = 2.0f;
     auto film_w = film_h * film->get_aspect();
     right *= film_w;

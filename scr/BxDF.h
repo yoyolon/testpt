@@ -11,7 +11,6 @@
 
 #include "Vec3.h"
 
-
 struct intersection;
 
 /**

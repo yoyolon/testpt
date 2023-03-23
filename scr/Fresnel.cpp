@@ -59,7 +59,7 @@ inline float fresnel_tp(float ni, float nj, float cosi, float cosj) {
 * @param[in] R            :ƒtƒŒƒlƒ‹”½ËŒW”
 * @param[in] phi          :ˆÊ‘Š·
 * @return complex<float>  :‡¬”½ËŒW”
-* @note: [Hirayama* 2001]‚ğŠî‚ÉÀ‘•
+* @note: [H.Hirayama et al. 2001]‚ğŠî‚ÉÀ‘•
 */
 static std::complex<float> composit_r(float r, float R, float phi) {
     std::complex<float>i(0.f, 1.f);
@@ -73,7 +73,7 @@ static std::complex<float> composit_r(float r, float R, float phi) {
 * @param[in] T            :ƒtƒŒƒlƒ‹“§‰ßŒW”
 * @param[in] phi          :ˆÊ‘Š·
 * @return complex<float>  :‡¬“§‰ßŒW”
-* @note: [Hirayama* 2001]‚ğŠî‚ÉÀ‘•
+* @note: [H.Hirayama et al. 2001]‚ğŠî‚ÉÀ‘•
 */
 static std::complex<float> composit_t(float r, float R, float t, float T, float phi) {
     std::complex<float>i(0.f, 1.f);

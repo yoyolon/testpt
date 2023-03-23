@@ -114,7 +114,7 @@ Vec3 Random::phong_sample(float shine) {
 Vec3 Random::ggx_sample(float alpha) {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();
-    auto tan2_theta = alpha * alpha * u / (1.0f - u); // atan2‚Í’x‚¢‚Ì‚Å‰ñ”ð
+    auto tan2_theta = alpha * alpha * u / (1.0f - u); // atan2‚Í’x‚¢‚Ì‚Å–¢Žg—p
     auto cos2_theta = 1 / (1 + tan2_theta);
     auto sin2_theta = 1 - cos2_theta;
     auto sin_theta = std::sqrt(std::max(sin2_theta, 0.0f));
@@ -131,7 +131,7 @@ Vec3 Random::beckmann_sample(float alpha) {
     auto v = Random::uniform_float();
     auto logs = std::log(1.0f - u);
     if (std::isinf(logs)) logs = 0.0f;
-    auto tan2_theta = -alpha * alpha * logs; // atan2‚Í’x‚¢‚Ì‚Å‰ñ”ð
+    auto tan2_theta = -alpha * alpha * logs;
     auto cos2_theta = 1 / (1 + tan2_theta);
     auto sin2_theta = 1 - cos2_theta;
     auto sin_theta = std::sqrt(std::max(sin2_theta, 0.0f));

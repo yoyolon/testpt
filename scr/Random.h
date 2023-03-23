@@ -53,7 +53,7 @@ public:
 
     /**
     * @brief 三角形からの一様なサンプリング(重心座標)
-    * @return Vec3 :サンプリング値
+    * @return Vec3 :重心のサンプリング値(z成分はゼロ)
     */
     static Vec3 uniform_triangle_sample();
 
@@ -81,7 +81,7 @@ public:
     * @brief 正規化Phong分布から散乱方向をサンプリング
     * @param[in] float :分布のパラメータ
     * @return Vec3     :サンプリング値
-    * @note: [E.Lafortune and Y.Willems 1994]がベース
+    * @note: [E.Lafortune and Y.Willems 1994]を基に実装
     */
     static Vec3 phong_sample(float shine);
 

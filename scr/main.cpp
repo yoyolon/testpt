@@ -33,8 +33,6 @@
 #include "Random.h"
 #include "Ray.h"
 #include "Scene.h"
-#include "Sphere.h"
-#include "Triangle.h"
 #include "Vec3.h"
 #include <chrono>
 #include <iostream>
@@ -59,7 +57,7 @@ constexpr bool IMAGE_BASED_LIGHTING = true;  // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 16;    // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES              = 2;    // 1ピクセル当たりのサンプル数
 
 
 /**

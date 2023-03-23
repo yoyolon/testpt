@@ -4,8 +4,6 @@
 #include "MakeScene.h"
 #include "Material.h"
 #include "Scene.h"
-#include "Sphere.h"
-#include "Triangle.h"
 #include "Vec3.h"
 #include <iostream>
 #include <iomanip>

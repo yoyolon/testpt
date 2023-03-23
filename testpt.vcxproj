@@ -32,8 +32,6 @@
     <ClInclude Include="scr\Ray.h" />
     <ClInclude Include="scr\Scene.h" />
     <ClInclude Include="scr\Shape.h" />
-    <ClInclude Include="scr\Sphere.h" />
-    <ClInclude Include="scr\Triangle.h" />
     <ClInclude Include="scr\utility.h" />
     <ClInclude Include="scr\Vcavity.h" />
     <ClInclude Include="scr\Vec3.h" />
@@ -51,8 +49,6 @@
     <ClCompile Include="scr\ONB.cpp" />
     <ClCompile Include="scr\Random.cpp" />
     <ClCompile Include="scr\Shape.cpp" />
-    <ClCompile Include="scr\Sphere.cpp" />
-    <ClCompile Include="scr\Triangle.cpp" />
     <ClCompile Include="scr\Vcavity.cpp" />
     <ClCompile Include="scr\Vec3.cpp" />
   </ItemGroup>

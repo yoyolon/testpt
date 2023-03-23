@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 // testpt
 // yoyolon - December 2022
 // 
@@ -14,7 +14,7 @@
 // pbrt-v3: https://pbrt.org/
 // 
 // More information on these licenses can be found in NOTICE.txt
-//---------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -44,7 +44,7 @@
 #include <string>
 #include <vector>
 
-
+// 直接光のサンプリング戦略
 enum class Sampling {
     BSDF  = 1, // BSDFによる重点的サンプリング
     LIGHT = 2, // 光源による重点的サンプリング
@@ -59,7 +59,7 @@ constexpr bool IMAGE_BASED_LIGHTING = true;  // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 128;    // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES              = 16;    // 1ピクセル当たりのサンプル数
 
 
 /**

@@ -1,6 +1,6 @@
 /**
 * @file Vcavity.h
-* @brief マイクロファセット分布クラス(V-cavityモデル用)
+* @brief マイクロファセット分布クラス(v-cavityモデル用)
 */
 
 #pragma once

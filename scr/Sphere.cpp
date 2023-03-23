@@ -1,4 +1,5 @@
 #include "Sphere.h"
+#include "Material.h"
 #include "Random.h"
 #include "ONB.h"
 

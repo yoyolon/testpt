@@ -177,7 +177,7 @@ inline Vec3 unit_vector(const Vec3& a) { return a / a.length(); }
 * @param[in]  max :最大値
 * @return Vec3  :クランプされたベクトル
 */
-inline Vec3 clamp(const Vec3& a, float min=0.0f, float max=1.0f) { 
+inline Vec3 clamp(const Vec3& a, float min=0.0f, float max=1.0f) {
     auto x = std::clamp(a.get_x(), min, max);
     auto y = std::clamp(a.get_y(), min, max);
     auto z = std::clamp(a.get_z(), min, max);
@@ -196,7 +196,7 @@ inline Vec3 reflect(const Vec3& w, const Vec3& n) {
 }
 
 /**
-* @brief 入射ベクトルの屈折方向ベクトルを計算する関数
+* @brief 入射ベクトルの屈折方向ベクトルを計算する関数(全反射ならゼロベクトルを返す)
 * @param[in]  w   :入射ベクトル
 * @param[in]  n   :法線ベクトル
 * @param[in]  eta :相対屈折率(n_theta / n_refract)

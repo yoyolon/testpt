@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include "Material.h"
 #include "Shape.h"
+
+class Material;
 
 /** ‹…ƒNƒ‰ƒX */
 class Sphere : public Shape {

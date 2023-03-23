@@ -1,4 +1,9 @@
 #include "Triangle.h"
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include "Material.h"
 #include "Random.h"
 
 /**
@@ -72,16 +77,6 @@ Triangle::Triangle(Vec3 v0, Vec3 v1, Vec3 v2, std::shared_ptr<Material> m)
 
 Triangle::Triangle(Vec3 v0, Vec3 v1, Vec3 v2, Vec3 n0, Vec3 n1, Vec3 n2, std::shared_ptr<Material> m)
     : V0(v0), V1(v1), V2(v2), N0(n0), N1(n1), N2(n2), mat(m) {};
-
-
-void Triangle::move(Vec3 pos) {
-    V0 -= pos;
-    V1 -= pos;
-    V2 -= pos;
-    N0 -= pos;
-    N1 -= pos;
-    N2 -= pos;
-}
 
 bool Triangle::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
     // 参考: http://www.graphics.cornell.edu/pubs/1997/MT97.html
@@ -181,23 +176,18 @@ TriangleMesh::TriangleMesh(std::string filename, std::shared_ptr<Material> m, bo
         Vec3 V0 = Vertices[x];
         Vec3 V1 = Vertices[y];
         Vec3 V2 = Vertices[z];
+        // スムーズシェーディングで場合分け
         if (is_smooth) {
             Vec3 N0 = Normals[x];
             Vec3 N1 = Normals[y];
             Vec3 N2 = Normals[z];
-            Triangles.push_back(Triangle(V0, V1, V2, N0, N1, N2, m)); // スムーズシェーディングあり
+            Triangles.push_back(Triangle(V0, V1, V2, N0, N1, N2, m));
         }
         else {
-            Triangles.push_back(Triangle(V0, V1, V2, m)); // スムーズシェーディングなし
+            Triangles.push_back(Triangle(V0, V1, V2, m));
         }
     }
 };
-
-void TriangleMesh::move(Vec3 pos) {
-    for (auto& Triangle : Triangles) {
-        Triangle.move(pos);
-    }
-}
 
 bool TriangleMesh::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
     p.t = t_max;

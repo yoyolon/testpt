@@ -1,6 +1,6 @@
 /**
-* @file  Triangle.h
-* @brief 三角形クラスと三角形メッシュクラス
+* @file  Light.h
+* @brief 光源クラス
 * @note  MaterialはShapeに"所有される"がLightはShapeを"所有する"
 */
 

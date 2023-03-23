@@ -7,7 +7,7 @@
 Vcavity::Vcavity(float _alpha, NDFType _type) 
     : dist(nullptr)
 {
-    // •ª•z‚Åê‡•ª‚¯
+    // –@ü•ª•z‚Åê‡•ª‚¯
     if (_type == NDFType::Beckmann) {
         dist = std::make_shared<Beckmann>(_alpha);
     }

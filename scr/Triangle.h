@@ -5,14 +5,10 @@
 
 #pragma once
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <vector>
-#include "Material.h"
-#include "Ray.h"
 #include "Shape.h"
+
+class Material;
 
 /** 三角形クラス */
 class Triangle : public Shape {
@@ -39,8 +35,6 @@ public:
     * @param[in] m  :マテリアル
     */
     Triangle(Vec3 v0, Vec3 v1, Vec3 v2, Vec3 n0, Vec3 n1, Vec3 n2, std::shared_ptr<Material> m);
-
-    void move(Vec3 pos);
 
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
@@ -78,8 +72,6 @@ public:
     * @param[in] is_smooth :スムーズシェーディングの設定 
     */
     TriangleMesh(std::string filename, std::shared_ptr<Material> m, bool is_smooth=true);
-
-    void move(Vec3 pos);
 
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 

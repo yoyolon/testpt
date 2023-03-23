@@ -28,8 +28,8 @@ struct intersection {
 
 /**
 * @brief 物体表面の表裏を判定する関数
-* @param[in] r :オブジェクトへの入射レイ
-* @param[in] n :オブジェクトの法線
+* @param[in] r :シェイプへの入射レイ
+* @param[in] n :シェイプの法線
 * @return bool :表ならtrueを返す
 */
 inline bool is_front(const Ray& r, const Vec3  n) {
@@ -43,7 +43,7 @@ public:
     virtual ~Shape() {};
 
     /**
-    * @brief レイとオブジェクトの交差判定を行う関数
+    * @brief レイとシェイプの交差判定を行う関数
     * @param[in]  r     :入射レイ
     * @param[in]  t_min :入射レイのパラメータ制限
     * @param[in]  t_max :入射レイのパラメータ制限
@@ -53,13 +53,13 @@ public:
     virtual bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const = 0;
 
     /**
-    * @brief オブジェクトの表面積を計算する関数
-    * @return float :オブジェクトの表面積
+    * @brief シェイプの表面積を計算する関数
+    * @return float :シェイプの表面積
     */
     virtual float area() const = 0;
 
     /**
-    * @brief ジオメトリサンプリングの立体角に関するPDF(確率密度)を計算する関数
+    * @brief ジオメトリサンプリングの立体角に関するPDF(確率密度)を評価する関数
     * @param[in] ref :サンプリング元の交差点情報
     * @param[in] w   :サンプリング方向(ジオメトリに向かう方向が正)
     * @return float  :PDF

@@ -16,7 +16,7 @@ public:
     /**
     * @brief マイクロファセット分布を評価する関数
     * @param[in]  h :ハーフ方向ベクトル
-    * @return float :ハーフ方向でのマイクロファセット分布
+    * @return float :ハーフ方向でのマイクロファセット分布の評価値
     */
     virtual float D(const Vec3& h) const = 0;
 
@@ -53,7 +53,7 @@ public:
     virtual Vec3 sample_halfvector() const = 0;
 
     /**
-    * @brief ハーフ方向のサンプリング確率密度を評価する関数
+    * @brief ハーフ方向のサンプリングPDF(確率密度)を評価する関数
     * @param[in] h  :ハーフ方向ベクトル
     * @return float :サンプリング確率密度
     */

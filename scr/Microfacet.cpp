@@ -44,13 +44,14 @@ float GGX::D(const Vec3& h) const {
     if (std::isinf(tan2_theta)) return 0;
     float cos4_theta = get_cos2(h) * get_cos2(h);
     float alpha2 = alpha * alpha;
-    return 1 / (pi * cos4_theta * alpha2 * (1.0f + tan2_theta / alpha2) * (1.0f + tan2_theta / alpha2));
+    float tan_term = 1.0f + tan2_theta / alpha2;
+    return 1 / (pi * cos4_theta * alpha2 * tan_term * tan_term);
 }
 
 float GGX::lambda(const Vec3& w) const {
-    float tan_theta = std::abs(get_tan(w));
+    float tan_theta = get_tan(w);
     if (std::isinf(tan_theta)) return 0;
-    return (-1.0f + std::sqrt(1.0f + alpha * alpha * tan_theta * tan_theta)) / 2;
+    return 0.5f * (-1.0f + std::sqrt(1.0f + alpha * alpha * tan_theta * tan_theta));
 }
 
 Vec3 GGX::sample_halfvector() const {

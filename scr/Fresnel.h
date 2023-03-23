@@ -1,6 +1,6 @@
 /**
 * @file  Fresnel.h
-* @brief フレネル式
+* @brief フレネル式を評価するクラス
 */
 
 #pragma once
@@ -23,7 +23,7 @@ public:
 
 /** 
 * 一定反射率クラス
-* @note: フレネルの式に従っていないので注意
+* @note: フレネル式に従っていないので注意
 */
 class FresnelConstant : public Fresnel {
 public:
@@ -39,7 +39,7 @@ private:
     Vec3 F0; /**< 反射率 */
 };
 
-/** Schlickフレネルクラス */
+/** Schlickによるフレネル式の近似クラス */
 class FresnelSchlick : public Fresnel {
 public:
     /**
@@ -55,7 +55,7 @@ private:
 };
 
 
-/** 誘電体フレネルクラス */
+/** 誘電体フレネル式クラス */
 class FresnelDielectric : public Fresnel {
 public:
     /**
@@ -72,7 +72,7 @@ private:
 };
 
 
-/** 誘電体単層薄膜干渉フレネルクラス */
+/** 誘電体単層薄膜干渉フレネル式クラス */
 class FresnelThinfilm : public Fresnel {
 public:
     /**
@@ -92,7 +92,7 @@ private:
 };
 
 
-/** LUTフレネルクラス */
+/** 反射率テーブル(1度間隔)によるフレネル式クラス */
 class FresnelLUT : public Fresnel {
 public:
     /**

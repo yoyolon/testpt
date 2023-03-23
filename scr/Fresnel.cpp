@@ -59,7 +59,7 @@ inline float fresnel_tp(float ni, float nj, float cosi, float cosj) {
 * @param[in] R            :フレネル反射係数
 * @param[in] phi          :位相差
 * @return complex<float>  :合成反射係数
-* @note: 参考: Hirayama+. "Visualization of optical phenomena caused by multilayer films based on wave optics". 2001.
+* @note: [Hirayama* 2001]を基に実装
 */
 static std::complex<float> composit_r(float r, float R, float phi) {
     std::complex<float>i(0.f, 1.f);
@@ -73,7 +73,7 @@ static std::complex<float> composit_r(float r, float R, float phi) {
 * @param[in] T            :フレネル透過係数
 * @param[in] phi          :位相差
 * @return complex<float>  :合成透過係数
-* @note: 参考: Hirayama+. "Visualization of optical phenomena caused by multilayer films based on wave optics". 2001.
+* @note: [Hirayama* 2001]を基に実装
 */
 static std::complex<float> composit_t(float r, float R, float t, float T, float phi) {
     std::complex<float>i(0.f, 1.f);
@@ -88,7 +88,6 @@ static std::complex<float> composit_t(float r, float R, float t, float T, float 
 * @param[in] n1   :薄膜の屈折率
 * @param[in] n2   :出射媒質の屈折率
 * @return Vec3    :薄膜干渉を考慮した反射率
-* @note: 参考: Hirayama+. "Visualization of optical phenomena caused by multilayer films based on wave optics". 2001.
 */
 Vec3 irid_reflectance(float cos0, float d, float n0, float n1, float n2) {
     // 透過角計算
@@ -185,7 +184,7 @@ std::vector<std::string> split_row(const std::string& line, char delimiter = ','
     return ret;
 }
 
-// *** LUTフレネル ***
+// *** 反射率テーブルによるフレネル ***
 FresnelLUT::FresnelLUT(std::string filename) 
 {
     load_LUT(filename);

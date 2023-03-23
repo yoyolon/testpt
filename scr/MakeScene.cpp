@@ -25,7 +25,7 @@ void make_scene_simple(Scene& world, Camera& cam) {
     //auto mat_mirr    = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
     //auto mat_glass   = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
     //auto mat_bubble  = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.34f, 0.0f);
-    // オブジェクト
+    // シェイプ
     auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_smith);
     world.add(obj_sphere);
     // カメラ設定
@@ -46,7 +46,7 @@ void make_scene_cylinder(Scene& world, Camera& cam) {
     // マテリアル
     auto mat_gold = std::make_shared<Metal>(Vec3::one, Vec3(1.00f, 0.71f, 0.29f), 0.05f);
     auto mat_mirr  = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
-    // オブジェクト
+    // シェイプ
     auto obj_disk_top = std::make_shared<Disk>(Vec3(0.0f,4.0f,0.0f), 4.0f, mat_gold, true);
     auto obj_disk_btm = std::make_shared<Disk>(Vec3::zero, 4.0f, mat_gold);
     auto obj_cylinder = std::make_shared<Cylinder>(Vec3(0.0f,-4.0f,0.0f), 4.0f, 8.0f, mat_gold);
@@ -89,7 +89,7 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     auto light_L   = std::make_shared<AreaLight>(Vec3( 11.1f, 11.1f, 11.1f), sphere_L);
     auto light_M   = std::make_shared<AreaLight>(Vec3(100.0f,100.0f,100.0f), sphere_M);
     auto light_S   = std::make_shared<AreaLight>(Vec3(900.0f,900.0f,900.0f), sphere_S);
-    // オブジェクト
+    // シェイプ
     auto plate1 = std::make_shared<TriangleMesh>("asset/veach_mis/plate1.obj", mat_smooth);
     auto plate2 = std::make_shared<TriangleMesh>("asset/veach_mis/plate2.obj", mat_normal);
     auto plate3 = std::make_shared<TriangleMesh>("asset/veach_mis/plate3.obj", mat_rough);
@@ -264,7 +264,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             Vec3(-423.0f, 0.0f, -247.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
             mat_tall);
-    // オブジェクトをシーンに追加
+    // シェイプをシーンに追加
     world.add(left);
     world.add(right);
     world.add(back);
@@ -364,7 +364,7 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
             Vec3(-556.0f, 548.8f,    0.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
             mat_red);
-    // オブジェクトをシーンに追加
+    // シェイプをシーンに追加
     world.add(sphere1);
     world.add(sphere2);
     world.add(sphere3);
@@ -392,7 +392,7 @@ void make_scene_vase(Scene& world, Camera& cam) {
     // マテリアル
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
     auto mat_gold = std::make_shared<Metal>(Vec3::one, gold, 0.05f);
-    // オブジェクト
+    // シェイプ
     auto obj_pot = std::make_shared<TriangleMesh>("asset/model.obj", mat_gold);
     world.add(obj_pot);
     // カメラの設定
@@ -422,7 +422,7 @@ void make_scene_thinfilm(Scene& world, Camera& cam) {
     auto mat_ggx7 = std::make_shared<Thinfilm>(Vec3::one, 700.0f, 1.6f, 0.05f);
     auto mat_ggx8 = std::make_shared<Thinfilm>(Vec3::one, 800.0f, 1.6f, 0.05f);
     auto mat_ggx9 = std::make_shared<Thinfilm>(Vec3::one, 900.0f, 1.6f, 0.05f);
-    // オブジェクト
+    // シェイプ
     auto spehre1 = std::make_shared<Sphere>(Vec3(-2.2f,-0.2f,0.0f), 1.0f, mat_ggx1);
     auto spehre2 = std::make_shared<Sphere>(Vec3( 0.0f,-0.2f,0.0f), 1.0f, mat_ggx2);
     auto spehre3 = std::make_shared<Sphere>(Vec3( 2.2f,-0.2f,0.0f), 1.0f, mat_ggx3);

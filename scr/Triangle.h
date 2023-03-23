@@ -16,7 +16,7 @@ public:
     Triangle();
 
     /**
-    * @brief 頂点から三角形オブジェクトを初期化
+    * @brief 頂点から三角形シェイプを初期化
     * @param[in] v0 :三角形の頂点
     * @param[in] v1 :三角形の頂点
     * @param[in] v2 :三角形の頂点
@@ -25,7 +25,7 @@ public:
     Triangle(Vec3 v0, Vec3 v1, Vec3 v2, std::shared_ptr<Material> m);
 
     /**
-    * @brief 頂点とその法線から三角形オブジェクトを初期化
+    * @brief 頂点とその法線から三角形シェイプを初期化
     * @param[in] v0 :三角形の頂点
     * @param[in] v1 :三角形の頂点
     * @param[in] v2 :三角形の頂点
@@ -56,7 +56,7 @@ public:
     TriangleMesh();
 
     /**
-    * @brief 頂点配列とインデックス配列から三角形メッシュオブジェクトを初期化
+    * @brief 頂点配列とインデックス配列から三角形メッシュシェイプを初期化
     * @param[in] vertices :三角形の頂点配列
     * @param[in] indices  :三角形のインデックス配列
     * @param[in] m        :マテリアル
@@ -65,7 +65,7 @@ public:
     TriangleMesh(std::vector<Vec3> vertices, std::vector<Vec3> indices, std::shared_ptr<Material> m);
 
     /**
-    * @brief objファイルから三角形メッシュオブジェクトを初期化
+    * @brief objファイルから三角形メッシュシェイプを初期化
     * @param[in] filenames :三角形の頂点配列
     * @param[in] m         :マテリアル
     * @param[in] p         :位置オフセット

@@ -227,7 +227,7 @@ public:
     /**
     * @brief コンストラクタ
     * @param[in] _scale :スケールファクター
-    * @param[in] _fres  :フレネルの式
+    * @param[in] _fres  :フレネル式
     */
     SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresnel> _fres);
 
@@ -303,7 +303,7 @@ public:
     * @brief コンストラクタ
     * @param[in] _scale :スケールファクター
     * @param[in] _dist  :マイクロファセット分布
-    * @param[in] _fres  :フレネルの式
+    * @param[in] _fres  :フレネル式
     */
     VcavityReflection(Vec3 _scale, std::shared_ptr<class Vcavity> _dist,
                       std::shared_ptr<class Fresnel> _fres);
@@ -330,7 +330,7 @@ public:
     * @brief コンストラクタ
     * @param[in] _scale :スケールファクター
     * @param[in] _dist  :マイクロファセット分布
-    * @param[in] _fres  :フレネルの式
+    * @param[in] _fres  :フレネル式
     */
     MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
                          std::shared_ptr<class Fresnel> _fres);
@@ -365,7 +365,7 @@ public:
     * @brief コンストラクタ
     * @param[in] _scale :スケールファクター
     * @param[in] _dist  :マイクロファセット分布
-    * @param[in] _fres  :フレネルの式
+    * @param[in] _fres  :フレネル式
     */
     MicrofacetTransmission(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
                            float _n_inside, float _n_outside = 1.0f);

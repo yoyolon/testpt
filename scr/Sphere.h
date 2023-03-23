@@ -13,7 +13,7 @@ class Material;
 class Sphere : public Shape {
 public:
     /**
-    * @brief 中心座標と半径から球オブジェクトを初期化
+    * @brief 中心座標と半径から球シェイプを初期化
     * @param[in] c :中心座標
     * @param[in] r :半径
     * @param[in] m :マテリアル
@@ -46,7 +46,7 @@ private:
 class Disk : public Shape {
 public:
     /**
-    * @brief 中心座標と半径から円盤オブジェクトを初期化
+    * @brief 中心座標と半径から円盤シェイプを初期化
     * @param[in] c       :中心座標
     * @param[in] r       :半径
     * @param[in] m       :マテリアル
@@ -73,7 +73,7 @@ private:
 class Cylinder : public Shape {
 public:
     /**
-    * @brief 中心座標と半径と高さから円柱オブジェクトを初期化
+    * @brief 中心座標と半径と高さから円柱シェイプを初期化
     * @param[in] c :中心座標
     * @param[in] r :半径
     * @param[in] h :高さ

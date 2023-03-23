@@ -1,6 +1,6 @@
 /**
 * @file Scene.h
-* @brief シーン中のオブジェクトを管理
+* @brief シーン中のシェイプを管理
 */
 
 #pragma once
@@ -31,8 +31,8 @@ public:
     }
 
     /**
-    * @brief シーンにオブジェクトを追加
-    * @param[in]  object :オブジェクト
+    * @brief シーンにシェイプを追加
+    * @param[in]  object :シェイプ
     */
     void add(std::shared_ptr<Shape> object) { shape_list.push_back(object); }
 
@@ -43,24 +43,24 @@ public:
     void add(std::shared_ptr<Light> light) { light_list.push_back(light); }
 
     /**
-    * @brief シーンからオブジェクトと光源を除去
+    * @brief シーンから全てのシェイプと光源を除去
     */
     void clear() { shape_list.clear(); }
 
     /**
-    * @brief シーンのオブジェクトを取得
-    * @return std::vector<std::shared_ptr<Shape>> :シーンのオブジェクト
+    * @brief シーンのシェイプを取得
+    * @return std::vector<std::shared_ptr<Shape>> :シーン中のシェイプの集合
     */
     std::vector<std::shared_ptr<Shape>> get_shape() const { return shape_list; }
 
     /**
     * @brief シーンの光源を取得
-    * @return std::vector<std::shared_ptr<Light>> :シーンの光源
+    * @return std::vector<std::shared_ptr<Light>> :シーン中の光源の集合
     */
     std::vector<std::shared_ptr<Light>> get_light() const { return light_list; }
 
     /**
-    * @brief レイとオブジェクト(光源も含む)の交差判定を行う関数
+    * @brief レイとオブジェクト(シェイプと光源)の交差判定を行う関数
     * @param[in]  r     :入射レイ
     * @param[in]  t_min :入射レイのパラメータ制限
     * @param[in]  t_max :入射レイのパラメータ制限
@@ -73,7 +73,7 @@ public:
         bool is_isect = false;
         auto t_first = t_max;
         isect.type = IsectType::None;
-        // オブジェクトとの交差判定
+        // シェイプとの交差判定
         for (const auto& object : shape_list) {
             if (object->intersect(r, t_min, t_first, isect)) {
                 is_isect = true;
@@ -96,7 +96,7 @@ public:
     }
 
     /**
-    * @brief レイとオブジェクトの交差判定を行う関数
+    * @brief レイとシェイプの交差判定を行う関数
     * @param[in]  r     :入射レイ
     * @param[in]  t_min :入射レイのパラメータ制限
     * @param[in]  t_max :入射レイのパラメータ制限
@@ -107,7 +107,7 @@ public:
         bool is_isect = false;
         auto t_first = t_max;
         isect.type = IsectType::None;
-        // オブジェクトとの交差判定
+        // シェイプとの交差判定
         for (const auto& object : shape_list) {
             if (object->intersect(r, t_min, t_first, isect)) {
                 is_isect = true;
@@ -148,6 +148,7 @@ public:
     * @brief 環境マップのサンプリング
     * @param[in]  r :レイ
     * @return Vec3  :レイに沿った環境マップの放射輝度
+    * @note: TODO: IBLを光源で実装したら削除
     */
     Vec3 sample_envmap(const Ray& r) const {
         if (envmap == nullptr) {
@@ -168,8 +169,9 @@ public:
     }
 
 private:
-    std::vector<std::shared_ptr<Shape>> shape_list; /**< シーン中のオブジェクト */
+    std::vector<std::shared_ptr<Shape>> shape_list; /**< シーン中のシェイプ */
     std::vector<std::shared_ptr<Light>> light_list; /**< シーン中の光源         */
+    // TODO: IBLを光源で実装したら削除
     float* envmap;    /**< 環境マップ               */
     int w_envmap = 0; /**< 環境マップの高さ         */
     int h_envmap = 0; /**< 環境マップの幅           */

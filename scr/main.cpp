@@ -383,7 +383,7 @@ Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
 }
 
 /**
-* @brief シーン中のオブジェクトの法線を表示する関数
+* @brief シーン中のシェイプの法線を表示する関数
 * @param[in]  r         :追跡するレイ
 * @param[in]  world     :レンダリングするシーンのデータ
 * @return Vec3          :法線の可視化

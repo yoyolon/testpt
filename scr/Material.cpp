@@ -3,10 +3,9 @@
 #include "Microfacet.h"
 #include "Shape.h"
 #include "Random.h"
-#include "Vcabvty.h"
+#include "Vcavity.h"
 
 // *** マテリアル ***
-
 Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf,
                         BxDFType& sampled_type, BxDFType acceptable_type) const {
     // 許容可能なBxDFの要素数をカウント

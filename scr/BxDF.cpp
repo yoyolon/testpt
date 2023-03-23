@@ -3,7 +3,7 @@
 #include "Microfacet.h"
 #include "Shape.h"
 #include "Random.h"
-#include "Vcabvty.h"
+#include "Vcavity.h"
 
 // *** Lambert”½ŽË ***
 LambertianReflection::LambertianReflection(const Vec3& _scale)

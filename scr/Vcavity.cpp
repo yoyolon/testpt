@@ -1,4 +1,4 @@
-#include "Vcabvty.h"
+#include "Vcavity.h"
 #include "BxDF.h"
 #include "Microfacet.h"
 #include "Random.h"

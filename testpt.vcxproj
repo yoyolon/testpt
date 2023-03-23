@@ -35,7 +35,7 @@
     <ClInclude Include="scr\Sphere.h" />
     <ClInclude Include="scr\Triangle.h" />
     <ClInclude Include="scr\utility.h" />
-    <ClInclude Include="scr\Vcabvty.h" />
+    <ClInclude Include="scr\Vcavity.h" />
     <ClInclude Include="scr\Vec3.h" />
   </ItemGroup>
   <ItemGroup>

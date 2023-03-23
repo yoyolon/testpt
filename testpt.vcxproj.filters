@@ -66,7 +66,7 @@
     <ClInclude Include="scr\MakeScene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="scr\Vcabvty.h">
+    <ClInclude Include="scr\Vcavity.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

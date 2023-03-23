@@ -124,4 +124,32 @@ public:
     static float power_heuristic(int n1, float pdf1, int n2, float pdf2, float beta=2.0f);
 };
 
+
+/** 1D区分関数 */
+class Piecewise1D {
+    // 参考: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] _f :離散化かれた関数配列
+    * @param[in] _n :配列の要素数
+    */
+    Piecewise1D(const float* data, int n);
+
+    int get_n() const { return n; }
+
+    /**
+    * @brief 逆関数法でf(x)からxをサンプルしてそのPDF(確率密度)を評価する関数
+    * @param[out] pdf :サンプリングPDF
+    * @return float   :サンプルしたxの値(f(x)でなくxを返すので注意)
+    */
+    float sample(float& pdf);
+
+private:
+    std::vector<float> f;   // 1D区分関数の配列
+    int n;                  // 配列の要素数
+    std::vector<float> cdf; // CDF(累積分布関数)
+    float integral_f;       // fを定義域で積分した値
+};
+
 static std::mt19937 mt; /**< 乱数生成器 */

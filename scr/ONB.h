@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Vec3.h"
+#include "Math.h"
 
 /** ³‹K’¼ŒğŠî’êƒNƒ‰ƒX */
 class ONB {

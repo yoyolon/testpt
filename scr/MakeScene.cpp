@@ -4,7 +4,7 @@
 #include "MakeScene.h"
 #include "Material.h"
 #include "Scene.h"
-#include "Vec3.h"
+#include "Math.h"
 #include <iostream>
 #include <iomanip>
 #include <memory>

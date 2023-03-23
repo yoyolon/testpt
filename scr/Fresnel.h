@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "Vec3.h"
+#include "Math.h"
 
 /** フレネル式の抽象クラス */
 class Fresnel {

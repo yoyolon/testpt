@@ -34,7 +34,7 @@
     <ClInclude Include="scr\Shape.h" />
     <ClInclude Include="scr\utility.h" />
     <ClInclude Include="scr\Vcavity.h" />
-    <ClInclude Include="scr\Vec3.h" />
+    <ClInclude Include="scr\Math.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scr\BxDF.cpp" />
@@ -50,7 +50,7 @@
     <ClCompile Include="scr\Random.cpp" />
     <ClCompile Include="scr\Shape.cpp" />
     <ClCompile Include="scr\Vcavity.cpp" />
-    <ClCompile Include="scr\Vec3.cpp" />
+    <ClCompile Include="scr\Math.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

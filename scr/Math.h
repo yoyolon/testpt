@@ -1,6 +1,6 @@
 /**
-* @file  Vec3.h
-* @brief 三次元ベクトルクラス
+* @file  Math.h
+* @brief 数学(線形代数)クラス
 */
 
 #pragma once

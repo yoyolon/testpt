@@ -9,9 +9,13 @@
 #include "Ray.h"
 
 struct intersection;
+class Scene;
+class Shape;
 
 enum class LightType {
-    Area = 1, IBL = 2
+    None = 1 << 0,  /**< なし   */
+    Area = 1 << 1,  /**< 面光源 */
+    IBL  = 1 << 2   /**< IBL    */
 };
 
 /** 光源抽象クラス */
@@ -73,7 +77,7 @@ public:
     * @param[in]  world :シーン
     * @return bool      :可視判定の結果
     */
-    bool is_visible(const intersection& p1, const intersection& p2, const class Scene& world);
+    bool is_visible(const intersection& p1, const intersection& p2, const Scene& world);
 
 private:
     const LightType type;
@@ -88,7 +92,7 @@ public:
     * @param[in] _intensity :光源の放射輝度
     * @param[in] _shape     :光源のジオメトリ
     */
-    AreaLight(Vec3 _intensity, std::shared_ptr<class Shape> _shape);
+    AreaLight(Vec3 _intensity, std::shared_ptr<Shape> _shape);
 
     Vec3 emitte() const override;
 
@@ -102,7 +106,33 @@ public:
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
 private:
-    Vec3 intensity;                     /**< 光源の放射輝度     */
-    std::shared_ptr<class Shape> shape; /**< 面光源のジオメトリ */
-    float area;                         /**< 光源の面積         */
+    Vec3 intensity;               /**< 光源の放射輝度     */
+    std::shared_ptr<Shape> shape; /**< 面光源のジオメトリ */
+    float area;                   /**< 光源の面積         */
 };
+
+
+//// *** 環境光源(IBL) ***
+//class EnvironmentLight : public Light {
+//public:
+//    /**
+//    * @brief 面光源の初期化
+//    * @param[in] _intensity :光源の放射輝度
+//    * @param[in] _shape     :光源のジオメトリ
+//    */
+//    EnvironmentLight(std:: string filename);
+//
+//    Vec3 emitte() const override;
+//
+//    Vec3 power() const override;
+//
+//
+//    Vec3 sample_light(const intersection& ref, Vec3& wo, float& pdf) override;
+//
+//    float eval_pdf(const intersection& ref, const Vec3& w) const override;
+//
+//    bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
+//
+//private:
+//    //float* envmap; /**< 環境マップ */
+//};

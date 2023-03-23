@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "Vec3.h"
+#include "Math.h"
 
 /**
 * @brief マイクロファセット分布の種類

@@ -33,7 +33,7 @@
 #include "Random.h"
 #include "Ray.h"
 #include "Scene.h"
-#include "Vec3.h"
+#include "Math.h"
 #include <chrono>
 #include <iostream>
 #include <iomanip>

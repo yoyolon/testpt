@@ -9,7 +9,7 @@
 */
 #pragma once
 
-#include "Vec3.h"
+#include "Math.h"
 
 struct intersection;
 

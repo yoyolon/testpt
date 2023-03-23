@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Vec3.h"
+#include "Math.h"
 
 /** マイクロファセット分布クラス(Smithモデル用) */
 class NDF {

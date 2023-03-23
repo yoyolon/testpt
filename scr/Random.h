@@ -6,7 +6,7 @@
 #pragma once
 
 #include "utility.h"
-#include "Vec3.h"
+#include "Math.h"
 
 /** 乱数生成クラス */
 class Random {
@@ -124,10 +124,12 @@ public:
     static float power_heuristic(int n1, float pdf1, int n2, float pdf2, float beta=2.0f);
 };
 
+static std::mt19937 mt; /**< 乱数生成器 */
+
 
 /** 1D区分関数 */
 class Piecewise1D {
-    // 参考: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
+    // 参考: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Sampling_Random_Variables
 public:
     /**
     * @brief コンストラクタ
@@ -152,4 +154,32 @@ private:
     float integral_f;       // fを定義域で積分した値
 };
 
-static std::mt19937 mt; /**< 乱数生成器 */
+
+/** 2D区分関数 */
+class Piecewise2D {
+    // 参考: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations
+public:
+    /**
+    * @brief コンストラクタ
+    * @param[in] data :離散化かれた関数配列
+    * @param[in] _nu :u方向の要素数
+    * @param[in] _nv :v方向の要素数
+    */
+    Piecewise2D(const float* data, int _nu, int _nv);
+
+    int get_nu() const { return nu; }
+    int get_nv() const { return nv; }
+
+    /**
+    * @brief 逆関数法でf(u, v)から(u, v)をサンプルしてそのPDF(確率密度)を評価する関数
+    * @param[out] pdf :サンプリングPDF
+    * @return float   :サンプルしたxの値(f(x)でなくxを返すので注意)
+    */
+    float sample(float& pdf);
+
+private:
+    int nu; // u方向の要素数
+    int nv; // v方向の要素数
+    std::vector<std::unique_ptr<Piecewise1D>> conditional_pdf; // 条件付き確率密度(p[u|v])
+    std::unique_ptr<Piecewise1D> merginal_pdf; // 周辺確率密度(p[v])
+};

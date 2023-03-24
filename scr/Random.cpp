@@ -171,3 +171,28 @@ float Piecewise1D::sample(float& pdf) {
     auto t = (u - cdf[index]) / (cdf[index + 1] - cdf[index]);
     return (index + t) / n;
 }
+
+
+/** 2D区分関数 */
+Piecewise2D::Piecewise2D(const float* data, int _nu, int _nv)
+    : nu(_nu), nv(_nv)
+{
+    // 条件付き確率密度関数p(u|v)を計算
+    for (int v = 0; v < nv; v++) {
+        conditional_pdf.push_back(std::make_unique<Piecewise1D>(&data[v * nu], nu));
+    }
+    // 周辺密度関数p(v)を計算
+    std::vector<float> merginal_f;
+    for (int v = 0; v < nv; v++) {
+        merginal_f.push_back(conditional_pdf[v]->get_integral_f());
+    }
+    merginal_pdf = std::make_unique<Piecewise1D>(&merginal_f[0], nv);
+}
+
+Vec2 Piecewise2D::sample(float& pdf) {
+    float pdf_u = 0, pdf_v = 0;
+    int v = merginal_pdf->sample(pdf_v);
+    auto u = conditional_pdf[v]->sample(pdf_u);
+    pdf = pdf_u * pdf_v;
+    return Vec2(pdf_u, pdf_v);
+}

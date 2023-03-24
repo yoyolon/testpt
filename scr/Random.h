@@ -139,6 +139,7 @@ public:
     Piecewise1D(const float* data, int n);
 
     int get_n() const { return n; }
+    float get_integral_f() const { return integral_f; }
 
     /**
     * @brief 逆関数法でf(x)からxをサンプルしてそのPDF(確率密度)を評価する関数
@@ -173,9 +174,9 @@ public:
     /**
     * @brief 逆関数法でf(u, v)から(u, v)をサンプルしてそのPDF(確率密度)を評価する関数
     * @param[out] pdf :サンプリングPDF
-    * @return float   :サンプルしたxの値(f(x)でなくxを返すので注意)
+    * @return float   :サンプルした(u,v)の値(f(u,v)でなく(u,v)を返すので注意)
     */
-    float sample(float& pdf);
+    Vec2 sample(float& pdf);
 
 private:
     int nu; // u方向の要素数

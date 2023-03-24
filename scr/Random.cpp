@@ -148,7 +148,7 @@ float Random::power_heuristic(int n1, float pdf1, int n2, float pdf2, float beta
 
 /** 1D区分関数 */
 Piecewise1D::Piecewise1D(const float* data, int _n)
-    : f(data, data+_n), n(_n)
+    : f(data, data+_n), n(_n), cdf(_n)
 {
     // CDFを計算
     cdf[0] = 0;
@@ -165,7 +165,7 @@ float Piecewise1D::sample(float& pdf) const {
     // cdf[index] <= u < cdf[index+1]となるインデックスを探索
     auto u = Random::uniform_float();
     auto iter = std::lower_bound(cdf.begin(), cdf.end(), u); // CDFを二分探索
-    int index = std::distance(f.begin(), iter); // イテレータからインデックスに変換
+    int index = (int)std::distance(f.begin(), iter); // イテレータからインデックスに変換
     pdf = f[index] / (integral_f * n);
     // 
     auto t = (u - cdf[index]) / (cdf[index + 1] - cdf[index]);
@@ -191,7 +191,7 @@ Piecewise2D::Piecewise2D(const float* data, int _nu, int _nv)
 
 Vec2 Piecewise2D::sample(float& pdf) const {
     float pdf_u = 0, pdf_v = 0;
-    int v = merginal_pdf->sample(pdf_v);
+    int v = (int)merginal_pdf->sample(pdf_v);
     auto u = conditional_pdf[v]->sample(pdf_u);
     pdf = pdf_u * pdf_v;
     return Vec2(pdf_u, pdf_v);

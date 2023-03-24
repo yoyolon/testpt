@@ -22,22 +22,22 @@ int Random::uniform_int(int min, int max) {
     return dist(mt);
 }
 
-Vec3 Random::uniform_disk_sample() {
+Vec2 Random::uniform_disk_sample() {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();
     auto r = std::sqrt(u);
     auto phi = 2 * pi * v;
     auto x = std::cos(phi) * r;
     auto y = std::cos(phi) * r;
-    return Vec3(x, y, 0.0f);
+    return Vec2(x, y);
 }
 
-Vec3 Random::concentric_disk_sample() {
+Vec2 Random::concentric_disk_sample() {
     float r, phi;
     auto u = 2 * Random::uniform_float() -1.0f;
     auto v = 2 * Random::uniform_float() -1.0f;
     if (u == 0 && v == 0) {
-        return Vec3::zero;
+        return Vec2::zero;
     }
     if (u * u > v * v) {
         r = u;
@@ -49,16 +49,16 @@ Vec3 Random::concentric_disk_sample() {
     }
     auto x = std::cos(phi) * r;
     auto y = std::sin(phi) * r;
-    return Vec3(x, y, 0.0f);
+    return Vec2(x, y);
 }
 
-Vec3 Random::uniform_triangle_sample() {
+Vec2 Random::uniform_triangle_sample() {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();
     auto sqrt_u = std::sqrt(u);
     auto x = 1 - sqrt_u;
     auto y = v * sqrt_u;
-    return Vec3(x, y, 0.0f);
+    return Vec2(x, y);
 }
 
 Vec3 Random::uniform_sphere_sample() {

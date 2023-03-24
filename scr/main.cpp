@@ -440,10 +440,10 @@ int main(int argc, char* argv[]) {
         world = Scene(envmap, w_envmap, h_envmap, c_envmap);
     }
     Camera cam;
-    make_scene_simple(world, cam);
+    //make_scene_simple(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
-    //make_scene_cornell_box(world, cam);
+    make_scene_cornell_box(world, cam);
     //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);

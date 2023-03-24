@@ -139,6 +139,7 @@ public:
     Piecewise1D(const float* data, int n);
 
     int get_n() const { return n; }
+    float get_f(int index) const { return f[index]; }
     float get_integral_f() const { return integral_f; }
 
     /**
@@ -146,7 +147,7 @@ public:
     * @param[out] pdf :サンプリングPDF
     * @return float   :サンプルしたxの値(f(x)でなくxを返すので注意)
     */
-    float sample(float& pdf);
+    float sample(float& pdf) const;
 
 private:
     std::vector<float> f;   // 1D区分関数の配列
@@ -176,7 +177,14 @@ public:
     * @param[out] pdf :サンプリングPDF
     * @return float   :サンプルした(u,v)の値(f(u,v)でなく(u,v)を返すので注意)
     */
-    Vec2 sample(float& pdf);
+    Vec2 sample(float& pdf) const;
+
+    /**
+    * @brief (u, v)をサンプリングするPDF(確率密度)を評価する関数
+    * @param[out] uv:(u,v)座標
+    * @return float   :サンプルした(u,v)の値(f(u,v)でなく(u,v)を返すので注意)
+    */
+    float eval_pdf(const Vec2& uv) const;
 
 private:
     int nu; // u方向の要素数

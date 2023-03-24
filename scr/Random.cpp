@@ -161,7 +161,7 @@ Piecewise1D::Piecewise1D(const float* data, int _n)
     }
 }
 
-float Piecewise1D::sample(float& pdf) {
+float Piecewise1D::sample(float& pdf) const {
     // cdf[index] <= u < cdf[index+1]となるインデックスを探索
     auto u = Random::uniform_float();
     auto iter = std::lower_bound(cdf.begin(), cdf.end(), u); // CDFを二分探索
@@ -189,10 +189,18 @@ Piecewise2D::Piecewise2D(const float* data, int _nu, int _nv)
     merginal_pdf = std::make_unique<Piecewise1D>(&merginal_f[0], nv);
 }
 
-Vec2 Piecewise2D::sample(float& pdf) {
+Vec2 Piecewise2D::sample(float& pdf) const {
     float pdf_u = 0, pdf_v = 0;
     int v = merginal_pdf->sample(pdf_v);
     auto u = conditional_pdf[v]->sample(pdf_u);
     pdf = pdf_u * pdf_v;
     return Vec2(pdf_u, pdf_v);
+}
+
+float Piecewise2D::eval_pdf(const Vec2& uv) const {
+    // インデックスを計算
+    int u = std::clamp(int(uv[0] * nu), 0, nu - 1);
+    int v = std::clamp(int(uv[1] * nv), 0, nv - 1);
+    // pdf = f(u,v) / \int \int f(u,v) dudv
+    return conditional_pdf[v]->get_f(u) / merginal_pdf->get_integral_f();
 }

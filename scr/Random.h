@@ -150,10 +150,10 @@ public:
     float sample(float& pdf) const;
 
 private:
-    std::vector<float> f;   // 1D区分関数の配列
-    int n;                  // 配列の要素数
-    std::vector<float> cdf; // CDF(累積分布関数)
-    float integral_f;       // fを定義域で積分した値
+    std::vector<float> f;   /**< 1D区分関数の配列      */
+    int n;                  /**< 配列の要素数          */
+    std::vector<float> cdf; /**< CDF(累積分布関数)     */
+    float integral_f;       /**< fを定義域で積分した値 */
 };
 
 
@@ -187,8 +187,8 @@ public:
     float eval_pdf(const Vec2& uv) const;
 
 private:
-    int nu; // u方向の要素数
-    int nv; // v方向の要素数
-    std::vector<std::unique_ptr<Piecewise1D>> conditional_pdf; // 条件付き確率密度(p[u|v])
-    std::unique_ptr<Piecewise1D> merginal_pdf; // 周辺確率密度(p[v])
+    int nu; /**< u方向の要素数 */
+    int nv; /**< v方向の要素数 */
+    std::vector<std::unique_ptr<Piecewise1D>> conditional_pdf; /**< 条件付き確率密度(p[u|v]) */
+    std::unique_ptr<Piecewise1D> merginal_pdf; /**< 周辺確率密度(p[v]) */
 };

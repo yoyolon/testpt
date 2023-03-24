@@ -156,7 +156,7 @@ Piecewise1D::Piecewise1D(const float* data, int _n)
         cdf[i + 1] = cdf[i] + f[i] / n;
     }
     integral_f = cdf[n - 1];
-    for (int i = 0; i < n - 1; i++) {
+    for (int i = 0; i < n; i++) {
         cdf[i] /= integral_f;
     }
 }

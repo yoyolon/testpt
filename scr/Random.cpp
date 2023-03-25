@@ -202,10 +202,10 @@ Piecewise2D::Piecewise2D(const float* data, int _nu, int _nv)
 Vec2 Piecewise2D::sample(float& pdf) const {
     float pdf_u = 0, pdf_v = 0;
     int index_u, index_v;
-    int v = (int)merginal_pdf->sample(pdf_v, index_v);
-    auto u = conditional_pdf[index_v]->sample(pdf_u, index_u);
+    float v = merginal_pdf->sample(pdf_v, index_v);
+    float u = conditional_pdf[index_v]->sample(pdf_u, index_u);
     pdf = pdf_u * pdf_v;
-    return Vec2(pdf_u, pdf_v);
+    return Vec2(u, v);
 }
 
 float Piecewise2D::eval_pdf(const Vec2& uv) const {

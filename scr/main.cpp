@@ -52,7 +52,7 @@ constexpr bool GLOBAL_ILLUMINATION  = true;   // 大域照明効果(GI)を有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 36;    // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES              = 2;    // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -227,7 +227,7 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
         if (is_intersect == false) {
-            return Vec3::zero;
+            break;
         }
         // カメラレイとスペキュラレイは光源の寄与を加算
         if (bounces == 0 || is_specular_ray) {
@@ -283,7 +283,7 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
         if (is_intersect == false) {
-            return Vec3::zero;
+            break;
         }
         if (isect.type == IsectType::Light) {
             if (isect.type == IsectType::Light) {
@@ -331,7 +331,7 @@ Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
         if (is_intersect == false) {
-            return Vec3::zero;
+            break;
         }
         // 光源と交差したら寄与を追加
         if (isect.type == IsectType::Light) {
@@ -413,8 +413,8 @@ int main(int argc, char* argv[]) {
     // シーン
     Scene world;
     Camera cam;
-    //make_scene_simple(world, cam);
-    make_scene_cylinder(world, cam);
+    make_scene_simple(world, cam);
+    //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
     //make_scene_cornell_box(world, cam);
     //make_scene_box_with_sphere(world, cam);

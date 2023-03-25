@@ -174,7 +174,7 @@ float Piecewise1D::sample(float& pdf, int& index) const {
             break;
         }
     }
-    pdf = f[index] / (integral_f * n);
+    pdf = f[index] / integral_f;
     if (index == n - 1) {
         return index;
     }
@@ -205,6 +205,7 @@ Vec2 Piecewise2D::sample(float& pdf) const {
     float v = merginal_pdf->sample(pdf_v, index_v);
     float u = conditional_pdf[index_v]->sample(pdf_u, index_u);
     pdf = pdf_u * pdf_v;
+    //pdf = eval_pdf(Vec2(u, v));
     return Vec2(u, v);
 }
 

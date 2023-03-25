@@ -135,6 +135,13 @@ public:
     bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const override;
 
 private:
+    /**
+    * @brief uv座標から環境マップの放射輝度を評価する関数
+    * @param[in] uv :uv座標
+    * @return Vec3  :環境マップの放射輝度
+    */
+    Vec3 evel_light_uv(const Vec2& uv) const;
+
     float* envmap;    /**< 環境マップ   */
     int nw;           /**< 幅           */
     int nh;           /**< 高さ         */

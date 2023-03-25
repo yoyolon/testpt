@@ -54,10 +54,10 @@ EnvironmentLight::EnvironmentLight(std::string filename)
 {
     envmap = stbi_loadf("asset/envmap.hdr", &nw, &nh, &nc, 0);
     if (envmap != nullptr) {
-        // 輝度マップを生成した
+        // 輝度マップを生成
         auto brightmap = std::make_unique<float[]>(nw * nh);
         for (int h = 0; h < nh; h++) {
-            float sin_theta = std::sin(pi * float(h + 0.5f) / nh);
+            float sin_theta = std::sin(pi * (h + 0.5f) / nh);
             for (int w = 0; w < nw; w++) {
                 int index = h * nw * 3 + w * 3;
                 // sRGBからXYZのY成分を計算
@@ -72,6 +72,18 @@ EnvironmentLight::EnvironmentLight(std::string filename)
         brightness /= (nw * nh);
         dist = std::make_unique<Piecewise2D>(brightmap.get(), nw, nh);
     }
+    //// サンプリングテスト
+    //std::vector<uint8_t> img(nw * nh * nc, 0);  // 画像データ
+    //int nsample = 1000000;
+    //for (int i = 0; i < nsample; i++) {
+    //    float pdf;
+    //    Vec2 uv = dist->sample(pdf);
+    //    int w = std::clamp(int(uv[0] * nw), 0, nw - 1);
+    //    int h = std::clamp(int(uv[1] * nh), 0, nh - 1);
+    //    int index = h * nw * 3 + w * 3;
+    //    img[index] = std::clamp(img[index]+10, 0, 255);
+    //}
+    //stbi_write_png("b.png", nw, nh, 3, img.data(), nw * nc * sizeof(uint8_t));
 }
 
 Vec3 EnvironmentLight::evel_light(const Vec3& w) const {
@@ -84,13 +96,7 @@ Vec3 EnvironmentLight::evel_light(const Vec3& w) const {
     u *= invpi * 0.5;
     float v = std::acos(std::clamp(dir.get_y(), -1.0f, 1.0f)) * invpi;
     // 環境マップから放射輝度をサンプリング
-    int x = std::clamp((int)(nw * u), 0, nw - 1);
-    int y = std::clamp((int)(nh * v), 0, nh - 1);
-    int index = y * nw * 3 + x * 3;
-    float R = envmap[index++];
-    float G = envmap[index++];
-    float B = envmap[index];
-    return Vec3(R, G, B);
+    return evel_light_uv(Vec2(u, v));
 }
 
 Vec3 EnvironmentLight::power() const {
@@ -100,20 +106,26 @@ Vec3 EnvironmentLight::power() const {
 
 Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wo, float& pdf) const {
     Vec2 uv = dist->sample(pdf);
+    //Vec2 uv(Random::uniform_float(), Random::uniform_float());
     float phi = 2 * pi * uv[0];
-    float theta = uv[1] * pi;
-    wo = Vec3(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
-    pdf /= 2 * pi * pi * std::sin(theta);
-    return evel_light(wo);
+    float theta = pi * uv[1];
+    float sin_theta = std::sin(theta);
+    // Note: xとyに-1を乗算すると上手くいく(あとで原因追及)
+    // Note: sin_thetaが原因?
+    wo = Vec3(-sin_theta * std::cos(phi), -sin_theta * std::sin(phi), std::cos(theta));
+    pdf /= 2 * pi * pi * sin_theta;
+    //pdf = 1.0f / (2 * pi * pi * sin_theta);
+    return evel_light_uv(uv);
 }
 
 float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
     float theta = std::acos(w.get_z());
     float phi = std::atan2(w.get_y(), w.get_x());
-    if (phi < 0) phi = phi + 2 * pi;
+    if (phi < 0) phi += 2 * pi;
     float sin_theta = std::sin(theta);
     if (sin_theta == 0) return 0;
     return dist->eval_pdf(Vec2(phi * invpi, theta * invpi)) / (2 * pi * pi * sin_theta);
+    //return 1.0f / (2 * pi * pi * sin_theta);
 }
 
 bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
@@ -127,4 +139,18 @@ bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, interse
     p.normal = Vec3::zero;
     p.is_front = true;
     return true;
+}
+
+Vec3 EnvironmentLight::evel_light_uv(const Vec2& uv) const {
+    if (envmap == nullptr) {
+        return Vec3(0.0f, 0.0f, 0.0f);
+    }
+    // 環境マップから放射輝度をサンプリング
+    int index_u = std::clamp((int)(nw * uv[0]), 0, nw - 1);
+    int index_v = std::clamp((int)(nh * uv[1]), 0, nh - 1);
+    int index = index_v * nw * 3 + index_u * 3;
+    float R = envmap[index++];
+    float G = envmap[index++];
+    float B = envmap[index];
+    return Vec3(R, G, B);
 }

@@ -14,21 +14,7 @@ public:
     /**
     * @brief デフォルトコンストラクタ
     */
-    Scene() : envmap(nullptr) {}
-
-    /**
-    * @brief コンストラクタ
-    * @param[in]  map : 環境マップ
-    * @param[in]  w   : 環境マップの幅
-    * @param[in]  h   : 環境マップの高さ
-    * @param[in]  c   : 環境マップのチャンネル数
-    */
-    Scene(float* map, int w, int h, int c) {
-        envmap = map;
-        w_envmap = w;
-        h_envmap = h;
-        c_envmap = c;
-    }
+    Scene() {}
 
     /**
     * @brief シーンにシェイプを追加
@@ -131,7 +117,7 @@ public:
         intersection isect;
         bool is_isect = false;
         auto t_first = t_max;
-        isect.type = IsectType::Light;
+        isect.type = IsectType::None;
         // 光源との交差判定
         for (const auto& light : light_list) {
             if (light->intersect(r, t_min, t_first, isect)) {
@@ -139,41 +125,13 @@ public:
                 t_first = isect.t;
                 isect.light = light;
                 p = isect;
+                isect.type = IsectType::Light;
             }
         }
         return is_isect;
     }
 
-    /**
-    * @brief 環境マップのサンプリング
-    * @param[in]  r :レイ
-    * @return Vec3  :レイに沿った環境マップの放射輝度
-    * @note: TODO: IBLを光源で実装したら削除
-    */
-    Vec3 sample_envmap(const Ray& r) const {
-        if (envmap == nullptr) {
-            return Vec3(0.0f, 0.0f, 0.0f);
-        }
-        Vec3 w = unit_vector(r.get_dir());
-        float u = std::atan2(w.get_z(), w.get_x()) + pi;
-        u *= invpi * 0.5;
-        float v = std::acos(std::clamp(w.get_y(), -1.0f, 1.0f)) * invpi;
-        // 環境マップから放射輝度をサンプリング
-        int x = std::clamp((int)(w_envmap * u), 0, w_envmap-1);
-        int y = std::clamp((int)(h_envmap * v), 0, h_envmap-1);
-        int index = y * w_envmap * 3 + x * 3;
-        float R = envmap[index++];
-        float G = envmap[index++];
-        float B = envmap[index];
-        return Vec3(R, G, B);
-    }
-
 private:
     std::vector<std::shared_ptr<Shape>> shape_list; /**< シーン中のシェイプ */
     std::vector<std::shared_ptr<Light>> light_list; /**< シーン中の光源         */
-    // TODO: IBLを光源で実装したら削除
-    float* envmap;    /**< 環境マップ               */
-    int w_envmap = 0; /**< 環境マップの高さ         */
-    int h_envmap = 0; /**< 環境マップの幅           */
-    int c_envmap = 0; /**< 環境マップのチャンネル数 */
 };

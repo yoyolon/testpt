@@ -16,12 +16,15 @@
 // More information on these licenses can be found in NOTICE.txt
 //-------------------------------------------------------------------------------------------------
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define __STDC_LIB_EXT1__
-
 #include "external/stb_image_write.h"
 #include "external/stb_image.h"
+#include <chrono>
+#include <iostream>
+#include <iomanip>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 #include "Camera.h"
 #include "Film.h"
 #include "Fresnel.h"
@@ -34,13 +37,6 @@
 #include "Ray.h"
 #include "Scene.h"
 #include "Math.h"
-#include <chrono>
-#include <iostream>
-#include <iomanip>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <vector>
 
 // 直接光のサンプリング戦略
 enum class Sampling {
@@ -53,11 +49,10 @@ Sampling sampling_strategy = Sampling::MIS;
 // デバッグ用
 constexpr bool DEBUG_MODE           = false;  // (デバッグモード)法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;   // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = true;  // IBLを有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
 constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 2;    // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES              = 36;    // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -111,7 +106,7 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
     }
 
     // 光源の放射輝度を計算
-    auto L = isect_light.light->emitte();
+    auto L = isect_light.light->evel_light(wi);
     pdf_light = isect_light.light->eval_pdf(isect, wi);
     if (pdf_light == 0 || is_zero(L)) {
         return Ld;
@@ -215,7 +210,7 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
 }
 
 /**
-* @brief 光源サンプリングを行うパストレーシング
+* @brief 光源サンプリングを行うパストレーシングを実行する関数
 * @param[in]  r_in      :カメラ方向からのレイ
 * @param[in]  max_depth :レイの最大バウンス回数
 * @param[in]  world     :レンダリングするシーンのデータ
@@ -228,28 +223,21 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
     bool is_specular_ray = false;
     // パストレーシング
     for (int bounces = 0; bounces < max_depth; bounces++) {
+        // 交差判定
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
+        if (is_intersect == false) {
+            return Vec3::zero;
+        }
         // カメラレイとスペキュラレイは光源の寄与を加算
         if (bounces == 0 || is_specular_ray) {
-            if (is_intersect) {
-                if (isect.type == IsectType::Light) {
-                    L += contrib * isect.light->emitte();
-                    break;
-                }
-            }
-            else {
-                L += contrib * world.sample_envmap(r);
+            if (isect.type == IsectType::Light) {
+                L += contrib * isect.light->evel_light(r.get_dir());
+                break;
             }
         }
         // 光源ジオメトリと交差時には寄与を加算しない(明示的に光源サンプリングを行うため)
         if (isect.type == IsectType::Light) {
-            break;
-        }
-        // 環境マップのサンプリング
-        // NOTE: 環境マップを光源として実装したら寄与は計算しない
-        if (!is_intersect) {
-            L += contrib * world.sample_envmap(r);
             break;
         }
 
@@ -294,22 +282,15 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
     for (int bounces = 0; bounces < max_depth; bounces++) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
-        // カメラレイとスペキュラレイは光源をの寄与を加算
-        if (!is_intersect) {
-            L += contrib * world.sample_envmap(r);
-            break;
+        if (is_intersect == false) {
+            return Vec3::zero;
         }
         if (isect.type == IsectType::Light) {
-            // 面の裏側をサンプルした場合は寄与をゼロにする
-            if (dot(isect.normal, -r.get_dir()) < 0) {
-                L = 0.0f;
+            if (isect.type == IsectType::Light) {
+                L += contrib * isect.light->evel_light(r.get_dir());
+                break;
             }
-            else {
-                L += contrib * isect.light->emitte();
-            }
-            break;
         }
-
         // BSDFに基づく出射方向のサンプリング
         ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
@@ -349,15 +330,12 @@ Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
     for (int bounces = 0; bounces < max_depth; bounces++) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
-
-        // 交差しないなら環境マップをサンプリング
-        if (!is_intersect) {
-            L += contrib * world.sample_envmap(r);
-            break;
+        if (is_intersect == false) {
+            return Vec3::zero;
         }
         // 光源と交差したら寄与を追加
         if (isect.type == IsectType::Light) {
-            L += contrib * isect.light->emitte();
+            L += contrib * isect.light->evel_light(r.get_dir());
             break;
         }
         // 出射方向のサンプリング
@@ -434,16 +412,11 @@ int main(int argc, char* argv[]) {
 
     // シーン
     Scene world;
-    if (IMAGE_BASED_LIGHTING) {
-        int w_envmap, h_envmap, c_envmap;
-        float* envmap = stbi_loadf("asset/envmap.hdr", &w_envmap, &h_envmap, &c_envmap, 0);
-        world = Scene(envmap, w_envmap, h_envmap, c_envmap);
-    }
     Camera cam;
     //make_scene_simple(world, cam);
-    //make_scene_cylinder(world, cam);
+    make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
-    make_scene_cornell_box(world, cam);
+    //make_scene_cornell_box(world, cam);
     //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);

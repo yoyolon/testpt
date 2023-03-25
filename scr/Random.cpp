@@ -161,13 +161,13 @@ Piecewise1D::Piecewise1D(const float* data, int _n)
     }
 }
 
-float Piecewise1D::sample(float& pdf) const {
+float Piecewise1D::sample(float& pdf, int& index) const {
     // cdf[index] <= u < cdf[index+1]となるインデックスを探索
     auto u = Random::uniform_float();
     //std::cout << '\n' << *cdf.end() << '\n'; // NOTE: cdf.end()がなぜかエラー
     //auto iter = std::lower_bound(cdf.begin(), cdf.end(), u); // CDFを二分探索
     //int index = (int)std::distance(f.begin(), iter); // イテレータからインデックスに変換
-    int index = n-1;
+    index = n-1;
     for (int i = 0; i < n; i++) {
         if (u <= cdf[i]) {
             index = i;
@@ -201,8 +201,9 @@ Piecewise2D::Piecewise2D(const float* data, int _nu, int _nv)
 
 Vec2 Piecewise2D::sample(float& pdf) const {
     float pdf_u = 0, pdf_v = 0;
-    int v = (int)merginal_pdf->sample(pdf_v);
-    auto u = conditional_pdf[v]->sample(pdf_u);
+    int index_u, index_v;
+    int v = (int)merginal_pdf->sample(pdf_v, index_v);
+    auto u = conditional_pdf[index_v]->sample(pdf_u, index_u);
     pdf = pdf_u * pdf_v;
     return Vec2(pdf_u, pdf_v);
 }

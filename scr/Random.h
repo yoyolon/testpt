@@ -144,10 +144,11 @@ public:
 
     /**
     * @brief 逆関数法でf(x)からxをサンプルしてそのPDF(確率密度)を評価する関数
-    * @param[out] pdf :サンプリングPDF
-    * @return float   :サンプルしたxの値(f(x)でなくxを返すので注意)
+    * @param[out] pdf   :サンプリングPDF
+    * @param[out] index :サンプリング値の配列インデックス
+    * @return float     :サンプルしたxの値(f(x)でなくxを返すので注意)
     */
-    float sample(float& pdf) const;
+    float sample(float& pdf, int& index) const;
 
 private:
     std::vector<float> f;   /**< 1D区分関数の配列      */

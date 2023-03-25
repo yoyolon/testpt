@@ -16,12 +16,15 @@
 // More information on these licenses can be found in NOTICE.txt
 //-------------------------------------------------------------------------------------------------
 
-//#define STB_IMAGE_WRITE_IMPLEMENTATION
-//#define STB_IMAGE_IMPLEMENTATION
-//#define __STDC_LIB_EXT1__
-
 #include "external/stb_image_write.h"
 #include "external/stb_image.h"
+#include <chrono>
+#include <iostream>
+#include <iomanip>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 #include "Camera.h"
 #include "Film.h"
 #include "Fresnel.h"
@@ -34,30 +37,22 @@
 #include "Ray.h"
 #include "Scene.h"
 #include "Math.h"
-#include <chrono>
-#include <iostream>
-#include <iomanip>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <vector>
 
 // 直接光のサンプリング戦略
 enum class Sampling {
-    BSDF = 1, // BSDFによる重点的サンプリング
+    BSDF  = 1, // BSDFによる重点的サンプリング
     LIGHT = 2, // 光源による重点的サンプリング
-    MIS = 3  // 多重重点的サンプリング
+    MIS   = 3  // 多重重点的サンプリング
 };
 Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
-constexpr bool DEBUG_MODE = false;  // (デバッグモード)法線可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION = true;   // 大域照明効果(GI)を有効にする
-constexpr bool IMAGE_BASED_LIGHTING = false;  // IBLを有効にする
-constexpr bool IS_GAMMA_CORRECTION = true;   // ガンマ補正を有効にする
-constexpr bool BIASED_DENOISING = false;  // 寄与に上限値を設定することで
-constexpr int  RUSSIAN_ROULETTE = 3;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES = 2;    // 1ピクセル当たりのサンプル数
+constexpr bool DEBUG_MODE           = false;  // (デバッグモード)法線可視化を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = true;   // 大域照明効果(GI)を有効にする
+constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
+constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
+constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 36;    // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -87,7 +82,7 @@ Vec3 exclude_invalid(const Vec3& color) {
 * @note スペキュラレイでは実行されない
 */
 Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
-    const ONB& shading_coord) {
+                  const ONB& shading_coord) {
     auto Ld = Vec3::zero;
     Vec3 wi_local; // 直接光の入射方向
     float pdf_scattering, pdf_light, weight = 1.0f;
@@ -96,8 +91,8 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
     auto wo = unit_vector(r.get_dir());          // 出射方向は必ず正規化する
     auto wo_local = -shading_coord.to_local(wo); // ローカルな出射方向
     BxDFType sampled_type;
-    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering,
-        sampled_type);
+    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, 
+                                    sampled_type);
     if (pdf_scattering == 0 || is_zero(bsdf)) {
         return Ld;
     }
@@ -141,7 +136,7 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
 * @note スペキュラレイでは実行されない
 */
 Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& world,
-    const ONB& shading_coord) {
+                       const ONB& shading_coord) {
     auto Ld = Vec3::zero;
     Vec3 wi;
     float pdf_scattering, pdf_light, weight = 1.0f;
@@ -170,9 +165,9 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     }
 
     // BSDFを評価
-    auto wo = unit_vector(r.get_dir());
+    auto wo       = unit_vector(r.get_dir());
     auto wo_local = -shading_coord.to_local(wo);
-    auto wi_local = shading_coord.to_local(wi);
+    auto wi_local =  shading_coord.to_local(wi);
     auto bsdf = isect.mat->eval_f(wo_local, wi_local, isect);
     pdf_scattering = isect.mat->eval_pdf(wo_local, wi_local, isect);
     if (pdf_scattering == 0 || is_zero(bsdf)) {
@@ -197,7 +192,7 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
 * @return Vec3 :光源の重み付き放射輝度
 */
 Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene& world,
-    const ONB& shading_coord) {
+                           const ONB& shading_coord) {
     auto Ld = Vec3::zero;
 
     // BSDFに基づきサンプリング
@@ -215,7 +210,7 @@ Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene&
 }
 
 /**
-* @brief 光源サンプリングを行うパストレーシング
+* @brief 光源サンプリングを行うパストレーシングを実行する関数
 * @param[in]  r_in      :カメラ方向からのレイ
 * @param[in]  max_depth :レイの最大バウンス回数
 * @param[in]  world     :レンダリングするシーンのデータ
@@ -228,28 +223,21 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
     bool is_specular_ray = false;
     // パストレーシング
     for (int bounces = 0; bounces < max_depth; bounces++) {
+        // 交差判定
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
+        if (is_intersect == false) {
+            return Vec3::zero;
+        }
         // カメラレイとスペキュラレイは光源の寄与を加算
         if (bounces == 0 || is_specular_ray) {
-            if (is_intersect) {
-                if (isect.type == IsectType::Light) {
-                    L += contrib * isect.light->evel_light(r.get_dir());
-                    break;
-                }
-            }
-            else {
-                //L += contrib * world.sample_envmap(r);
+            if (isect.type == IsectType::Light) {
+                L += contrib * isect.light->evel_light(r.get_dir());
+                break;
             }
         }
         // 光源ジオメトリと交差時には寄与を加算しない(明示的に光源サンプリングを行うため)
         if (isect.type == IsectType::Light) {
-            break;
-        }
-        // 環境マップのサンプリング
-        // NOTE: 環境マップを光源として実装したら寄与は計算しない
-        if (!is_intersect) {
-            //L += contrib * world.sample_envmap(r);
             break;
         }
 
@@ -294,22 +282,15 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
     for (int bounces = 0; bounces < max_depth; bounces++) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
-        // カメラレイとスペキュラレイは光源をの寄与を加算
-        if (!is_intersect) {
-            //L += contrib * world.sample_envmap(r);
-            break;
+        if (is_intersect == false) {
+            return Vec3::zero;
         }
         if (isect.type == IsectType::Light) {
-            // 面の裏側をサンプルした場合は寄与をゼロにする
-            if (dot(isect.normal, -r.get_dir()) < 0) {
-                L = 0.0f;
-            }
-            else {
+            if (isect.type == IsectType::Light) {
                 L += contrib * isect.light->evel_light(r.get_dir());
+                break;
             }
-            break;
         }
-
         // BSDFに基づく出射方向のサンプリング
         ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
@@ -349,11 +330,8 @@ Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
     for (int bounces = 0; bounces < max_depth; bounces++) {
         intersection isect; // 交差点情報
         bool is_intersect = world.intersect(r, eps_isect, inf, isect);
-
-        // 交差しないなら環境マップをサンプリング
-        if (!is_intersect) {
-            //L += contrib * world.sample_envmap(r);
-            break;
+        if (is_intersect == false) {
+            return Vec3::zero;
         }
         // 光源と交差したら寄与を追加
         if (isect.type == IsectType::Light) {
@@ -406,7 +384,7 @@ float gamma_correction_element(float c) {
     if (c < 0.0031308f) {
         return 12.92f * c;
     }
-    return 1.055f * std::powf(c, 1 / 2.4f) - 0.055f;
+    return 1.055f * std::powf(c, 1/2.4f) - 0.055f;
 }
 
 /**
@@ -434,20 +412,15 @@ int main(int argc, char* argv[]) {
 
     // シーン
     Scene world;
-    //if (IMAGE_BASED_LIGHTING) {
-    //    int w_envmap, h_envmap, c_envmap;
-    //    float* envmap = stbi_loadf("asset/envmap.hdr", &w_envmap, &h_envmap, &c_envmap, 0);
-    //    world = Scene(envmap, w_envmap, h_envmap, c_envmap);
-    //}
     Camera cam;
     //make_scene_simple(world, cam);
-    //make_scene_cylinder(world, cam);
+    make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
-    make_scene_cornell_box(world, cam);
+    //make_scene_cornell_box(world, cam);
     //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);
-
+ 
     // 出力画像
     const auto w = cam.get_w(); // 高さ
     const auto h = cam.get_h(); // 幅
@@ -458,7 +431,7 @@ int main(int argc, char* argv[]) {
     auto start_time = std::chrono::system_clock::now(); // 計測開始時間
     int index = 0;
     for (int i = 0; i < h; i++) {
-        std::cout << '\r' << i + 1 << '/' << h << std::flush;
+        std::cout << '\r' << i+1 << '/' << h << std::flush;
         for (int j = 0; j < w; j++) {
             Vec3 I(0.0f, 0.0f, 0.0f);
             // index番目のピクセルのサンプルを生成
@@ -498,6 +471,6 @@ int main(int argc, char* argv[]) {
     // 出力
     auto end_time = std::chrono::system_clock::now(); // 計測終了時間
     auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-    std::cout << '\n' << time_ms / 1000 << "sec\n";
+    std::cout << '\n' <<  time_ms / 1000 << "sec\n";
     stbi_write_png(cam.get_filename(), w, h, 3, img.data(), w * c * sizeof(uint8_t));
 }

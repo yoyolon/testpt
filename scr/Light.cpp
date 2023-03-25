@@ -117,8 +117,12 @@ float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
 }
 
 bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
+    // 他に交差したオブジェクトがあるなら交差しない
+    if (std::isinf(t_max) == false) {
+        return false;
+    }
     // 交差点情報の更新
-    p.t = inf;
+    p.t = t_max;
     p.pos = Vec3::zero;
     p.normal = Vec3::zero;
     p.is_front = true;

@@ -48,12 +48,14 @@ bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& 
 }
 
 
-// *** 環境光源(IBL) ***
-EnvironmentLight::EnvironmentLight(std::string filename) 
+EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation) 
     : Light(LightType::IBL), nw(1), nh(1), nc(3), brightness(0.f)
 {
+    // 環境マップの生成
     envmap = stbi_loadf("asset/envmap.hdr", &nw, &nh, &nc, 0);
     if (envmap != nullptr) {
+        // 環境マップの回転
+        rotate_envmap(rotation);
         // 輝度マップを生成
         auto brightmap = std::make_unique<float[]>(nw * nh);
         for (int h = 0; h < nh; h++) {
@@ -113,6 +115,12 @@ Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wo, float& pd
     // Note: xとyに-1を乗算すると上手くいく(あとで原因追及)
     // Note: sin_thetaが原因?
     wo = Vec3(-sin_theta * std::cos(phi), -sin_theta * std::sin(phi), std::cos(theta));
+    //wo = Vec3(sin_theta * std::cos(phi), sin_theta * std::sin(phi), std::cos(theta));
+    // 反対方向をサンプリングした場合の処理)
+    //if (dot(ref.normal, -wo) < 0) {
+    //    pdf = 0;
+    //    return Vec3::zero;
+    //}
     pdf /= 2 * pi * pi * sin_theta;
     //pdf = 1.0f / (2 * pi * pi * sin_theta);
     return evel_light_uv(uv);
@@ -153,4 +161,33 @@ Vec3 EnvironmentLight::evel_light_uv(const Vec2& uv) const {
     float G = envmap[index++];
     float B = envmap[index];
     return Vec3(R, G, B);
+}
+
+void EnvironmentLight::rotate_envmap(float deg) {
+    // TODO: forループでなく一括で回転したい
+    int num_rotation = int(nw * deg / 360) % nw;
+    for (int r = 0; r < num_rotation; r++) {
+        // 環境マップを回転(1行ごとに循環)
+        for (int h = 0; h < nh; h++) {
+            int index_begin = h * nw * 3;
+            int index_end   = (h+1) * nw * 3 - 3;
+            float R_first = envmap[index_begin];   // 循環用Rバッファ
+            float G_first = envmap[index_begin+1]; // 循環用Gバッファ
+            float B_first = envmap[index_begin+2]; // 循環用Bバッファ
+            // 行に関して循環
+            for (int w = 0; w < nw; w++) {
+                int index = index_begin + w * 3;
+                if (index >= index_end) {
+                    envmap[index]     = R_first;
+                    envmap[index + 1] = G_first;
+                    envmap[index + 2] = B_first;
+                    break;
+                }
+                // 配列の要素をシフト
+                envmap[index]     = envmap[index + 3];
+                envmap[index + 1] = envmap[index + 4];
+                envmap[index + 2] = envmap[index + 5];
+            }
+        }
+    }
 }

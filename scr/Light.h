@@ -122,7 +122,7 @@ public:
     * @param[in] _intensity :光源の放射輝度
     * @param[in] _shape     :光源のジオメトリ
     */
-    EnvironmentLight(std:: string filename);
+    EnvironmentLight(const std::string& filename, float rotation=0);
 
     Vec3 evel_light(const Vec3& w) const override;
 
@@ -141,6 +141,12 @@ private:
     * @return Vec3  :環境マップの放射輝度
     */
     Vec3 evel_light_uv(const Vec2& uv) const;
+
+    /**
+    * @brief 環境マップを回転する関数関数
+    * @param[in] deg :回転角(度数法)
+    */
+    void rotate_envmap(float deg);
 
     float* envmap;    /**< 環境マップ   */
     int nw;           /**< 幅           */

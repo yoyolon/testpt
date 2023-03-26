@@ -164,30 +164,22 @@ Vec3 EnvironmentLight::evel_light_uv(const Vec2& uv) const {
 }
 
 void EnvironmentLight::rotate_envmap(float deg) {
-    // TODO: forループでなく一括で回転したい
-    int num_rotation = int(nw * deg / 360) % nw;
-    for (int r = 0; r < num_rotation; r++) {
-        // 環境マップを回転(1行ごとに循環)
-        for (int h = 0; h < nh; h++) {
-            int index_begin = h * nw * 3;
-            int index_end   = (h+1) * nw * 3 - 3;
-            float R_first = envmap[index_begin];   // 循環用Rバッファ
-            float G_first = envmap[index_begin+1]; // 循環用Gバッファ
-            float B_first = envmap[index_begin+2]; // 循環用Bバッファ
-            // 行に関して循環
-            for (int w = 0; w < nw; w++) {
-                int index = index_begin + w * 3;
-                if (index >= index_end) {
-                    envmap[index]     = R_first;
-                    envmap[index + 1] = G_first;
-                    envmap[index + 2] = B_first;
-                    break;
-                }
-                // 配列の要素をシフト
-                envmap[index]     = envmap[index + 3];
-                envmap[index + 1] = envmap[index + 4];
-                envmap[index + 2] = envmap[index + 5];
-            }
+    // 環境マップのコピー
+    float* envmap_copy = new float[nh * nw * 3];
+    std::memcpy(envmap_copy, envmap, sizeof(float) * nh * nw * 3);
+    // 環境マップを回転
+    int offset = int(nw * deg / 360) % (nw); // 列ピクセルのオフセット
+    for (int h = 0; h < nh; h++) {
+        int index_begin = h * nw * 3 + offset * 3; // 回転後の先頭のインデックス 
+        // 行に関して循環
+        for (int w = 0; w < nw; w++) {
+            int index = h * nw * 3 + w * 3;
+            int index_offset = h * nw * 3 + (index_begin + w * 3) % (nw * 3);
+            // 配列の要素をシフト
+            envmap[index]     = envmap_copy[index_offset];
+            envmap[index + 1] = envmap_copy[index_offset + 1];
+            envmap[index + 2] = envmap_copy[index_offset + 2];
         }
     }
+    delete[] envmap_copy;
 }

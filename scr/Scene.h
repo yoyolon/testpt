@@ -124,8 +124,8 @@ public:
                 is_isect = true;
                 t_first = isect.t;
                 isect.light = light;
-                p = isect;
                 isect.type = IsectType::Light;
+                p = isect;
             }
         }
         return is_isect;

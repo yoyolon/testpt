@@ -18,7 +18,7 @@ void make_scene_simple(Scene& world, Camera& cam) {
     // マテリアル
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
     auto copper = Vec3(0.95f, 0.64f, 0.54f);
-    auto mat_smith   = std::make_shared<Metal>(Vec3::one, copper, 0.5f);
+    auto mat_smith   = std::make_shared<Metal>(Vec3::one, gold, 0.5f);
     //auto mat_vcavity = std::make_shared<VcavityMetal>(Vec3::one, copper, 0.1f);
     //auto mat_mirr    = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
     //auto mat_glass   = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
@@ -27,7 +27,7 @@ void make_scene_simple(Scene& world, Camera& cam) {
     auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_smith);
     world.add(obj_sphere);
     // 光源
-    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr");
+    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 180.0f);
     world.add(light_env);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "simple.png");

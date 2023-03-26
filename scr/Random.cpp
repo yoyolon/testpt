@@ -176,7 +176,7 @@ float Piecewise1D::sample(float& pdf, int& index) const {
     }
     pdf = f[index] / integral_f;
     if (index == n - 1) {
-        return index;
+        return (float)index;
     }
     auto t = (u - cdf[index]) / (cdf[index + 1] - cdf[index]);
     return (index + t) / n;

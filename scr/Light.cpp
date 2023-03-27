@@ -5,9 +5,10 @@
 #include "external/stb_image_write.h"
 #include "external/stb_image.h"
 #include "Light.h"
-#include "Shape.h"
+#include "ONB.h"
 #include "Random.h"
 #include "Scene.h"
+#include "Shape.h"
 
 // *** ŒõŒ¹ ***
 bool Light::is_visible(const intersection& p1, const intersection& p2, const Scene& world) {
@@ -32,11 +33,11 @@ Vec3 AreaLight::power() const {
     return intensity * area * 4 * pi;
 }
 
-Vec3 AreaLight::sample_light(const intersection& ref, Vec3& w, float& pdf) const {
+Vec3 AreaLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {
     auto isect = shape->sample(ref);
-    w = unit_vector(isect.pos - ref.pos);
-    pdf = shape->eval_pdf(ref, w);
-    return evel_light(w);
+    wi = unit_vector(isect.pos - ref.pos);
+    pdf = shape->eval_pdf(ref, wi);
+    return evel_light(wi);
 }
 
 float AreaLight::eval_pdf(const intersection& ref, const Vec3& w) const {
@@ -106,23 +107,16 @@ Vec3 EnvironmentLight::power() const {
     return pi * radius * radius * brightness;
 }
 
-Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wo, float& pdf) const {
-    Vec2 uv = dist->sample(pdf);
-    //Vec2 uv(Random::uniform_float(), Random::uniform_float());
+Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {
+    float sample_pdf;
+    Vec2 uv = dist->sample(sample_pdf);
+    if (sample_pdf == 0) return Vec3::zero;
     float phi = 2 * pi * uv[0];
     float theta = pi * uv[1];
     float sin_theta = std::sin(theta);
-    // Note: x‚Æy‚É-1‚ğæZ‚·‚é‚Æãè‚­‚¢‚­(‚ ‚Æ‚ÅŒ´ˆö’Ç‹y)
-    // Note: sin_theta‚ªŒ´ˆö?
-    wo = Vec3(-sin_theta * std::cos(phi), -sin_theta * std::sin(phi), std::cos(theta));
-    //wo = Vec3(sin_theta * std::cos(phi), sin_theta * std::sin(phi), std::cos(theta));
-    // ”½‘Î•ûŒü‚ğƒTƒ“ƒvƒŠƒ“ƒO‚µ‚½ê‡‚Ìˆ—)
-    //if (dot(ref.normal, -wo) < 0) {
-    //    pdf = 0;
-    //    return Vec3::zero;
-    //}
-    pdf /= 2 * pi * pi * sin_theta;
-    //pdf = 1.0f / (2 * pi * pi * sin_theta);
+    wi = Vec3(-sin_theta * std::cos(phi), std::cos(theta), -sin_theta * std::sin(phi));
+    if (sin_theta == 0) return Vec3::zero;
+    pdf = sample_pdf / (2 * pi * pi * sin_theta);
     return evel_light_uv(uv);
 }
 
@@ -133,7 +127,6 @@ float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
     float sin_theta = std::sin(theta);
     if (sin_theta == 0) return 0;
     return dist->eval_pdf(Vec2(phi * invpi, theta * invpi)) / (2 * pi * pi * sin_theta);
-    //return 1.0f / (2 * pi * pi * sin_theta);
 }
 
 bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {

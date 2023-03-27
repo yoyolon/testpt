@@ -164,19 +164,12 @@ Piecewise1D::Piecewise1D(const float* data, int _n)
 float Piecewise1D::sample(float& pdf, int& index) const {
     // cdf[index] <= u < cdf[index+1]となるインデックスを探索
     auto u = Random::uniform_float();
-    //std::cout << '\n' << *cdf.end() << '\n'; // NOTE: cdf.end()がなぜかエラー
-    //auto iter = std::lower_bound(cdf.begin(), cdf.end(), u); // CDFを二分探索
-    //int index = (int)std::distance(f.begin(), iter); // イテレータからインデックスに変換
-    index = n-1;
-    for (int i = 0; i < n; i++) {
-        if (u <= cdf[i]) {
-            index = i;
-            break;
-        }
-    }
+    auto iter = std::lower_bound(cdf.begin(), cdf.end(), u); // 二分探索
+    auto index_find = (int)std::distance(cdf.begin(), iter); // イテレータからインデックスに変換
+    index = index_find;
     pdf = f[index] / integral_f;
     if (index == n - 1) {
-        return (float)index;
+        return (float)index / n;
     }
     auto t = (u - cdf[index]) / (cdf[index + 1] - cdf[index]);
     return (index + t) / n;

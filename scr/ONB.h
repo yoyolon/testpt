@@ -1,7 +1,7 @@
 /**
 * @file  ONB.h
 * @brief 正規直交基底(ONB)クラス
-* @note  正規直交基底はz軸正の方向を上向きとする
+* @note  ONB座標系は上方向をz軸正とする右手系(s軸正:手前，t軸正:右，n軸正:上)
 */
 
 #pragma once
@@ -41,13 +41,6 @@ public:
     Vec3 get_n() const { return n; }
 
     /**
-    * @brief 法線から正規直交基底(ONB)を構築する関数
-    * @param[in]  Vec3 :ワールド座標系の法線ベクトル
-    * @note 参考: Shirly. "Realistic Ray Tracing". 2007.
-    */
-    void build_ONB(const Vec3& normal);
-
-    /**
     * @brief ワールド座標系のベクトルをONB座標系のベクトルに変換する関数
     * @param[in]  Vec3 :ワールド座標のベクトル
     * @return Vec3     :ONB座標系のベクトル
@@ -56,11 +49,18 @@ public:
 
     /**
     * @brief ONB座標系のベクトルをワールド座標系のベクトルに変換する関数
-    * @param[in]  Vec3 :ONB座標のベクトル
+    * @param[in]  Vec3 :ONB座標系のベクトル
     * @return Vec3     :ワールド座標系のベクトル
     */
     Vec3 to_world(const Vec3& a) const;
 
 private:
+    /**
+    * @brief 法線から正規直交基底(ONB)を構築する関数
+    * @param[in]  Vec3 :ワールド座標系の法線ベクトル
+    * @note 参考: Shirly. "Realistic Ray Tracing". 2007.
+    */
+    void build_ONB(const Vec3& normal);
+
     Vec3 s, t, n; /**< 正規直交ベクトル */
 };

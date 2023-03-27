@@ -18,16 +18,14 @@ void make_scene_simple(Scene& world, Camera& cam) {
     // マテリアル
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
     auto copper = Vec3(0.95f, 0.64f, 0.54f);
-    auto mat_smith   = std::make_shared<Metal>(Vec3::one, gold, 0.5f);
-    //auto mat_vcavity = std::make_shared<VcavityMetal>(Vec3::one, copper, 0.1f);
-    //auto mat_mirr    = std::make_shared<Mirror>(Vec3(0.9f,0.9f,0.9f));
+    auto mat_smith = std::make_shared<Metal>(Vec3::one, gold, 0.5f);
+    auto mat_diff = std::make_shared<Diffuse>(Vec3(0.75,0.75,0.75));
     //auto mat_glass   = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
-    //auto mat_bubble  = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.34f, 0.0f);
     // シェイプ
     auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_smith);
     world.add(obj_sphere);
     // 光源
-    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 180.0f);
+    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 0.0f);
     world.add(light_env);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "simple.png");
@@ -133,7 +131,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Light sorce
     auto light_shape = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-343.0f, 543.7f, -227.0f),
+            Vec3(-343.0f, 543.7f, -227.0f),
             Vec3(-343.0f, 543.7f, -332.0f),
             Vec3(-213.0f, 543.7f, -332.0f),
             Vec3(-213.0f, 543.7f, -227.0f)},
@@ -143,7 +141,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Ceiling
     auto ceiling = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-556.0f, 548.8f, 0.0f),
+            Vec3(-556.0f, 548.8f, 0.0f),
             Vec3(-556.0f, 548.8f, -559.2f),
             Vec3(0.0f, 548.8f, -559.2f),
             Vec3(0.0f, 548.8f, 0.0f)},
@@ -152,7 +150,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Floor
     auto floor = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-552.8f, 0.0f, 0.0f),
+            Vec3(-552.8f, 0.0f, 0.0f),
             Vec3(0.0f, 0.0f, 0.0f),
             Vec3(0.0f, 0.0f, -559.2f),
             Vec3(-549.6f, 0.0f, -559.2f)},
@@ -161,7 +159,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Back wall
     auto back = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-549.6f, 0.0f, -559.2f),
+            Vec3(-549.6f, 0.0f, -559.2f),
             Vec3(0.0f, 0.0f, -559.2f),
             Vec3(0.0f, 548.8f, -559.2f),
             Vec3(-556.0f, 548.8f, -559.2f)},
@@ -170,7 +168,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Right wall
     auto right = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(0.0f, 0.0f, -559.2f),
+            Vec3(0.0f, 0.0f, -559.2f),
             Vec3(0.0f, 0.0f, 0.0f),
             Vec3(0.0f, 548.8f, 0.0f),
             Vec3(0.0f, 548.8f, -559.2f)},
@@ -179,7 +177,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Left wall
     auto left = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-552.8f, 0.0f, 0.0f),
+            Vec3(-552.8f, 0.0f, 0.0f),
             Vec3(-549.6f, 0.0f, -559.2f),
             Vec3(-556.0f, 548.8f, -559.2f),
             Vec3(-556.0f, 548.8f, 0.0f)},
@@ -188,7 +186,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Short block
     auto short_top = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-130.0f, 165.0f, -65.0f),
+            Vec3(-130.0f, 165.0f, -65.0f),
             Vec3(-82.0f, 165.0f, -225.0f),
             Vec3(-240.0f, 165.0f, -272.0f),
             Vec3(-290.0f, 165.0f, -114.0f)},
@@ -196,7 +194,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_short);
     auto short_rgt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-290.0f, 0.0f, -114.0f),
+            Vec3(-290.0f, 0.0f, -114.0f),
             Vec3(-290.0f, 165.0f, -114.0f),
             Vec3(-240.0f, 165.0f, -272.0f),
             Vec3(-240.0f, 0.0f, -272.0f)},
@@ -204,7 +202,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_short);
     auto short_frt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-130.0f, 0.0f, -65.0f),
+            Vec3(-130.0f, 0.0f, -65.0f),
             Vec3(-130.0f, 165.0f, -65.0f),
             Vec3(-290.0f, 165.0f, -114.0f),
             Vec3(-290.0f, 0.0f, -114.0f)},
@@ -212,7 +210,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_short);
     auto short_lft = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-82.0f, 0.0f, -225.0f),
+            Vec3(-82.0f, 0.0f, -225.0f),
             Vec3(-82.0f, 165.0f, -225.0f),
             Vec3(-130.0f, 165.0f, -65.0f),
             Vec3(-130.0f, 0.0f, -65.0f)},
@@ -220,7 +218,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_short);
     auto short_bck = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-240.0f, 0.0f, -272.0f),
+            Vec3(-240.0f, 0.0f, -272.0f),
             Vec3(-240.0f, 165.0f, -272.0f),
             Vec3(-82.0f, 165.0f, -225.0f),
             Vec3(-82.0f, 0.0f, -225.0f)},
@@ -229,7 +227,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     // Tall block
     auto tall_top = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-423.0f, 330.0f, -247.0f),
+            Vec3(-423.0f, 330.0f, -247.0f),
             Vec3(-265.0f, 330.0f, -296.0f),
             Vec3(-314.0f, 330.0f, -456.0f),
             Vec3(-472.0f, 330.0f, -406.0f)},
@@ -237,7 +235,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_tall);
     auto tall_rgt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-423.0f, 0.0f, -247.0f),
+            Vec3(-423.0f, 0.0f, -247.0f),
             Vec3(-423.0f, 330.0f, -247.0f),
             Vec3(-472.0f, 330.0f, -406.0f),
             Vec3(-472.0f, 0.0f, -406.0f)},
@@ -245,7 +243,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_tall);
     auto tall_bck = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-472.0f, 0.0f, -406.0f),
+            Vec3(-472.0f, 0.0f, -406.0f),
             Vec3(-472.0f, 330.0f, -406.0f),
             Vec3(-314.0f, 330.0f, -456.0f),
             Vec3(-314.0f, 0.0f, -456.0f)},
@@ -253,7 +251,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_tall);
     auto tall_lft = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-314.0f, 0.0f, -456.0f),
+            Vec3(-314.0f, 0.0f, -456.0f),
             Vec3(-314.0f, 330.0f, -456.0f),
             Vec3(-265.0f, 330.0f, -296.0f),
             Vec3(-265.0f, 0.0f, -296.0f)},
@@ -261,7 +259,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
             mat_tall);
     auto tall_frt = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-        Vec3(-265.0f, 0.0f, -296.0f),
+            Vec3(-265.0f, 0.0f, -296.0f),
             Vec3(-265.0f, 330.0f, -296.0f),
             Vec3(-423.0f, 330.0f, -247.0f),
             Vec3(-423.0f, 0.0f, -247.0f)},
@@ -416,15 +414,15 @@ void make_scene_vase(Scene& world, Camera& cam) {
 void make_scene_thinfilm(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
-    auto mat_ggx1 = std::make_shared<Thinfilm>(Vec3::one, 100.0f, 1.6f, 0.05f);
-    auto mat_ggx2 = std::make_shared<Thinfilm>(Vec3::one, 200.0f, 1.6f, 0.05f);
-    auto mat_ggx3 = std::make_shared<Thinfilm>(Vec3::one, 300.0f, 1.6f, 0.05f);
-    auto mat_ggx4 = std::make_shared<Thinfilm>(Vec3::one, 400.0f, 1.6f, 0.05f);
-    auto mat_ggx5 = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.6f, 0.05f);
-    auto mat_ggx6 = std::make_shared<Thinfilm>(Vec3::one, 600.0f, 1.6f, 0.05f);
-    auto mat_ggx7 = std::make_shared<Thinfilm>(Vec3::one, 700.0f, 1.6f, 0.05f);
-    auto mat_ggx8 = std::make_shared<Thinfilm>(Vec3::one, 800.0f, 1.6f, 0.05f);
-    auto mat_ggx9 = std::make_shared<Thinfilm>(Vec3::one, 900.0f, 1.6f, 0.05f);
+    auto mat_ggx1 = std::make_shared<Thinfilm>(Vec3::one, 100.0f, 1.6f, 0.5f);
+    auto mat_ggx2 = std::make_shared<Thinfilm>(Vec3::one, 200.0f, 1.6f, 0.5f);
+    auto mat_ggx3 = std::make_shared<Thinfilm>(Vec3::one, 300.0f, 1.6f, 0.5f);
+    auto mat_ggx4 = std::make_shared<Thinfilm>(Vec3::one, 400.0f, 1.6f, 0.5f);
+    auto mat_ggx5 = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.6f, 0.5f);
+    auto mat_ggx6 = std::make_shared<Thinfilm>(Vec3::one, 600.0f, 1.6f, 0.5f);
+    auto mat_ggx7 = std::make_shared<Thinfilm>(Vec3::one, 700.0f, 1.6f, 0.5f);
+    auto mat_ggx8 = std::make_shared<Thinfilm>(Vec3::one, 800.0f, 1.6f, 0.5f);
+    auto mat_ggx9 = std::make_shared<Thinfilm>(Vec3::one, 900.0f, 1.6f, 0.5f);
     // シェイプ
     auto spehre1 = std::make_shared<Sphere>(Vec3(-2.2f,-0.2f,0.0f), 1.0f, mat_ggx1);
     auto spehre2 = std::make_shared<Sphere>(Vec3( 0.0f,-0.2f,0.0f), 1.0f, mat_ggx2);
@@ -444,6 +442,9 @@ void make_scene_thinfilm(Scene& world, Camera& cam) {
     world.add(spehre7);
     world.add(spehre8);
     world.add(spehre9);
+    // 光源
+    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 0.0f);
+    world.add(light_env);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "iridescence_spehre.png");
     auto fd = 2.5f; // 焦点距離

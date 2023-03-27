@@ -1,6 +1,7 @@
 /**
 * @file  MakeScene.h
 * @brief シーンデータの実装
+* @note  ワールド座標系は手前方向をz軸正とする右手系(x軸正:右，y軸正:上，z軸正:手前)
 */
 
 #pragma once

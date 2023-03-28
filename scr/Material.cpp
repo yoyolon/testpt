@@ -91,7 +91,7 @@ Diffuse::Diffuse(Vec3 _base)
 
 // *** 拡散透過マテリアル ***
 // TODO: [要検証]拡散透過って何？？？
-DiffusePlastic::DiffusePlastic(Vec3 _base, Vec3 _r, Vec3 _t)
+DiffuseTransmission::DiffuseTransmission(Vec3 _base, Vec3 _r, Vec3 _t)
     : Material(),
       base(_base),
       r(_r),
@@ -222,19 +222,26 @@ Phong::Phong(Vec3 _base, Vec3 _kd, Vec3 _ks, float _shine)
 
 
 // *** Thinfilmマテリアル ***
-Thinfilm::Thinfilm(Vec3 _base, float _d, float _n, float _alpha)
+Thinfilm::Thinfilm(Vec3 _base, float _thickness, float _n_inside, float _n_film, float _alpha, bool is_transmission)
     : Material(),
     base(_base),
-    d(_d),
-    n(_n),
+    thickness(_thickness),
+    n_inside(_n_inside),
+    n_film(_n_film),
     alpha(_alpha)
 {
-    auto fres = std::make_shared<FresnelThinfilm>(d, 1.0f, n, 1.0f);
+    auto fres = std::make_shared<FresnelThinfilm>(thickness, n_inside, n_film);
     if (alpha == 0) {
         add(std::make_shared<SpecularReflection>(base, fres));
+        if (is_transmission) {
+            add(std::make_shared<SpecularTransmission>(base, n_inside, 1.0f, fres));
+        }
     }
     else {
-        auto dist = std::make_shared<GGX>(alpha);
+        auto dist = std::make_shared<Beckmann>(alpha);
         add(std::make_shared<MicrofacetReflection>(base, dist, fres));
+        if (is_transmission) {
+            add(std::make_shared<MicrofacetTransmission>(base, dist, n_inside, 1.0f, fres));
+        }
     }
 }

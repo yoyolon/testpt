@@ -3,8 +3,8 @@
 * @brief マテリアル
 * @note: シェーディング規則
 *        1.法線をz軸正の方向としたシェーディング座標系で行う
-*        2.入射/出射方向は物体表面から離れる方向を正とする
-*        3.z軸とベクトルがなす角をthetaとする．
+*        2.z軸とベクトルがなす角をthetaとする．
+*        3.入射/出射方向は物体表面から離れる方向を正とする
 *        4.入射/出射方向は正規化されている
 */
 #pragma once
@@ -25,11 +25,11 @@ public:
     Material() {};
 
     /**
-    * @brief 反射方向に対して入射方向をサンプリングしてBRDFを評価する関数
-    * @param[in]  wo              :入射方向ベクトル
+    * @brief 出射方向から入射方向をサンプリングしてBRDFを評価する関数
+    * @param[in]  wo              :出射方向ベクトル(ローカル座標)
     * @param[in]  p               :物体表面の交差点情報
     * @param[out] brdf            :入射方向と出射方向に対するBRDFの値
-    * @param[out] wi              :出射方向ベクトル
+    * @param[out] wi              :入射方向ベクトル(ローカル座標)
     * @param[out] pdf             :立体角に関する入射方向サンプリング確率密度
     * @oaram[out] sampled_type    :サンプリングしたBxDFの種類
     * @oaram[in]  acceptable_type :サンプリング可能なBxDFの種類
@@ -40,8 +40,8 @@ public:
 
     /**
     * @brief BRDFを評価する関数
-    * @param[in] wo              :出射方向ベクトル
-    * @param[in] wi              :入射方向ベクトル
+    * @param[in] wo              :出射方向ベクトル(ローカル座標)
+    * @param[in] wi              :入射方向ベクトル(ローカル座標)
     * @oaram[in] acceptable_type :サンプリング可能なBxDFの種類
     * @return Vec3               :BRDFの値
     */
@@ -50,8 +50,8 @@ public:
 
     /**
     * @brief 入射方向のサンプリング確率密度を計算する関数
-    * @param[in] wo              :出射方向ベクトル
-    * @param[in] wi              :入射方向ベクトル
+    * @param[in] wo              :出射方向ベクトル(ローカル座標)
+    * @param[in] wi              :入射方向ベクトル(ローカル座標)
     * @oaram[in] acceptable_type :サンプリング可能なBxDFの種類
     * @return float              :サンプリング確率密度
     */
@@ -90,7 +90,7 @@ private:
 
 
 /** 拡散透過マテリアル */
-class DiffusePlastic : public Material {
+class DiffuseTransmission : public Material {
 public:
     /**
     * @brief コンストラクタ
@@ -98,7 +98,7 @@ public:
     * @param[in] _r    :反射係数
     * @param[in] _t    :透過係数
     */
-    DiffusePlastic(Vec3 _base, Vec3 _r, Vec3 _t);
+    DiffuseTransmission(Vec3 _base, Vec3 _r, Vec3 _t);
 
 private:
     Vec3 base; /**> ベースカラー */
@@ -223,15 +223,19 @@ public:
     /**
     * @brief コンストラクタ
     * @param[in] _base  :ベースカラー
-    * @param[in] _d     :膜厚
-    * @param[in] _n     :屈折率
-    * @param[in] _alpha :表面粗さ
+    * @param[in] _thickness       :薄膜の膜厚
+    * @param[in] _n_inside        :内側媒質の屈折率
+    * @param[in] _n_film          :薄膜の屈折率
+    * @param[in] _alpha           :表面粗さ
+    * @param[in] _is_transmission :透過物体ならtrue
     */
-    Thinfilm(Vec3 _base, float _d, float _n, float _alpha);
+    Thinfilm(Vec3 _base, float _thickness, float _n_inside, float _n_film, 
+             float _alpha=0.0f, bool is_transmission=false);
 
 private:
-    Vec3 base;   /**> ベースカラー */
-    float d;     /**> 膜厚         */
-    float n;     /**> 屈折率       */
-    float alpha; /**> 表面粗さ     */
+    Vec3 base;       /**> ベースカラー     */
+    float thickness; /**> 膜厚             */
+    float n_inside;  /**> 内側媒質の屈折率 */
+    float n_film;    /**> 薄膜の屈折率     */
+    float alpha;     /**> 表面粗さ         */
 };

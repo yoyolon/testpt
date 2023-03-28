@@ -1,7 +1,7 @@
 /**
 * @file  Light.h
 * @brief 光源クラス
-* @note  MaterialはShapeに"所有される"がLightはShapeを"所有する"
+* @note  MaterialはShapeに"所有される"がAreaLightはShapeを"所有する"
 */
 
 #pragma once
@@ -46,7 +46,7 @@ public:
     /**
     * @brief 光源からの入射方向をサンプルして放射輝度を返す関数
     * @param[in]  ref :サンプリング元の交差点情報
-    * @param[out] wi  :光源からの入射方向(物体表面から光源に向かう方向が正)
+    * @param[out] wi  :光源からのワールド座標系での入射方向(物体表面から光源に向かう方向が正)
     * @param[out] pdf :立体角に関するサンプリング確率密度
     * @return Vec3    :光源からの入射方向
     * @note: 実際は光源からの入射方向は反転する(視線方向から追跡するため)
@@ -56,7 +56,7 @@ public:
     /**
     * @brief 入射方向から光源サンプリングの確率密度を返す関数
     * @param[in]  ref :サンプリング元の交差点情報
-    * @param[in] w    :光源への入射方向(正規化)
+    * @param[in] w    :光源へのワールド座標系での入射方向(正規化)
     * @return float   :確率密度
     * @note 光源に到達しない場合は確率密度はゼロになる
     */

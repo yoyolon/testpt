@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 // testpt
-// yoyolon - December 2022
+// yoyolon - March 2022
 // 
 // Development
 // Microsoft Visual Studio 2019
@@ -50,13 +50,13 @@ Sampling sampling_strategy = Sampling::MIS;
 constexpr bool DEBUG_MODE           = false;  // (デバッグモード)法線可視化を有効にする
 constexpr bool GLOBAL_ILLUMINATION  = true;   // 大域照明効果(GI)を有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
-constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することで
-constexpr int  RUSSIAN_ROULETTE     = 3;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 2;    // 1ピクセル当たりのサンプル数
+constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することでデノイズ
+constexpr int  RUSSIAN_ROULETTE     = 5;      // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 128;    // 1ピクセル当たりのサンプル数
 
 
 /**
-* @brief 無効な値(NaNやinf)を除外
+* @brief 輝度から無効な値(NaNやinf)を除外する関数
 * @param[in]  color :輝度
 * @return Vec3      :有効値に変換後の値
 */
@@ -73,7 +73,7 @@ Vec3 exclude_invalid(const Vec3& color) {
 
 
 /**
-* @brief BSDFに沿った直接光の入射方向をサンプリング
+* @brief 直接光をBSDFに沿った入射方向からサンプリングする関数
 * @pram[in] r             :追跡レイ
 * @pram[in] isect         :交差点情報
 * @pram[in] world         :シーン
@@ -84,12 +84,12 @@ Vec3 exclude_invalid(const Vec3& color) {
 Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
                   const ONB& shading_coord) {
     auto Ld = Vec3::zero;
-    Vec3 wi_local; // 直接光の入射方向
+    Vec3 wi_local; // 直接光の入射方向(シェーディング座標系)
     float pdf_scattering, pdf_light, weight = 1.0f;
 
     // BSDFに基づき直接光の入射方向をサンプリング
-    auto wo = unit_vector(r.get_dir());          // 出射方向は必ず正規化する
-    auto wo_local = -shading_coord.to_local(wo); // ローカルな出射方向
+    auto wo = unit_vector(r.get_dir()); // 出射方向は必ず正規化する
+    auto wo_local = -shading_coord.to_local(wo);
     BxDFType sampled_type;
     auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, 
                                     sampled_type);
@@ -105,7 +105,7 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
         return Ld;
     }
 
-    // 光源の放射輝度を計算
+    // 交差した光源の放射輝度を計算
     auto L = isect_light.light->evel_light(wi);
     pdf_light = isect_light.light->eval_pdf(isect, wi);
     if (pdf_light == 0 || is_zero(L)) {
@@ -191,8 +191,8 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
 * @pram[in] shading_coord :シェーディング座標系
 * @return Vec3 :光源の重み付き放射輝度
 */
-Vec3 explicit_direct_light(const Ray& r, const intersection& isect, const Scene& world,
-                           const ONB& shading_coord) {
+Vec3 explicit_direct_light_sampling(const Ray& r, const intersection& isect, 
+                                    const Scene& world, const ONB& shading_coord) {
     auto Ld = Vec3::zero;
 
     // BSDFに基づきサンプリング
@@ -240,11 +240,10 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         if (isect.type == IsectType::Light) {
             break;
         }
-
         // 直接光のサンプリング
         ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);// 法線を反転
-        L += contrib * explicit_direct_light(r, isect, world, shading_coord);
-        // BSDFに基づく出射方向のサンプリング
+        L += contrib * explicit_direct_light_sampling(r, isect, world, shading_coord);
+        // BSDFに基づく入射方向のサンプリング
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
         float pdf;
@@ -285,13 +284,14 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         if (is_intersect == false) {
             break;
         }
+        // 光源と交差したら寄与を加算
         if (isect.type == IsectType::Light) {
             if (isect.type == IsectType::Light) {
                 L += contrib * isect.light->evel_light(r.get_dir());
                 break;
             }
         }
-        // BSDFに基づく出射方向のサンプリング
+        // BSDFに基づく入射方向のサンプリング
         ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
         Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
         Vec3 wi_local;
@@ -347,7 +347,7 @@ Vec3 L_raytracing(const Ray& r_in, int max_depth, const Scene& world) {
         auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, sampled_type);
         // 出射方向がスペキュラでないなら光源を明示的にサンプリング
         if (!is_spacular_type(sampled_type)) {
-            L += contrib * explicit_direct_light(r, isect, world, shading_coord);
+            L += contrib * explicit_direct_light_sampling(r, isect, world, shading_coord);
             break;
         }
         auto wi = shading_coord.to_world(wi_local);

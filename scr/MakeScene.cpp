@@ -20,9 +20,10 @@ void make_scene_simple(Scene& world, Camera& cam) {
     auto copper = Vec3(0.95f, 0.64f, 0.54f);
     auto mat_smith = std::make_shared<Metal>(Vec3::one, gold, 0.5f);
     auto mat_diff = std::make_shared<Diffuse>(Vec3(0.75,0.75,0.75));
-    //auto mat_glass   = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.0f);
+    auto mat_irid = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.6f, 1.2f, 0.02f, true);
+    auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.1f);
     // シェイプ
-    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_smith);
+    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.0f,2.0f,0.0f), 3.0f, mat_irid);
     world.add(obj_sphere);
     // 光源
     auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 0.0f);
@@ -414,15 +415,15 @@ void make_scene_vase(Scene& world, Camera& cam) {
 void make_scene_thinfilm(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
-    auto mat_ggx1 = std::make_shared<Thinfilm>(Vec3::one, 100.0f, 1.6f, 0.5f);
-    auto mat_ggx2 = std::make_shared<Thinfilm>(Vec3::one, 200.0f, 1.6f, 0.5f);
-    auto mat_ggx3 = std::make_shared<Thinfilm>(Vec3::one, 300.0f, 1.6f, 0.5f);
-    auto mat_ggx4 = std::make_shared<Thinfilm>(Vec3::one, 400.0f, 1.6f, 0.5f);
-    auto mat_ggx5 = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.6f, 0.5f);
-    auto mat_ggx6 = std::make_shared<Thinfilm>(Vec3::one, 600.0f, 1.6f, 0.5f);
-    auto mat_ggx7 = std::make_shared<Thinfilm>(Vec3::one, 700.0f, 1.6f, 0.5f);
-    auto mat_ggx8 = std::make_shared<Thinfilm>(Vec3::one, 800.0f, 1.6f, 0.5f);
-    auto mat_ggx9 = std::make_shared<Thinfilm>(Vec3::one, 900.0f, 1.6f, 0.5f);
+    auto mat_ggx1 = std::make_shared<Thinfilm>(Vec3::one, 100.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx2 = std::make_shared<Thinfilm>(Vec3::one, 200.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx3 = std::make_shared<Thinfilm>(Vec3::one, 300.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx4 = std::make_shared<Thinfilm>(Vec3::one, 400.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx5 = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx6 = std::make_shared<Thinfilm>(Vec3::one, 600.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx7 = std::make_shared<Thinfilm>(Vec3::one, 700.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx8 = std::make_shared<Thinfilm>(Vec3::one, 800.0f, 1.0f, 1.6f, 0.5f);
+    auto mat_ggx9 = std::make_shared<Thinfilm>(Vec3::one, 900.0f, 1.0f, 1.6f, 0.5f);
     // シェイプ
     auto spehre1 = std::make_shared<Sphere>(Vec3(-2.2f,-0.2f,0.0f), 1.0f, mat_ggx1);
     auto spehre2 = std::make_shared<Sphere>(Vec3( 0.0f,-0.2f,0.0f), 1.0f, mat_ggx2);

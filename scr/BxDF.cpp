@@ -60,7 +60,7 @@ Vec3 LambertianTransmission::sample_f(const Vec3& wo, const intersection& p, Vec
 
 
 // *** 完全鏡面反射 ***
-SpecularReflection::SpecularReflection(Vec3 _scale, std::shared_ptr<Fresnel> _fres)
+SpecularReflection::SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresnel> _fres)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Specular)), 
       scale(_scale),
       fres(_fres)
@@ -96,17 +96,13 @@ Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p,
 
 
 // *** 完全鏡面透過 ***
-SpecularTransmission::SpecularTransmission(Vec3 _scale, float _n_inside, float _n_outside, 
-                                           std::shared_ptr<Fresnel> _fres)
+SpecularTransmission::SpecularTransmission(Vec3 _scale, float _n_inside, float _n_outside)
     : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Specular)),
     scale(_scale),
     n_inside(_n_inside),
-    n_outside(_n_outside),
-    fres(_fres)
+    n_outside(_n_outside)
 {
-    if (fres == nullptr) {
-        fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
-    }
+    fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
 }
 
 float SpecularTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
@@ -282,18 +278,15 @@ Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p,
 
 // *** マイクロファセットBTDF ***
 /** @note 参考: https://www.pbr-book.org/3ed-2018/Transmission_Models/Microfacet_Models */
-MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF> _dist, float _n_inside, 
-                                               float _n_outside, std::shared_ptr<Fresnel> _fres)
+MicrofacetTransmission::MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF> _dist,
+                                               float _n_inside, float _n_outside)
     : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Glossy)),
     scale(_scale),
     dist(_dist),
     n_inside(_n_inside),
-    n_outside(_n_outside),
-    fres(_fres)
+    n_outside(_n_outside)
 {
-    if (fres == nullptr) {
-        fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
-    }
+    fres = std::make_shared<FresnelDielectric>(n_inside, n_outside);
 }
 
 float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 

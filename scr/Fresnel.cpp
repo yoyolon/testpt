@@ -142,9 +142,9 @@ FresnelDielectric::FresnelDielectric(float _n_inside, float _n_outside)
 
 Vec3 FresnelDielectric::eval(float cos_theta, const intersection& p) const {
     bool is_inside = !p.is_front; // 入射レイが媒質の内側にあるか判定
-    cos_theta = std::abs(cos_theta);
     auto n_coming = is_inside ? n_inside : n_outside;
     auto n_going  = is_inside ? n_outside : n_inside;
+    cos_theta = std::abs(cos_theta);
     float sin_theta = std::sqrt(std::max(0.0f, 1.0f - cos_theta * cos_theta));
     float sin_refract = n_coming / n_going * sin_theta;
     if (sin_refract >= 1.0f) { // 全反射
@@ -159,11 +159,16 @@ Vec3 FresnelDielectric::eval(float cos_theta, const intersection& p) const {
 
 
 // *** 薄膜干渉フレネル ***
-FresnelThinfilm::FresnelThinfilm(float _d, float _ni, float _nf, float _no)
-    : d(_d), ni(_ni), nf(_nf), no(_no) {}
+FresnelThinfilm::FresnelThinfilm(float _thickness, float _n_inside, float _n_film, float _n_outside)
+    : thickness(_thickness), n_inside(_n_inside), n_film(_n_film), n_outside(_n_outside) {}
 
 Vec3 FresnelThinfilm::eval(float cos_theta, const intersection& p) const {
-    return irid_reflectance(cos_theta, d, ni, nf, no);
+    // 入射レイが媒質の内側にあるか判定
+    bool is_inside = !p.is_front;
+    auto n_coming = is_inside ? n_inside : n_outside;
+    auto n_going = is_inside ? n_outside : n_inside;
+    cos_theta = std::abs(cos_theta);
+    return irid_reflectance(cos_theta, thickness, n_coming, n_film, n_going);
 }
 
 

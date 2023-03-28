@@ -77,18 +77,18 @@ class FresnelThinfilm : public Fresnel {
 public:
     /**
     * @brief ƒRƒ“ƒXƒgƒ‰ƒNƒ^
-    * @param[in]  _d :”––Œ‚Ì–ŒŒú
-    * @param[in] _ni :“üË•ûŒü”}¿‚Ì‹üÜ—¦
-    * @param[in] _nf :”––Œ‚Ì‹üÜ—¦
-    * @param[in] _no :oË•ûŒü”}¿‚Ì‹üÜ—¦
+    * @param[in]  _thickness :”––Œ‚Ì–ŒŒú
+    * @param[in]  _n_inside  :“à‘¤”}¿‚Ì‹üÜ—¦
+    * @param[in]  _n_film    :”––Œ”}¿‚Ì‹üÜ—¦
+    * @param[in]  _n_outside :ŠO‘¤”}¿‚Ì‹üÜ—¦
     */
-    FresnelThinfilm(float _d, float _ni, float _nf, float _no);
+    FresnelThinfilm(float _thickness, float _n_inside, float _n_film, float _n_outside=1.0f);
 
     Vec3 eval(float cos_theta, const struct intersection& p) const override;
 
 private:
-    float d;          /**< –ŒŒú   */
-    float ni, nf, no; /**< ‹üÜ—¦ */
+    float thickness; /**< ”––Œ‚Ì–ŒŒú   */
+    float n_inside, n_film, n_outside; /**< ‹üÜ—¦ */
 };
 
 

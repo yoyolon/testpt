@@ -12,6 +12,7 @@
 #include "Math.h"
 
 struct intersection;
+class Fresnel;
 
 /**
 * @brief BxDFのフラグ
@@ -228,7 +229,7 @@ public:
     * @param[in] _scale :スケールファクター
     * @param[in] _fres  :フレネル式
     */
-    SpecularReflection(Vec3 _scale, std::shared_ptr<class Fresnel> _fres);
+    SpecularReflection(Vec3 _scale, std::shared_ptr<Fresnel> _fres);
 
     /**
     * @brief 誘電体用コンストラクタ
@@ -245,7 +246,7 @@ public:
 
 private:
     Vec3 scale; /**> スケールファクター */
-    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
+    std::shared_ptr<Fresnel> fres; /**> フレネル項 */
 };
 
 
@@ -254,9 +255,13 @@ class SpecularTransmission : public BxDF {
 public:
     /**
     * @brief コンストラクタ
-    * @param[in] _scale :スケールファクター
+    * @param[in] _scale     :スケールファクター
+    * @param[in] _n_inside  :外側媒質の屈折率
+    * @param[in] _n_outside :内側媒質の屈折率
+    * @param[in] _fres      :フレネル式
     */
-    SpecularTransmission(Vec3 _scale, float _n_inside, float _n_outside=1.0f);
+    SpecularTransmission(Vec3 _scale, float _n_inside, float _n_outside=1.0f, std::shared_ptr<Fresnel> _fres=nullptr);
+
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
@@ -268,7 +273,7 @@ private:
     Vec3 scale; /**> スケールファクター */
     float n_inside;  /**> 内側媒質の屈折率 */
     float n_outside; /**> 外側媒質の屈折率 */
-    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
+    std::shared_ptr<Fresnel> fres; /**> フレネル項 */
 };
 
 
@@ -305,7 +310,7 @@ public:
     * @param[in] _fres  :フレネル式
     */
     VcavityReflection(Vec3 _scale, std::shared_ptr<class Vcavity> _dist,
-                      std::shared_ptr<class Fresnel> _fres);
+                      std::shared_ptr<Fresnel> _fres);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
@@ -316,7 +321,7 @@ public:
 
 private:
     Vec3 scale; /**> スケールファクター */
-    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
+    std::shared_ptr<Fresnel> fres; /**> フレネル項 */
     std::shared_ptr<class Vcavity> dist; /**> マイクロファセット分布(v-cavity用) */
 };
 
@@ -331,16 +336,14 @@ public:
     * @param[in] _dist  :マイクロファセット分布
     * @param[in] _fres  :フレネル式
     */
-    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
-                         std::shared_ptr<class Fresnel> _fres);
+    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, std::shared_ptr<Fresnel> _fres);
 
     /**
     * @brief 誘電体用コンストラクタ
     * @param[in] _scale :スケールファクター
     * @param[in] _n     :屈折率
     */
-    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
-                         float _ni, float _no = 1.0f);
+    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, float _ni, float _no = 1.0f);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
@@ -351,7 +354,7 @@ public:
 
 private:
     Vec3 scale; /**> スケールファクター */
-    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
+    std::shared_ptr<Fresnel> fres; /**> フレネル項 */
     std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
 };
 
@@ -366,8 +369,8 @@ public:
     * @param[in] _dist  :マイクロファセット分布
     * @param[in] _fres  :フレネル式
     */
-    MicrofacetTransmission(Vec3 _scale, std::shared_ptr<class NDF> _dist, 
-                           float _n_inside, float _n_outside = 1.0f);
+    MicrofacetTransmission(Vec3 _scale, std::shared_ptr<class NDF> _dist, float _n_inside, 
+                           float _n_outside = 1.0f, std::shared_ptr<Fresnel> _fres = nullptr);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
@@ -381,5 +384,5 @@ private:
     float n_inside;  /**> 内側媒質の屈折率 */
     float n_outside; /**> 外側媒質の屈折率 */
     std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
-    std::shared_ptr<class Fresnel> fres; /**> フレネル項 */
+    std::shared_ptr<Fresnel> fres; /**> フレネル項 */
 };

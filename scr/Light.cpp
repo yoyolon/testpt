@@ -158,7 +158,23 @@ Vec3 EnvironmentLight::evel_light_uv(const Vec2& uv) const {
     // 環境マップから放射輝度をサンプリング
     int index_u = std::clamp((int)(nw * uv[0]), 0, nw - 1);
     int index_v = std::clamp((int)(nh * uv[1]), 0, nh - 1);
-    int index = index_v * nw * 3 + index_u * 3;
+    float t_u = nw * uv[0] - (float)index_u;
+    float t_v = nh * uv[1] - (float)index_v;
+    // バイリニア補間
+    return   (1-t_u) * (1-t_v) * evel_envmap(index_u,   index_v  )
+           + (1-t_u) * (t_v)   * evel_envmap(index_u,   index_v+1)
+           + (t_u)   * (1-t_v) * evel_envmap(index_u+1, index_v  )
+           + (t_u)   * (t_v)   * evel_envmap(index_u+1, index_v+1);
+}
+
+Vec3 EnvironmentLight::evel_envmap(int x, int y) const {
+    if (envmap == nullptr) {
+        return Vec3(0.0f, 0.0f, 0.0f);
+    }
+    // 環境マップから放射輝度をサンプリング
+    x = std::clamp(x, 0, nw - 1);
+    y = std::clamp(y, 0, nh - 1);
+    int index = y * nw * 3 + x * 3;
     float R = envmap[index++];
     float G = envmap[index++];
     float B = envmap[index];

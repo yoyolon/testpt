@@ -143,6 +143,14 @@ private:
     Vec3 evel_light_uv(const Vec2& uv) const;
 
     /**
+    * @brief 配列インデックスから環境マップの放射輝度を評価する関数
+    * @param[in] x :行のインデックス
+    * @param[in] y :列のインデックス
+    * @return Vec3 :環境マップの放射輝度
+    */
+    Vec3 evel_envmap(int x, int y) const;
+
+    /**
     * @brief 環境マップを回転する関数関数
     * @param[in] deg :回転角(度数法)
     */

@@ -53,7 +53,7 @@ EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation)
     : Light(LightType::IBL), nw(1), nh(1), nc(3), brightness(0.f)
 {
     // 環境マップの生成
-    envmap = stbi_loadf("asset/envmap.hdr", &nw, &nh, &nc, 0);
+    envmap = stbi_loadf(filename.c_str(), &nw, &nh, &nc, 0);
     if (envmap != nullptr) {
         // 環境マップの回転
         rotate_envmap(rotation);
@@ -74,6 +74,9 @@ EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation)
         }
         brightness /= (nw * nh);
         dist = std::make_unique<Piecewise2D>(brightmap.get(), nw, nh);
+    }
+    else {
+        std::cerr << "failed to load" << filename << '\n';
     }
     //// サンプリングテスト
     //std::vector<uint8_t> img(nw * nh * nc, 0);  // 画像データ
@@ -108,6 +111,9 @@ Vec3 EnvironmentLight::power() const {
 }
 
 Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {
+    if (envmap == nullptr) {
+        return Vec3(0.0f, 0.0f, 0.0f);
+    }
     float sample_pdf;
     Vec2 uv = dist->sample(sample_pdf);
     if (sample_pdf == 0) return Vec3::zero;
@@ -121,6 +127,9 @@ Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wi, float& pd
 }
 
 float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
+    if (envmap == nullptr) {
+        return 0.0f;
+    }
     float theta = std::acos(w.get_z());
     float phi = std::atan2(w.get_y(), w.get_x());
     if (phi < 0) phi += 2 * pi;

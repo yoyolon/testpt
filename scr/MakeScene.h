@@ -14,6 +14,13 @@
 void make_scene_simple(class Scene& world, class Camera& cam);
 
 /**
+* @brief シンプルな球のシーンを生成する関数
+* @param[out] world :シーンデータ
+* @param[out] cam   :カメラデータ
+*/
+void make_scene_simple2(class Scene& world, class Camera& cam);
+
+/**
 * @brief 円柱のシーンを生成する関数
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ

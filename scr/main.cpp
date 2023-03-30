@@ -38,6 +38,7 @@
 #include "Scene.h"
 #include "Math.h"
 
+
 // 直接光のサンプリング戦略
 enum class Sampling {
     BSDF  = 1, // BSDFによる重点的サンプリング
@@ -48,34 +49,17 @@ Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
 constexpr bool DEBUG_MODE           = false;  // (デバッグモード)法線可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION  = true;   // 大域照明効果(GI)を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することでデノイズ
-constexpr int  RUSSIAN_ROULETTE     = 5;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 128;    // 1ピクセル当たりのサンプル数
-
-
-/**
-* @brief 輝度から無効な値(NaNやinf)を除外する関数
-* @param[in]  color :輝度
-* @return Vec3      :有効値に変換後の値
-*/
-Vec3 exclude_invalid(const Vec3& color) {
-    float r = color.get_x();
-    float g = color.get_y();
-    float b = color.get_z();
-    // 無効な値をゼロにする
-    if (!isfinite(r)) r = 0.0f;
-    if (!isfinite(g)) g = 0.0f;
-    if (!isfinite(b)) b = 0.0f;
-    return Vec3(r, g, b);
-}
+constexpr int  RUSSIAN_ROULETTE     = 0;      // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 1024 * 4; // 1ピクセル当たりのサンプル数
 
 
 /**
 * @brief 直接光をBSDFに沿った入射方向からサンプリングする関数
 * @pram[in] r             :追跡レイ
-* @pram[in] isect         :交差点情報
+* @pram[in] isect         :オブジェクトの交差点情報
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
 * @return Vec3 :直接光の重み付き入射放射輝度
@@ -84,24 +68,23 @@ Vec3 exclude_invalid(const Vec3& color) {
 Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
                   const ONB& shading_coord) {
     auto Ld = Vec3::zero;
-    Vec3 wi_local; // 直接光の入射方向(シェーディング座標系)
+    Vec3 wi_local;
     float pdf_scattering, pdf_light, weight = 1.0f;
 
     // BSDFに基づき直接光の入射方向をサンプリング
-    auto wo = unit_vector(r.get_dir()); // 出射方向は必ず正規化する
+    auto wo = unit_vector(r.get_dir());
     auto wo_local = -shading_coord.to_local(wo);
     BxDFType sampled_type;
-    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, 
-                                    sampled_type);
+    auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf_scattering, sampled_type);
     if (pdf_scattering == 0 || is_zero(bsdf)) {
         return Ld;
     }
+    auto wi = shading_coord.to_world(wi_local); // 直接光の入射方向(交差点から離れる方向が正)
 
-    // 光源と交差しなければ寄与はゼロ
-    auto wi = shading_coord.to_world(wi_local); // 直接光の入射方向
-    auto r_new = Ray(isect.pos, wi); // 光源へ向かうのレイ
+    // 光源へのレイが光源と交差しなければ寄与はゼロ
+    auto r_to_light = Ray(isect.pos, wi); // 光源へ向かうのレイ
     intersection isect_light;
-    if (!world.intersect_light(r_new, eps_isect, inf, isect_light)) {
+    if (!world.intersect_light(r_to_light, eps_isect, inf, isect_light)) {
         return Ld;
     }
 
@@ -112,14 +95,15 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
         return Ld;
     }
 
-    // 光源へのレイが遮蔽されると寄与はゼロ
-    if (world.intersect_object(r_new, eps_isect, isect_light.t)) {
+    // 光源へのレイがシェイプに遮蔽されると寄与はゼロ
+    if (world.intersect_object(r_to_light, eps_isect, isect_light.t)) {
         return Ld;
     }
 
     // 寄与の計算
     if (sampling_strategy == Sampling::MIS) {
         weight = Random::power_heuristic(1, pdf_scattering, 1, pdf_light);
+        //return weight * Vec3::red; // デバッグ用
     }
     auto cos_term = dot(isect.normal, wi);
     Ld += bsdf * cos_term * weight * L / pdf_scattering;
@@ -129,7 +113,7 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
 /**
 * @brief 直接光を一つの光源からサンプリング
 * @pram[in] r             :追跡レイ
-* @pram[in] isect         :交差点情報
+* @pram[in] isect         :オブジェクトの交差点情報
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
 * @return Vec3 :直接光の重み付き入射放射輝度
@@ -138,10 +122,11 @@ Vec3 explict_bsdf(const Ray& r, const intersection& isect, const Scene& world,
 Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& world,
                        const ONB& shading_coord) {
     auto Ld = Vec3::zero;
-    Vec3 wi;
+    Vec3 wi; // 光源の入射方向(交差点から離れる方向が正)
     float pdf_scattering, pdf_light, weight = 1.0f;
 
     // 光源をランダムに一つ選択
+    // TODO: 光源エネルギー分布をベースに光源を選びたい
     const auto& lights = world.get_light();
     int num_lights = (int)lights.size();
     if (num_lights == 0) {
@@ -150,21 +135,21 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     auto light_index = Random::uniform_int(0, num_lights - 1);
     const auto& light = lights[light_index];
 
-    // 光源のジオメトリから入射方向をサンプリング
+    // 選んだ光源から入射方向をサンプリング
     auto L = light->sample_light(isect, wi, pdf_light);
     if (pdf_light == 0 || is_zero(L)) {
         return Ld;
     }
 
-    // 光源が遮蔽されると寄与はゼロ
-    auto r_light = Ray(isect.pos, wi); // 光源への入射方向
+    // 光源へのレイが遮蔽されると寄与はゼロ
+    auto r_to_light = Ray(isect.pos, wi); // 光源へ向かうレイ
     intersection isect_light;
-    light->intersect(r_light, eps_isect, inf, isect_light); // 光源の交差点を取得
-    if (world.intersect_object(r_light, eps_isect, isect_light.t)) {
+    light->intersect(r_to_light, eps_isect, inf, isect_light); // 光源の交差点を取得
+    if (world.intersect_object(r_to_light, eps_isect, isect_light.t)) {
         return Ld;
     }
 
-    // BSDFを評価
+    // サンプリングした入射方向でのBSDFを評価
     auto wo       = unit_vector(r.get_dir());
     auto wo_local = -shading_coord.to_local(wo);
     auto wi_local =  shading_coord.to_local(wi);
@@ -177,6 +162,7 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
     // 寄与の計算
     if (sampling_strategy == Sampling::MIS) {
         weight = Random::power_heuristic(1, pdf_light, 1, pdf_scattering);
+        //return weight * Vec3::green; // デバッグ用
     }
     auto cos_term = std::abs(dot(isect.normal, wi));
     Ld += bsdf * L * cos_term * weight / pdf_light;
@@ -186,7 +172,7 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
 /**
 * @brief 明示的に直接光をサンプリング
 * @pram[in] r             :追跡レイ
-* @pram[in] isect         :交差点情報
+* @pram[in] isect         :オブジェクトの交差点情報
 * @pram[in] world         :シーン
 * @pram[in] shading_coord :シェーディング座標系
 * @return Vec3 :光源の重み付き放射輝度
@@ -194,14 +180,13 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
 Vec3 explicit_direct_light_sampling(const Ray& r, const intersection& isect, 
                                     const Scene& world, const ONB& shading_coord) {
     auto Ld = Vec3::zero;
-
     // BSDFに基づきサンプリング
     if ((sampling_strategy == Sampling::BSDF) || (sampling_strategy == Sampling::MIS)) {
         auto L = explict_bsdf(r, isect, world, shading_coord);
         Ld += exclude_invalid(L);
     }
 
-    // 光源のジオメトリに基づきサンプリング
+    // 光源に基づきサンプリング
     if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
         auto L = explict_one_light(r, isect, world, shading_coord);
         Ld += exclude_invalid(L);
@@ -210,7 +195,7 @@ Vec3 explicit_direct_light_sampling(const Ray& r, const intersection& isect,
 }
 
 /**
-* @brief 光源サンプリングを行うパストレーシングを実行する関数
+* @brief パストレーシングを実行する関数
 * @param[in]  r_in      :カメラ方向からのレイ
 * @param[in]  max_depth :レイの最大バウンス回数
 * @param[in]  world     :レンダリングするシーンのデータ
@@ -236,31 +221,38 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
                 break;
             }
         }
-        // 光源ジオメトリと交差時には寄与を加算しない(明示的に光源サンプリングを行うため)
+        // カメラレイとスペキュラレイ以外は光源との交差時に寄与を加算しない(明示的に光源をサンプリングするため)
         if (isect.type == IsectType::Light) {
             break;
         }
+
+        // シェーディング座標の生成
+        ONB shading_coord(isect.is_front ? isect.normal : -isect.normal); // 透過側なら法線を反転
+
         // 直接光のサンプリング
-        ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);// 法線を反転
         L += contrib * explicit_direct_light_sampling(r, isect, world, shading_coord);
-        // BSDFに基づく入射方向のサンプリング
-        Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir()));
+
+        // BSDFに基づく経路(方向)のサンプリング
+        Vec3 wo_local = -shading_coord.to_local(unit_vector(r.get_dir())); // 物体表面から離れる方向が正
         Vec3 wi_local;
         float pdf;
         BxDFType sampled_type;
         auto bsdf = isect.mat->sample_f(wo_local, isect, wi_local, pdf, sampled_type);
         if (pdf == 0.0f || is_zero(bsdf)) break;
-        auto wi = shading_coord.to_world(wi_local); // サンプリングした入射方向
+        auto wi = shading_coord.to_world(wi_local);
+        // 寄与の更新
         auto cos_term = std::abs(dot(isect.normal, wi));
         contrib = contrib * bsdf * cos_term / pdf;
-        is_specular_ray = is_spacular_type(sampled_type);
-        r = Ray(isect.pos, wi); // 次のレイを生成
         //ロシアンルーレット
         if (bounces >= RUSSIAN_ROULETTE) {
             float p_rr = std::max(0.05f, 1.0f - contrib.average()); // 打ち切り確率
             if (p_rr > Random::uniform_float()) break;
             contrib /= std::max(epsilon, 1.0f - p_rr);
         }
+
+        // 次のレイを生成
+        is_specular_ray = is_spacular_type(sampled_type);
+        r = Ray(isect.pos, wi); // 次のレイを生成
     }
     return L;
 }
@@ -375,33 +367,6 @@ Vec3 L_normal(const Ray& r, const Scene& world) {
 
 
 /**
-* @brief ガンマ補正のヘルパー関数
-* @param[in]  c  :ガンマ補正前の色の要素
-* @return Vfloat :ガンマ補正後の色の要素
-*/
-float gamma_correction_element(float c) {
-    // ガンマ補正
-    if (c < 0.0031308f) {
-        return 12.92f * c;
-    }
-    return 1.055f * std::powf(c, 1/2.4f) - 0.055f;
-}
-
-/**
-* @brief ガンマ補正
-* @param[in]  color :ガンマ補正前の色
-* @return Vec3      :ガンマ補正後の色
-*/
-Vec3 gamma_correction(const Vec3& color) {
-    // ガンマ補正
-    auto r = gamma_correction_element(color.get_x());
-    auto g = gamma_correction_element(color.get_y());
-    auto b = gamma_correction_element(color.get_z());
-    return Vec3(r, g, b);
-}
-
-
-/**
 * @brief main関数
 */
 int main(int argc, char* argv[]) {
@@ -413,7 +378,7 @@ int main(int argc, char* argv[]) {
     // シーン
     Scene world;
     Camera cam;
-    make_scene_simple(world, cam);
+    make_scene_simple2(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
     //make_scene_cornell_box(world, cam);
@@ -430,33 +395,38 @@ int main(int argc, char* argv[]) {
     // レイトレーシング
     auto start_time = std::chrono::system_clock::now(); // 計測開始時間
     int index = 0;
-    for (int i = 0; i < h; i++) {
-        std::cout << '\r' << i+1 << '/' << h << std::flush;
-        for (int j = 0; j < w; j++) {
+    for (int y = 0; y < h; y++) {
+        std::cout << '\r' << y+1 << '/' << h << std::flush;
+        for (int x = 0; x < w; x++) {
             Vec3 I(0.0f, 0.0f, 0.0f);
             // index番目のピクセルのサンプルを生成
-            for (int k = 0; k < nsample; k++) {
-                auto v = (i + Random::uniform_float()) / (h - 1);
-                auto u = (j + Random::uniform_float()) / (w - 1);
-                Ray r = cam.generate_ray(u, v);
-                Vec3 L;
-                if (DEBUG_MODE) {
-                    L = L_normal(r, world);
-                }
-                else {
-                    if (GLOBAL_ILLUMINATION) {
-                        L = L_pathtracing(r, max_depth, world);
-                        //L = L_naive_pathtracing(r, max_depth, world);
+            for (int k = 0; k < nsample/4; k++) {
+                // ジッタリング
+                for (int x_sub = 0; x_sub < 2; x_sub++) {
+                    for (int y_sub = 0; y_sub < 2; y_sub++) {
+                        auto u = (x + Random::uniform_float(x_sub * 0.5f, x_sub * 0.5f + 0.5f)) / (w - 1);
+                        auto v = (y + Random::uniform_float(y_sub * 0.5f, y_sub * 0.5f + 0.5f)) / (h - 1);
+                        Ray r = cam.generate_ray(u, v);
+                        Vec3 L;
+                        if (DEBUG_MODE) {
+                            L = L_normal(r, world);
+                        }
+                        else {
+                            if (GLOBAL_ILLUMINATION) {
+                                L = L_pathtracing(r, max_depth, world);
+                                //L = L_naive_pathtracing(r, max_depth, world);
+                            }
+                            else {
+                                L = L_raytracing(r, max_depth, world);
+                            }
+                        }
+                        if (BIASED_DENOISING) {
+                            I += clamp(exclude_invalid(L), 0, 2.f); // ノイズが減るが物理ベースでない
+                        }
+                        else {
+                            I += exclude_invalid(L);
+                        }
                     }
-                    else {
-                        L = L_raytracing(r, max_depth, world);
-                    }
-                }
-                if (BIASED_DENOISING) {
-                    I += clamp(exclude_invalid(L)); // ノイズが減るが物理ベースでない
-                }
-                else {
-                    I += exclude_invalid(L);
                 }
             }
             I *= 1.0f / nsample;

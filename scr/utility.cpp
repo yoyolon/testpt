@@ -17,3 +17,14 @@ Vec3 gamma_correction(const Vec3& color) {
     auto b = gamma_correction_element(color.get_z());
     return Vec3(r, g, b);
 }
+
+Vec3 exclude_invalid(const Vec3& color) {
+    float r = color.get_x();
+    float g = color.get_y();
+    float b = color.get_z();
+    // –³Œø‚È’l‚ğƒ[ƒ‚É‚·‚é
+    if (!isfinite(r)) r = 0.0f;
+    if (!isfinite(g)) g = 0.0f;
+    if (!isfinite(b)) b = 0.0f;
+    return Vec3(r, g, b);
+}

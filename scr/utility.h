@@ -41,3 +41,10 @@ float gamma_correction_element(float c);
 * @return Vec3      :ガンマ補正後の色
 */
 Vec3 gamma_correction(const Vec3& color);
+
+/**
+* @brief 輝度から無効な値(NaNやinf)を除外する関数
+* @param[in]  color :輝度
+* @return Vec3      :有効値に変換後の値
+*/
+Vec3 exclude_invalid(const Vec3& color);

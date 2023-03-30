@@ -49,6 +49,7 @@
     <ClCompile Include="scr\ONB.cpp" />
     <ClCompile Include="scr\Random.cpp" />
     <ClCompile Include="scr\Shape.cpp" />
+    <ClCompile Include="scr\utility.cpp" />
     <ClCompile Include="scr\Vcavity.cpp" />
     <ClCompile Include="scr\Math.cpp" />
   </ItemGroup>

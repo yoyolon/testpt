@@ -9,6 +9,12 @@
 #include <iostream>
 #include "utility.h"
 
+// *** 関数 ***
+inline float to_degree(float radian) { return 180.0f * radian / pi; }
+inline float to_radian(float degree) { return pi * degree / 180.0f; }
+inline float lerp(float a, float b, float t) { return (1 - t) * a + t * b; }
+
+
 /** 三次元ベクトルクラス */
 class Vec3 {
 public:

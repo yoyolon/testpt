@@ -59,16 +59,17 @@ public:
                    BxDFType acceptable_type=BxDFType::All) const;
 
     /**
-    * @brief 材質にBxDFを追加する関数
-    * @param[in] bxdf: 散乱特性を表すBxDF
-    */
-    void add(std::shared_ptr<BxDF> bxdf) { bxdf_list.push_back(bxdf); }
-
-    /**
     * @brief BxDFの集合を取得
     * @return std::vector<std::shared_ptr<BxDF>> : BxDFの集合
     */
     std::vector<std::shared_ptr<BxDF>> get_BSDF() const { return bxdf_list; }
+
+protected:
+    /**
+    * @brief 材質にBxDFを追加する関数
+    * @param[in] bxdf: 散乱特性を表すBxDF
+    */
+    void add(std::shared_ptr<BxDF> bxdf) { bxdf_list.push_back(bxdf); }
 
 private:
     std::vector<std::shared_ptr<BxDF>> bxdf_list; /**> BxDFの集合 */

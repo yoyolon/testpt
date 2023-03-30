@@ -9,6 +9,7 @@
 #include "Ray.h"
 
 class Material;
+class Light;
 
 
 /** 交差点の種類 */
@@ -20,13 +21,13 @@ enum class IsectType {
 
 /** 交差点情報 */
 struct intersection {
-    Vec3 pos;                            /**< 座標             */
-    Vec3 normal;                         /**< 法線             */
-    float t=0.0f;                        /**< レイのパラメータ */
-    bool is_front=true;                  /**< 交差点の裏表     */
-    IsectType type=IsectType::None;      /**< 交差点の種類     */
-    std::shared_ptr<class Material> mat; /**< 材質の種類       */
-    std::shared_ptr<class Light> light;  /**< 光源の種類       */
+    Vec3 pos;                       /**< 座標             */
+    Vec3 normal;                    /**< 法線             */
+    float t=0.0f;                   /**< レイのパラメータ */
+    bool is_front=true;             /**< 交差点の裏表     */
+    IsectType type=IsectType::None; /**< 交差点の種類     */
+    std::shared_ptr<Material> mat;  /**< 材質の種類       */
+    std::shared_ptr<Light> light;   /**< 光源の種類       */
 };
 
 

@@ -148,15 +148,15 @@ float Random::power_heuristic(int n1, float pdf1, int n2, float pdf2, float beta
 
 /** 1D区分関数 */
 Piecewise1D::Piecewise1D(const float* data, int _n)
-    : f(data, data+_n), n(_n), cdf(_n)
+    : f(data, data+_n), n(_n), cdf(_n + 1)
 {
     // CDFを計算
     cdf[0] = 0;
-    for (int i = 0; i < n - 1; i++) {
-        cdf[i + 1] = cdf[i] + f[i] / n;
+    for (int i = 1; i < n + 1; i++) {
+        cdf[i] = cdf[i-1] + f[i-1] / n;
     }
-    integral_f = cdf[n - 1];
-    for (int i = 0; i < n; i++) {
+    integral_f = cdf[n];
+    for (int i = 1; i < n + 1; i++) {
         cdf[i] /= integral_f;
     }
 }
@@ -164,13 +164,20 @@ Piecewise1D::Piecewise1D(const float* data, int _n)
 float Piecewise1D::sample(float& pdf, int& index) const {
     // cdf[index] <= u < cdf[index+1]となるインデックスを探索
     auto u = Random::uniform_float();
-    auto iter = std::lower_bound(cdf.begin(), cdf.end(), u); // 二分探索
-    auto index_find = (int)std::distance(cdf.begin(), iter); // イテレータからインデックスに変換
+    //auto iter = std::lower_bound(cdf.begin(), cdf.end(), u); // 二分探索
+    //auto index_find = (int)std::distance(cdf.begin(), iter); // イテレータからインデックスに変換
+    
+    // NOTE: stdのバイナリサーチでエラーが発生したので線形探索に変更
+    // TODO: 線形探索は効率が悪いので修正
+    int index_find = n;
+    for (int i = 1; i < n + 1; i++) {
+        if (cdf[i] > u) {
+            index_find = i - 1;
+            break;
+        }
+    }
     index = index_find;
     pdf = f[index] / integral_f;
-    if (index == n - 1) {
-        return (float)index / n;
-    }
     auto t = (u - cdf[index]) / (cdf[index + 1] - cdf[index]);
     return (index + t) / n;
 }
@@ -204,8 +211,8 @@ Vec2 Piecewise2D::sample(float& pdf) const {
 
 float Piecewise2D::eval_pdf(const Vec2& uv) const {
     // インデックスを計算
-    int u = std::clamp(int(uv[0] * nu), 0, nu - 1);
-    int v = std::clamp(int(uv[1] * nv), 0, nv - 1);
+    int index_u = std::clamp(int(uv[0] * nu), 0, nu - 1);
+    int index_v = std::clamp(int(uv[1] * nv), 0, nv - 1);
     // pdf = f(u,v) / \int \int f(u,v) dudv
-    return conditional_pdf[v]->get_f(u) / merginal_pdf->get_integral_f();
+    return conditional_pdf[index_v]->get_f(index_u) / merginal_pdf->get_integral_f();
 }

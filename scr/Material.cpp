@@ -159,8 +159,8 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
         add(std::make_shared<SpecularReflection>(base, fres));
     }
     else {
-        //auto dist = std::make_shared<GGX>(alpha);
-        auto dist = std::make_shared<Beckmann>(alpha);
+        auto dist = std::make_shared<GGX>(alpha);
+        //auto dist = std::make_shared<Beckmann>(alpha);
         add(std::make_shared<MicrofacetReflection>(base, dist, fres));
     }
 }

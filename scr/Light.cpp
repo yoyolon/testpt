@@ -57,6 +57,7 @@ EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation)
     if (envmap != nullptr) {
         // 環境マップの回転
         rotate_envmap(rotation);
+        
         // 輝度マップを生成
         auto brightmap = std::make_unique<float[]>(nw * nh);
         for (int h = 0; h < nh; h++) {
@@ -98,7 +99,7 @@ Vec3 EnvironmentLight::evel_light(const Vec3& w) const {
     }
     // 方向からuv座標を計算
     Vec3 dir = unit_vector(w);
-    float u = std::atan2(dir.get_z(), dir.get_x()) + pi;
+    float u = std::atan2(dir.get_z(), dir.get_x()) + pi; // +piは右手座標を考慮
     u *= invpi * 0.5;
     float v = std::acos(std::clamp(dir.get_y(), -1.0f, 1.0f)) * invpi;
     // 環境マップから放射輝度をサンプリング
@@ -114,14 +115,21 @@ Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wi, float& pd
     if (envmap == nullptr) {
         return Vec3(0.0f, 0.0f, 0.0f);
     }
+    // uv座標をサンプリング
     float sample_pdf;
     Vec2 uv = dist->sample(sample_pdf);
     if (sample_pdf == 0) return Vec3::zero;
-    float phi = 2 * pi * uv[0];
+
+    // uv座標から方向を計算
+    float phi = 2 * pi * uv[0] + pi; // +piは右手座標を考慮
     float theta = pi * uv[1];
     float sin_theta = std::sin(theta);
-    wi = Vec3(-sin_theta * std::cos(phi), std::cos(theta), -sin_theta * std::sin(phi));
-    if (sin_theta == 0) return Vec3::zero;
+    wi = Vec3(sin_theta * std::cos(phi), std::cos(theta), sin_theta * std::sin(phi));
+    // 方向に関するサンプリングPDFを計算し放射輝度を返す
+    if (sin_theta == 0) {
+        pdf = 0.0f;
+        return Vec3::zero;
+    }
     pdf = sample_pdf / (2 * pi * pi * sin_theta);
     return evel_light_uv(uv);
 }
@@ -130,12 +138,12 @@ float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
     if (envmap == nullptr) {
         return 0.0f;
     }
-    float theta = std::acos(w.get_z());
-    float phi = std::atan2(w.get_y(), w.get_x());
+    float theta = std::acos(w.get_y());
+    float phi = std::atan2f(w.get_z(), w.get_x()) + pi; // +piは右手座標を考慮
     if (phi < 0) phi += 2 * pi;
     float sin_theta = std::sin(theta);
     if (sin_theta == 0) return 0;
-    return dist->eval_pdf(Vec2(phi * invpi, theta * invpi)) / (2 * pi * pi * sin_theta);
+    return dist->eval_pdf(Vec2(0.5 * phi * invpi, theta * invpi)) / (2 * pi * pi * sin_theta);
 }
 
 bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
@@ -182,7 +190,7 @@ Vec3 EnvironmentLight::evel_envmap(int x, int y) const {
 }
 
 void EnvironmentLight::rotate_envmap(float deg) {
-    // 環境マップのコピー
+    // 環境マップをコピー
     float* envmap_copy = new float[nh * nw * 3];
     std::memcpy(envmap_copy, envmap, sizeof(float) * nh * nw * 3);
     // 環境マップを回転

@@ -171,7 +171,7 @@ float Piecewise1D::sample(float& pdf, int& index) const {
     // TODO: 線形探索は効率が悪いので修正
     int index_find = n;
     for (int i = 1; i < n + 1; i++) {
-        if (cdf[i] > u) {
+        if (cdf[i] >= u) {
             index_find = i - 1;
             break;
         }
@@ -205,7 +205,6 @@ Vec2 Piecewise2D::sample(float& pdf) const {
     float v = merginal_pdf->sample(pdf_v, index_v);
     float u = conditional_pdf[index_v]->sample(pdf_u, index_u);
     pdf = pdf_u * pdf_v;
-    //pdf = eval_pdf(Vec2(u, v));
     return Vec2(u, v);
 }
 
@@ -213,6 +212,6 @@ float Piecewise2D::eval_pdf(const Vec2& uv) const {
     // インデックスを計算
     int index_u = std::clamp(int(uv[0] * nu), 0, nu - 1);
     int index_v = std::clamp(int(uv[1] * nv), 0, nv - 1);
-    // pdf = f(u,v) / \int \int f(u,v) dudv
+    // pdf(u, v) = f(u,v) / \int \int f(u,v) dudv
     return conditional_pdf[index_v]->get_f(index_u) / merginal_pdf->get_integral_f();
 }

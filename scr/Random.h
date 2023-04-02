@@ -183,7 +183,7 @@ public:
     /**
     * @brief (u, v)をサンプリングするPDF(確率密度)を評価する関数
     * @param[out] uv:(u,v)座標
-    * @return float   :サンプルした(u,v)の値(f(u,v)でなく(u,v)を返すので注意)
+    * @return float   :サンプルしたPDFを返す
     */
     float eval_pdf(const Vec2& uv) const;
 

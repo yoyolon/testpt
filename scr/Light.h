@@ -160,6 +160,6 @@ private:
     int nw;           /**< 幅           */
     int nh;           /**< 高さ         */
     int nc;           /**< チャンネル数 */
-    float brightness; /**< 明るさ       */
+    float luminance; /**< 明るさ       */
     std::unique_ptr<Piecewise2D> dist;  /**< 環境マップの輝度分布 */
 };

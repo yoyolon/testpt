@@ -50,7 +50,7 @@ bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& 
 
 
 EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation) 
-    : Light(LightType::IBL), nw(1), nh(1), nc(3), brightness(0.f)
+    : Light(LightType::IBL), nw(1), nh(1), nc(3), luminance(0.f)
 {
     // 環境マップの生成
     envmap = stbi_loadf(filename.c_str(), &nw, &nh, &nc, 0);
@@ -59,22 +59,22 @@ EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation)
         rotate_envmap(rotation);
         
         // 輝度マップを生成
-        auto brightmap = std::make_unique<float[]>(nw * nh);
+        auto luminance_map = std::make_unique<float[]>(nw * nh);
         for (int h = 0; h < nh; h++) {
             float sin_theta = std::sin(pi * (h + 0.5f) / nh);
             for (int w = 0; w < nw; w++) {
                 int index = h * nw * 3 + w * 3;
-                // sRGBからXYZのY成分を計算
+                // RGBから輝度を計算
                 float R = envmap[index++];
                 float G = envmap[index++];
                 float B = envmap[index];
-                float brightness_element = 0.2126f * R + 0.7152f * G + 0.0722f * B;
-                brightness += brightness_element;
-                brightmap[h * nw + w] = brightness_element * sin_theta;
+                float luminance_element = 0.2126f * R + 0.7152f * G + 0.0722f * B;
+                luminance += luminance_element;
+                luminance_map [h * nw + w] = luminance_element * sin_theta;
             }
         }
-        brightness /= (nw * nh);
-        dist = std::make_unique<Piecewise2D>(brightmap.get(), nw, nh);
+        luminance /= (nw * nh);
+        dist = std::make_unique<Piecewise2D>(luminance_map.get(), nw, nh);
     }
     else {
         std::cerr << "failed to load" << filename << '\n';
@@ -108,7 +108,7 @@ Vec3 EnvironmentLight::evel_light(const Vec3& w) const {
 
 Vec3 EnvironmentLight::power() const {
     float radius = 100;
-    return pi * radius * radius * brightness;
+    return pi * radius * radius * luminance;
 }
 
 Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {

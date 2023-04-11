@@ -41,20 +41,70 @@
 
 // 直接光のサンプリング戦略
 enum class Sampling {
-    BSDF  = 1, // BSDFによる重点的サンプリング
-    LIGHT = 2, // 光源による重点的サンプリング
-    MIS   = 3  // 多重重点的サンプリング
+    UNIFORM = 1 << 0,  /**< 一様サンプリング             */
+    BSDF    = 1 << 1,  /**< BSDFによる重点的サンプリング */
+    LIGHT   = 1 << 2,  /**< 光源による重点的サンプリング */
+    MIS     = 1 << 3,  /**< 多重重点的サンプリング       */
 };
 Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
-constexpr bool DEBUG_MODE           = false;  // (デバッグモード)法線可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION  = true;  // 大域照明効果(GI)を有効にする
-constexpr bool IS_GAMMA_CORRECTION  = true;   // ガンマ補正を有効にする
-constexpr bool BIASED_DENOISING     = false;  // 寄与に上限値を設定することでデノイズ
-constexpr int  RUSSIAN_ROULETTE     = 0;      // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 1024 * 4; // 1ピクセル当たりのサンプル数
+constexpr bool DEBUG_MODE           = false; // (デバッグモード)法線可視化を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = false; // 大域照明効果(GI)を有効にする
+constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
+constexpr bool BIASED_DENOISING     = false; // 寄与に上限値を設定することでデノイズ
+constexpr int  RUSSIAN_ROULETTE     = 0;     // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 128;   // 1ピクセル当たりのサンプル数
 
+
+/**
+* @brief 直接光を一様に選んだ入射方向からサンプリングする関数
+* @pram[in] r             :追跡レイ
+* @pram[in] isect         :オブジェクトの交差点情報
+* @pram[in] world         :シーン
+* @pram[in] shading_coord :シェーディング座標系
+* @return Vec3 :直接光の入射放射輝度
+* @note スペキュラレイでは実行されない
+*/
+Vec3 explict_uniform(const Ray& r, const intersection& isect, const Scene& world,
+    const ONB& shading_coord) {
+    auto Ld = Vec3::zero;
+
+    // 入射方向をランダムにサンプリング
+    Vec3 wi_local = Random::uniform_hemisphere_sample();
+    Vec3 wi = shading_coord.to_world(wi_local);
+
+    // 光源へのレイが光源と交差しなければ寄与はゼロ
+    auto r_to_light = Ray(isect.pos, wi); // 光源へ向かうのレイ
+    intersection isect_light;
+    if (!world.intersect_light(r_to_light, eps_isect, inf, isect_light)) {
+        return Ld;
+    }
+
+    // 交差した光源の放射輝度を計算
+    auto L = isect_light.light->evel_light(wi);
+    if (is_zero(L)) {
+        return Ld;
+    }
+
+    // 光源へのレイがシェイプに遮蔽されると寄与はゼロ
+    if (world.intersect_object(r_to_light, eps_isect, isect_light.t)) {
+        return Ld;
+    }
+
+    // サンプリング方向でのBSDFとpdfを評価
+    auto wo = unit_vector(r.get_dir());
+    auto wo_local = -shading_coord.to_local(wo); // 物体表面から離れる方向が正
+    auto bsdf = isect.mat->eval_f(wo_local, wi_local, isect);
+    if (is_zero(bsdf)) {
+        return Ld;
+    }
+    float pdf_scattering = 0.5 * invpi; // 一様サンプリングのため
+    // 寄与の計算
+    auto cos_term = dot(isect.normal, wi);
+    Ld += bsdf * cos_term * L / pdf_scattering;
+    return Ld;
+}
 
 /**
 * @brief 直接光をBSDFに沿った入射方向からサンプリングする関数
@@ -180,6 +230,11 @@ Vec3 explict_one_light(const Ray& r, const intersection& isect, const Scene& wor
 Vec3 explicit_direct_light_sampling(const Ray& r, const intersection& isect, 
                                     const Scene& world, const ONB& shading_coord) {
     auto Ld = Vec3::zero;
+    // 一様サンプリング
+    if (sampling_strategy == Sampling::UNIFORM) {
+        Ld += explict_uniform(r, isect, world, shading_coord);
+        return Ld;
+    }
     // BSDFに基づきサンプリング
     if ((sampling_strategy == Sampling::BSDF) || (sampling_strategy == Sampling::MIS)) {
         auto L = explict_bsdf(r, isect, world, shading_coord);
@@ -367,6 +422,21 @@ Vec3 L_normal(const Ray& r, const Scene& world) {
 
 
 /**
+* @brief  Low-Discrepancy数列の生成に利用する関数
+* @param[in] i  :
+* @return float :[0,1]の実数
+* @note // Ref. T. Kollig and A. Keller. "Efficient Multidimensional Sampling" 2002.
+*/
+float radical_inverse(unsigned int i) {
+    i = (i << 16) | (i >> 16);
+    i = ((i & 0x00FF00FF) << 8) | ((i & 0xFF00FF00) >> 8);
+    i = ((i & 0x0F0F0F0F) << 4) | ((i & 0xF0F0F0F0) >> 4);
+    i = ((i & 0x33333333) << 2) | ((i & 0xCCCCCCCC) >> 2);
+    i = ((i & 0x55555555) << 1) | ((i & 0xAAAAAAAA) >> 1);
+    return (float)i / (float)0x100000000;
+}
+
+/**
 * @brief main関数
 */
 int main(int argc, char* argv[]) {
@@ -374,7 +444,6 @@ int main(int argc, char* argv[]) {
     // パラメータ
     const int nsample = (argc == 2) ? atoi(argv[1]) : SAMPLES; // レイのサンプル数
     constexpr auto max_depth = 100;  // レイの最大追跡数
-
     // シーン
     Scene world;
     Camera cam;
@@ -400,33 +469,28 @@ int main(int argc, char* argv[]) {
         for (int x = 0; x < w; x++) {
             Vec3 I(0.0f, 0.0f, 0.0f);
             // index番目のピクセルのサンプルを生成
-            for (int k = 0; k < nsample/4; k++) {
-                // ジッタリング
-                for (int x_sub = 0; x_sub < 2; x_sub++) {
-                    for (int y_sub = 0; y_sub < 2; y_sub++) {
-                        auto u = (x + Random::uniform_float(x_sub * 0.5f, x_sub * 0.5f + 0.5f)) / (w - 1);
-                        auto v = (y + Random::uniform_float(y_sub * 0.5f, y_sub * 0.5f + 0.5f)) / (h - 1);
-                        Ray r = cam.generate_ray(u, v);
-                        Vec3 L;
-                        if (DEBUG_MODE) {
-                            L = L_normal(r, world);
-                        }
-                        else {
-                            if (GLOBAL_ILLUMINATION) {
-                                L = L_pathtracing(r, max_depth, world);
-                                //L = L_naive_pathtracing(r, max_depth, world);
-                            }
-                            else {
-                                L = L_raytracing(r, max_depth, world);
-                            }
-                        }
-                        if (BIASED_DENOISING) {
-                            I += clamp(exclude_invalid(L), 0, 2.f); // ノイズが減るが物理ベースでない
-                        }
-                        else {
-                            I += exclude_invalid(L);
-                        }
+            for (int k = 0; k < nsample; k++) {
+                Vec2 uv(float(k) / nsample, radical_inverse(k)); // Low-Discrepancy数列を利用
+                //Vec2 uv(Random::uniform_float(), Random::uniform_float()); // 一様サンプリング
+                Ray r = cam.generate_ray((x + uv[0])/(w - 1), (y + uv[1])/(h - 1));
+                Vec3 L;
+                if (DEBUG_MODE) {
+                    L = L_normal(r, world);
+                }
+                else {
+                    if (GLOBAL_ILLUMINATION) {
+                        L = L_pathtracing(r, max_depth, world);
+                        //L = L_naive_pathtracing(r, max_depth, world);
                     }
+                    else {
+                        L = L_raytracing(r, max_depth, world);
+                    }
+                }
+                if (BIASED_DENOISING) {
+                    I += clamp(exclude_invalid(L), 0, 2.f); // ノイズが減るが物理ベースでない
+                }
+                else {
+                    I += exclude_invalid(L);
                 }
             }
             I *= 1.0f / nsample;

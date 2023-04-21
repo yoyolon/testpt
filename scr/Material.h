@@ -90,24 +90,6 @@ private:
 };
 
 
-/** 拡散透過マテリアル */
-class DiffuseTransmission : public Material {
-public:
-    /**
-    * @brief コンストラクタ
-    * @param[in] _base :ベースカラー
-    * @param[in] _r    :反射係数
-    * @param[in] _t    :透過係数
-    */
-    DiffuseTransmission(Vec3 _base, Vec3 _r, Vec3 _t);
-
-private:
-    Vec3 base; /**> ベースカラー */
-    Vec3 r;    /**> 反射係数     */
-    Vec3 t;    /**> 透過係数     */
-};
-
-
 /** 鏡マテリアル */
 class Mirror : public Material {
 public:

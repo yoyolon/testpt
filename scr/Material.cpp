@@ -89,23 +89,6 @@ Diffuse::Diffuse(Vec3 _base)
 }
 
 
-// *** 拡散透過マテリアル ***
-// TODO: [要検証]拡散透過って何？？？
-DiffuseTransmission::DiffuseTransmission(Vec3 _base, Vec3 _r, Vec3 _t)
-    : Material(),
-      base(_base),
-      r(_r),
-      t(_t)
-{
-    if (!is_zero(r)) {
-        add(std::make_shared<LambertianReflection>(base * r));
-    }
-    if (!is_zero(t)) {
-        add(std::make_shared<LambertianTransmission>(base * t));
-    }
-}
-
-
 // *** 鏡マテリアル ***
 Mirror::Mirror(Vec3 _base)
     : Material(),

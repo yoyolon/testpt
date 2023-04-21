@@ -201,26 +201,6 @@ private:
 };
 
 
-/** Lambert透過 */
-class LambertianTransmission : public BxDF {
-public:
-    /**
-    * @brief コンストラクタ
-    * @param[in] _scale :スケールファクター
-    */
-    LambertianTransmission(const Vec3& _scale);
-
-    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
-
-    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
-
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
-
-private:
-    Vec3 scale; /**> スケールファクター */
-};
-
-
 /** 完全鏡面反射 */
 class SpecularReflection : public BxDF {
 public:

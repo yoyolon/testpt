@@ -29,36 +29,6 @@ Vec3 LambertianReflection::sample_f(const Vec3& wo, const intersection& p,
 }
 
 
-// *** Lambert透過 ***
-LambertianTransmission::LambertianTransmission(const Vec3& _scale)
-    : BxDF(BxDFType((uint8_t)BxDFType::Transmission | (uint8_t)BxDFType::Diffuse)),
-    scale(_scale)
-{}
-
-float LambertianTransmission::eval_pdf(const Vec3& wo, const Vec3& wi, 
-                                       const intersection& p) const {
-    if (is_same_hemisphere(wo, wi)) {
-        return 0.0f; // BTDFなので同一半球内ならサンプルされない
-    }
-    else {
-        return std::max(std::abs(get_cos(wi)) * invpi, epsilon);
-    }
-}
-
-Vec3 LambertianTransmission::eval_f(const Vec3& wo, const Vec3& wi, 
-                                    const intersection& p) const {
-    return scale * invpi;
-}
-
-Vec3 LambertianTransmission::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, 
-                                      float& pdf) const {
-    auto temp = Random::cosine_hemisphere_sample();
-    wi = Vec3(temp.get_x(), temp.get_y(), -temp.get_z()); // 透過方向は半球外
-    pdf = eval_pdf(wo, wi, p);
-    return eval_f(wo, wi, p);
-}
-
-
 // *** 完全鏡面反射 ***
 SpecularReflection::SpecularReflection(Vec3 _scale, std::shared_ptr<Fresnel> _fres)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Specular)), 

@@ -143,7 +143,7 @@ float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
     if (phi < 0) phi += 2 * pi;
     float sin_theta = std::sin(theta);
     if (sin_theta == 0) return 0;
-    return dist->eval_pdf(Vec2(0.5 * phi * invpi, theta * invpi)) / (2 * pi * pi * sin_theta);
+    return dist->eval_pdf(Vec2(0.5f * phi * invpi, theta * invpi)) / (2 * pi * pi * sin_theta);
 }
 
 bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {

@@ -81,6 +81,8 @@ public:
     */
     bool is_visible(const intersection& p1, const intersection& p2, const Scene& world);
 
+    LightType get_type() const { return type; }
+
 private:
     const LightType type;
 };

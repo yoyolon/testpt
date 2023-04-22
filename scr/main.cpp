@@ -50,11 +50,11 @@ Sampling sampling_strategy = Sampling::MIS;
 
 // デバッグ用
 constexpr bool DEBUG_MODE           = false; // (デバッグモード)法線可視化を有効にする
-constexpr bool GLOBAL_ILLUMINATION  = false; // 大域照明効果(GI)を有効にする
+constexpr bool GLOBAL_ILLUMINATION  = true; // 大域照明効果(GI)を有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false; // 寄与に上限値を設定することでデノイズ
-constexpr int  RUSSIAN_ROULETTE     = 0;     // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 128;   // 1ピクセル当たりのサンプル数
+constexpr int  RUSSIAN_ROULETTE     = 5;     // ロシアンルーレット適用までのレイのバウンス数
+constexpr int  SAMPLES              = 8;   // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -272,6 +272,11 @@ Vec3 L_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         // カメラレイとスペキュラレイは光源の寄与を加算
         if (bounces == 0 || is_specular_ray) {
             if (isect.type == IsectType::Light) {
+                // 面光源かつ法線が逆向きの場合は光源をサンプルしない
+                auto light_type = isect.light->get_type();
+                if (light_type == LightType::Area && dot(isect.normal, -r.get_dir()) < 0) {
+                    return Vec3::zero;
+                }
                 L += contrib * isect.light->evel_light(r.get_dir());
                 break;
             }
@@ -333,10 +338,13 @@ Vec3 L_naive_pathtracing(const Ray& r_in, int max_depth, const Scene& world) {
         }
         // 光源と交差したら寄与を加算
         if (isect.type == IsectType::Light) {
-            if (isect.type == IsectType::Light) {
-                L += contrib * isect.light->evel_light(r.get_dir());
-                break;
+            // 面光源かつ法線が逆向きの場合は光源をサンプルしない
+            auto light_type = isect.light->get_type();
+            if (light_type == LightType::Area && dot(isect.normal, -r.get_dir()) < 0) {
+                return Vec3::zero;
             }
+            L += contrib * isect.light->evel_light(r.get_dir());
+            break;
         }
         // BSDFに基づく入射方向のサンプリング
         ONB shading_coord(isect.is_front ? isect.normal : -isect.normal);
@@ -443,15 +451,15 @@ int main(int argc, char* argv[]) {
     Random::init(); // 乱数の初期化
     // パラメータ
     const int nsample = (argc == 2) ? atoi(argv[1]) : SAMPLES; // レイのサンプル数
-    constexpr auto max_depth = 100;  // レイの最大追跡数
+    constexpr auto max_depth = 10;  // レイの最大追跡数
     // シーン
     Scene world;
     Camera cam;
-    make_scene_simple2(world, cam);
+    //make_scene_simple2(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
     //make_scene_cornell_box(world, cam);
-    //make_scene_box_with_sphere(world, cam);
+    make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);
  
@@ -479,8 +487,8 @@ int main(int argc, char* argv[]) {
                 }
                 else {
                     if (GLOBAL_ILLUMINATION) {
-                        L = L_pathtracing(r, max_depth, world);
-                        //L = L_naive_pathtracing(r, max_depth, world);
+                        //L = L_pathtracing(r, max_depth, world);
+                        L = L_naive_pathtracing(r, max_depth, world);
                     }
                     else {
                         L = L_raytracing(r, max_depth, world);

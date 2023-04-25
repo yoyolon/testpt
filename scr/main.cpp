@@ -54,7 +54,7 @@ constexpr bool GLOBAL_ILLUMINATION  = true; // 大域照明効果(GI)を有効にする
 constexpr bool IS_GAMMA_CORRECTION  = true;  // ガンマ補正を有効にする
 constexpr bool BIASED_DENOISING     = false; // 寄与に上限値を設定することでデノイズ
 constexpr int  RUSSIAN_ROULETTE     = 5;     // ロシアンルーレット適用までのレイのバウンス数
-constexpr int  SAMPLES              = 8;   // 1ピクセル当たりのサンプル数
+constexpr int  SAMPLES              = 1024;   // 1ピクセル当たりのサンプル数
 
 
 /**
@@ -232,7 +232,8 @@ Vec3 explicit_direct_light_sampling(const Ray& r, const intersection& isect,
     auto Ld = Vec3::zero;
     // 一様サンプリング
     if (sampling_strategy == Sampling::UNIFORM) {
-        Ld += explict_uniform(r, isect, world, shading_coord);
+        auto L = explict_uniform(r, isect, world, shading_coord);
+        Ld += exclude_invalid(L);
         return Ld;
     }
     // BSDFに基づきサンプリング
@@ -240,7 +241,6 @@ Vec3 explicit_direct_light_sampling(const Ray& r, const intersection& isect,
         auto L = explict_bsdf(r, isect, world, shading_coord);
         Ld += exclude_invalid(L);
     }
-
     // 光源に基づきサンプリング
     if ((sampling_strategy == Sampling::LIGHT) || (sampling_strategy == Sampling::MIS)) {
         auto L = explict_one_light(r, isect, world, shading_coord);
@@ -455,11 +455,12 @@ int main(int argc, char* argv[]) {
     // シーン
     Scene world;
     Camera cam;
-    //make_scene_simple2(world, cam);
+    //make_scene_simple(world, cam);
+    make_scene_simple2(world, cam);
     //make_scene_cylinder(world, cam);
     //make_scene_MIS(world, cam);
     //make_scene_cornell_box(world, cam);
-    make_scene_box_with_sphere(world, cam);
+    //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);
     //make_scene_thinfilm(world, cam);
  
@@ -487,8 +488,8 @@ int main(int argc, char* argv[]) {
                 }
                 else {
                     if (GLOBAL_ILLUMINATION) {
-                        //L = L_pathtracing(r, max_depth, world);
-                        L = L_naive_pathtracing(r, max_depth, world);
+                        L = L_pathtracing(r, max_depth, world);
+                        //L = L_naive_pathtracing(r, max_depth, world);
                     }
                     else {
                         L = L_raytracing(r, max_depth, world);

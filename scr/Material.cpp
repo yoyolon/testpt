@@ -48,7 +48,7 @@ Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi, const intersection& p,
                       BxDFType acceptable_type) const {
     // ‚·‚×‚Ä‚ÌBxDF‚Ì‘˜a‚ðŒvŽZ
     auto f = Vec3::zero;
-    bool is_reflect = wo.get_z() * wi.get_z() > 0; // •ûŒü‚ª”½ŽË‚Í‚Ç‚¤‚©”»’è
+    bool is_reflect = wo.get_z() * wi.get_z() > 0; // •ûŒü‚ª”½ŽË‚©‚Ç‚¤‚©”»’è
     for (const auto& bxdf : bxdf_list) {
         if (bxdf->is_same_type(acceptable_type)) {
             if ((is_reflect && bxdf->is_reflection()) ||

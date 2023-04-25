@@ -26,7 +26,7 @@ C++17
 - 3Dモデル(.obj)の読み込み
 - マイクロファセット理論に基づくマテリアル
 - 薄膜干渉マテリアル
-- 簡単なイメージベーストライティング
+- イメージベーストライティング(IBL)
 
 
 ### グローバルイルミネーション
@@ -72,16 +72,16 @@ testptでは，明示的な光源サンプリングでMISを，経路構築に�
 
 ### 様々な材質
 
-レンダリング品質の向上以外にも表現の幅を広げるために，様々な材質を実装しています．図6に示す通り，プラスチック，金属，ガラス，薄膜干渉など幅広い材質を表示できます．
+レンダリング品質の向上以外にも表現の幅を広げるために，様々な材質やイメージベーストライティング(IBL)を実装しています．図6に示す通り，プラスチック，金属，ガラス，シャボン玉などの幅広い材質が環境照明に照らされたシーンをレンダリング可能です．
 
 <div align="center">
   <img src="imgs/fig5_model.png" width=30%/>
-  <img src="imgs/fig5_thinfilm.png" width=30%/>
   <img src="imgs/fig5_bsdf.png" width=30%/>
-  <p>図6 様々な材質の表示結果 </p>
+  <img src="imgs/fig5_thinfilm.png" width=30%/>
+  <p>図6 様々な材質の表示結果(モデル/環境マップ: https://polyhaven.com/) </p>
 </div>
 
-## 参考文献
+## 主要参考文献
 
 - [Moller and Trumbore 1997] "Fast, minimum storage ray-triangle intersection" JGT. 1997.
 - [Walter et al. 2007] "Microfacet Models for Refraction through Rough Surfaces". EGSR 2007.

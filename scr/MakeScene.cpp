@@ -1,16 +1,17 @@
-#include "Camera.h"
-#include "Film.h"
-#include "Light.h"
 #include "MakeScene.h"
-#include "Material.h"
-#include "Scene.h"
-#include "Math.h"
 #include <iostream>
 #include <iomanip>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
+#include "Camera.h"
+#include "Film.h"
+#include "Light.h"
+#include "Material.h"
+#include "Math.h"
+#include "Random.h"
+#include "Scene.h"
 
 
 void make_scene_simple(Scene& world, Camera& cam) {
@@ -36,7 +37,7 @@ void make_scene_simple(Scene& world, Camera& cam) {
     world.add(obj_sphere);
     world.add(obj_plane);
     // 光源
-    auto light_env = std::make_shared<EnvironmentLight>("asset/lili_1k.hdr", 270.0f);
+    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 270.0f);
     world.add(light_env);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "simple.png");
@@ -54,16 +55,22 @@ void make_scene_simple2(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
-    auto mat_diff = std::make_shared<Diffuse>(Vec3(0.1f, 0.1f, 0.8f));
+    auto silver = Vec3(0.95f, 0.93f, 0.88f);
+    auto copper = Vec3(0.95f, 0.64f, 0.54f);
+    auto mat_diff_blue = std::make_shared<Diffuse>(Vec3(0.1f, 0.1f, 0.8f));
+    auto mat_diff_green = std::make_shared<Diffuse>(Vec3(0.1f, 0.8f, 0.1f));
+    auto mat_diff_red = std::make_shared<Diffuse>(Vec3(0.8f, 0.1f, 0.1f));
     auto mat_gold = std::make_shared<Metal>(Vec3::one, gold, 0.20f);
+    auto mat_silver = std::make_shared<Metal>(Vec3::one, silver, 0.20f);
+    auto mat_copper = std::make_shared<Metal>(Vec3::one, copper, 0.20f);
     auto mat_plastic = std::make_shared<Plastic>(Vec3::one, Vec3(0.5f, 0.0f, 0.0f), Vec3(0.5f, 0.5f, 0.5f), 0.05f);
     auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.6f, 0.0f);
     auto mat_irid = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.0f, 1.34f, 0.1f, false);
     auto mat_plane = std::make_shared<Diffuse>(Vec3(0.1f, 0.1f, 0.1f));
     // シェイプ
-    auto obj_sphere1 = std::make_shared<Sphere>(Vec3(5.0f, 2.0f, 0.0f), 2.0f, mat_gold);
-    auto obj_sphere2 = std::make_shared<Sphere>(Vec3(0.0f, 2.0f, 0.0f), 2.0f, mat_diff);
-    auto obj_sphere3 = std::make_shared<Sphere>(Vec3(-5.0f, 2.0f, 0.0f), 2.0f, mat_plastic);
+    auto obj_sphere1 = std::make_shared<Sphere>(Vec3(5.0f, 2.0f, 0.0f), 2.0f, mat_plastic);
+    auto obj_sphere2 = std::make_shared<Sphere>(Vec3( 0.0f, 2.0f, 0.0f), 2.0f, mat_glass);
+    auto obj_sphere3 = std::make_shared<Sphere>(Vec3(-5.0f, 2.0f, 0.0f), 2.0f, mat_silver);
     // Floor
     auto obj_plane = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
@@ -76,23 +83,22 @@ void make_scene_simple2(Scene& world, Camera& cam) {
     world.add(obj_sphere1);
     world.add(obj_sphere2);
     world.add(obj_sphere3);
-    world.add(obj_plane);
+    //world.add(obj_plane);
     // 光源
-    // Light sorce
     auto obj_light_plane = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
-            Vec3(-5.0f, 15.0f,  5.0f),
-            Vec3(-5.0f, 15.0f, -5.0f),
-            Vec3( 5.0f, 15.0f, -5.0f),
-            Vec3( 5.0f, 15.0f,  5.0f)},
+            Vec3(-15.0f, 10.0f,  1.0f),
+            Vec3(-15.0f, 10.0f, -1.0f),
+            Vec3( 15.0f, 10.0f, -1.0f),
+            Vec3( 15.0f, 10.0f,  1.0f)},
         std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-        mat_diff);
+        mat_plane);
     auto light_plane = std::make_shared<AreaLight>(Vec3(10.0f,10.0f,10.0f), obj_light_plane);
-    auto light_env = std::make_shared<EnvironmentLight>("asset/lili_1k.hdr", 270.0f);
+    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 270.0f);
     //world.add(light_plane);
     world.add(light_env);
     // カメラ設定
-    auto film = std::make_shared<Film>(800, 600, 3, "simple.png");
+    auto film = std::make_shared<Film>(600, 600, 3, "simple2.png");
     //auto fd = 2.5f; // 焦点距離
     auto deg_to_rad = [](float deg) { return deg * pi / 180; };
     auto fov = deg_to_rad(30.0f);
@@ -363,7 +369,7 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
     auto mat_gold   = std::make_shared<Metal>(Vec3::one, gold, 0.20f);
     auto mat_plastic = std::make_shared<Plastic>(Vec3::one, Vec3(0.5f,0.0f,0.0f), Vec3(0.5f,0.5f,0.5f), 0.05f);
-    auto mat_glass    = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.6f, 0.0f);
+    auto mat_glass    = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.6f, 0.001f);
     auto mat_red   = std::make_shared<Diffuse>(Vec3(1.000f, 0.065f, 0.065f));
     auto mat_green = std::make_shared<Diffuse>(Vec3(0.065f, 0.065f, 1.000f));
     auto mat_white = std::make_shared<Diffuse>(Vec3(0.710f, 0.710f, 0.710f));
@@ -439,7 +445,7 @@ void make_scene_box_with_sphere(Scene& world, Camera& cam) {
     world.add(floor);
     world.add(light);
     //// カメラ設定
-    auto film = std::make_shared<Film>(1000, 1000, 3, "box_with_sphere.png");
+    auto film = std::make_shared<Film>(600, 600, 3, "box_with_sphere.png");
     auto deg_to_rad = [](float deg) { return deg * pi / 180; };
     auto fov = deg_to_rad(35.0f);
     auto fd = 2.0f * std::cos(fov) / std::sin(fov); // 焦点距離
@@ -458,6 +464,9 @@ void make_scene_vase(Scene& world, Camera& cam) {
     // シェイプ
     auto obj_pot = std::make_shared<TriangleMesh>("asset/model.obj", mat_gold);
     world.add(obj_pot);
+    // 光源
+    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 180.0f);
+    world.add(light_env);
     // カメラの設定
     auto film = std::make_shared<Film>(600, 600, 3, "vase.png");
     auto fd = 2.5f; // 焦点距離
@@ -468,50 +477,45 @@ void make_scene_vase(Scene& world, Camera& cam) {
 }
 
 
-/**
-* @brief 異なる膜厚の薄膜がコーティングされた球のシーンを生成する関数
-* @param[out] world :シーンデータ
-* @param[out] cam   :カメラデータ
-*/
 void make_scene_thinfilm(Scene& world, Camera& cam) {
     world.clear();
-    // マテリアル
-    auto mat_ggx1 = std::make_shared<Thinfilm>(Vec3::one, 100.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx2 = std::make_shared<Thinfilm>(Vec3::one, 200.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx3 = std::make_shared<Thinfilm>(Vec3::one, 300.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx4 = std::make_shared<Thinfilm>(Vec3::one, 400.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx5 = std::make_shared<Thinfilm>(Vec3::one, 500.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx6 = std::make_shared<Thinfilm>(Vec3::one, 600.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx7 = std::make_shared<Thinfilm>(Vec3::one, 700.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx8 = std::make_shared<Thinfilm>(Vec3::one, 800.0f, 1.0f, 1.6f, 0.2f);
-    auto mat_ggx9 = std::make_shared<Thinfilm>(Vec3::one, 900.0f, 1.0f, 1.6f, 0.2f);
-    // シェイプ
-    auto spehre1 = std::make_shared<Sphere>(Vec3(-2.2f,-0.2f,0.0f), 1.0f, mat_ggx1);
-    auto spehre2 = std::make_shared<Sphere>(Vec3( 0.0f,-0.2f,0.0f), 1.0f, mat_ggx2);
-    auto spehre3 = std::make_shared<Sphere>(Vec3( 2.2f,-0.2f,0.0f), 1.0f, mat_ggx3);
-    auto spehre4 = std::make_shared<Sphere>(Vec3(-2.2f, 2.0f,0.0f), 1.0f, mat_ggx4);
-    auto spehre5 = std::make_shared<Sphere>(Vec3( 0.0f, 2.0f,0.0f), 1.0f, mat_ggx5);
-    auto spehre6 = std::make_shared<Sphere>(Vec3( 2.2f, 2.0f,0.0f), 1.0f, mat_ggx6);
-    auto spehre7 = std::make_shared<Sphere>(Vec3(-2.2f, 4.2f,0.0f), 1.0f, mat_ggx7);
-    auto spehre8 = std::make_shared<Sphere>(Vec3( 0.0f, 4.2f,0.0f), 1.0f, mat_ggx8);
-    auto spehre9 = std::make_shared<Sphere>(Vec3( 2.2f, 4.2f,0.0f), 1.0f, mat_ggx9);
-    world.add(spehre1);
-    world.add(spehre2);
-    world.add(spehre3);
-    world.add(spehre4);
-    world.add(spehre5);
-    world.add(spehre6);
-    world.add(spehre7);
-    world.add(spehre8);
-    world.add(spehre9);
+    // ランダムにシーンを生成
+    // small
+    for (int i = 0; i < 20; i++) {
+        // マテリアル
+        auto thickness = Random::uniform_float(200.0f, 1200.0f);
+        auto mat = std::make_shared<Thinfilm>(Vec3::one, thickness, 1.0f, 1.34f, 0.0f, true);
+        // シェイプ
+        auto radius = Random::uniform_float(0.1f, 1.0f);
+        auto pos = Vec3(Random::uniform_float(-10.0f,  10.0f), 
+                        Random::uniform_float(-10.0f,  10.0f), 
+                        Random::uniform_float(-15.0f, -10.0f));
+        auto spehre = std::make_shared<Sphere>(pos, radius, mat);
+        world.add(spehre);
+    }
+    // middle
+    for (int i = 0; i < 10; i++) {
+        // マテリアル
+        auto thickness = Random::uniform_float(200.0f, 700.0f);
+        auto mat = std::make_shared<Thinfilm>(Vec3::one, thickness, 1.0f, 1.34f, 0.0f, true);
+        // シェイプ
+        auto radius = Random::uniform_float(0.1f, 2.0f);
+        auto pos = Vec3(Random::uniform_float(-5.0f, 5.0f),
+                        Random::uniform_float(-5.0f, 5.0f),
+                        Random::uniform_float(-5.0f, 0.0f));
+        auto spehre = std::make_shared<Sphere>(pos, radius, mat);
+        world.add(spehre);
+    }
     // 光源
-    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 0.0f);
+    auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 180.0f);
     world.add(light_env);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "iridescence_spehre.png");
-    auto fd = 2.5f; // 焦点距離
-    Vec3 cam_pos(0.0f,2.0f,10.0f);
-    Vec3 cam_target(0.0f,2.0f,0.0f);
+    auto deg_to_rad = [](float deg) { return deg * pi / 180; };
+    auto fov = deg_to_rad(45.0f);
+    auto fd = 2.0f * std::cos(fov) / std::sin(fov); // 焦点距離
+    Vec3 cam_pos(0.0f,0.0f,10.0f);
+    Vec3 cam_target(0.0f,0.0f,0.0f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(film, fd, cam_pos, cam_forward);
 }

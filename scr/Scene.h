@@ -1,20 +1,27 @@
 /**
 * @file Scene.h
-* @brief シーン中のシェイプを管理
+* @brief シーンを管理するクラス
 */
 
 #pragma once
 
-#include "Shape.h"
-#include "Light.h"
+#include <memory>
+#include <vector>
+#include "Math.h"
+
+struct intersection;
+class Light;
+class Material;
+class Ray;
+class Shape;
 
 // *** シーンクラス ***
 class Scene {
 public:
     /**
-    * @brief デフォルトコンストラクタ
+    * @brief コンストラクタ
     */
-    Scene() {}
+    Scene() : bg_color(Vec3::zero) {}
 
     /**
     * @brief シーンにシェイプを追加
@@ -29,21 +36,33 @@ public:
     void add(std::shared_ptr<Light> light) { light_list.push_back(light); }
 
     /**
-    * @brief シーンから全てのシェイプと光源を除去
+    * @brief シーン中のシェイプが空か判定
+    * @return bool :空ならtrue
     */
-    void clear() { shape_list.clear(); }
+    bool is_empty_shape_list() const { return shape_list.empty(); }
 
     /**
-    * @brief シーンのシェイプを取得
+    * @brief シーンから全てのシェイプと光源を除去
+    */
+    void clear() { 
+        shape_list.clear();
+        light_list.clear();
+    }
+
+    /**
+    * @brief シーンの全シェイプを取得
     * @return std::vector<std::shared_ptr<Shape>> :シーン中のシェイプの集合
     */
     std::vector<std::shared_ptr<Shape>> get_shape() const { return shape_list; }
 
     /**
-    * @brief シーンの光源を取得
+    * @brief シーンの全光源を取得
     * @return std::vector<std::shared_ptr<Light>> :シーン中の光源の集合
     */
     std::vector<std::shared_ptr<Light>> get_light() const { return light_list; }
+
+    Vec3 get_bg_color() const { return bg_color; }
+    void set_bg_color(Vec3 color) { bg_color = color; }
 
     /**
     * @brief レイとオブジェクト(シェイプと光源)の交差判定を行う関数
@@ -54,32 +73,7 @@ public:
     * @return bool      :交差判定の結果
     * @note TODO: BVHの実装
     */
-    bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
-        intersection isect;
-        bool is_isect = false;
-        auto t_first = t_max;
-        isect.type = IsectType::None;
-        // シェイプとの交差判定
-        for (const auto& object : shape_list) {
-            if (object->intersect(r, t_min, t_first, isect)) {
-                is_isect = true;
-                t_first = isect.t;
-                isect.type = IsectType::Material;
-                p = isect;
-            }
-        }
-        // 光源との交差判定
-        for (const auto& light : light_list) {
-            if (light->intersect(r, t_min, t_first, isect)) {
-                is_isect = true;
-                t_first = isect.t;
-                isect.light = light;
-                isect.type = IsectType::Light;
-                p = isect;
-            }
-        }
-        return is_isect;
-    }
+    bool intersect(const Ray& r, float t_min, float t_max, intersection& p) const;
 
     /**
     * @brief レイとシェイプの交差判定を行う関数
@@ -87,22 +81,9 @@ public:
     * @param[in]  t_min :入射レイのパラメータ制限
     * @param[in]  t_max :入射レイのパラメータ制限
     * @return bool      :交差判定の結果
+    * @note TODO: BVHの実装
     */
-    bool intersect_object(const Ray& r, float t_min, float t_max) const {
-        intersection isect;
-        bool is_isect = false;
-        auto t_first = t_max;
-        isect.type = IsectType::None;
-        // シェイプとの交差判定
-        for (const auto& object : shape_list) {
-            if (object->intersect(r, t_min, t_first, isect)) {
-                is_isect = true;
-                t_first = isect.t;
-                isect.type = IsectType::Material;
-            }
-        }
-        return is_isect;
-    }
+    bool intersect_object(const Ray& r, float t_min, float t_max) const;
 
     /**
     * @brief レイと光源の交差判定を行う関数
@@ -113,25 +94,11 @@ public:
     * @return bool      :交差判定の結果
     * @note TODO: BVHの実装
     */
-    bool intersect_light(const Ray& r, float t_min, float t_max, intersection& p) const {
-        intersection isect;
-        bool is_isect = false;
-        auto t_first = t_max;
-        isect.type = IsectType::None;
-        // 光源との交差判定
-        for (const auto& light : light_list) {
-            if (light->intersect(r, t_min, t_first, isect)) {
-                is_isect = true;
-                t_first = isect.t;
-                isect.light = light;
-                isect.type = IsectType::Light;
-                p = isect;
-            }
-        }
-        return is_isect;
-    }
+    bool intersect_light(const Ray& r, float t_min, float t_max, intersection& p) const;
+
 
 private:
     std::vector<std::shared_ptr<Shape>> shape_list; /**< シーン中のシェイプ */
-    std::vector<std::shared_ptr<Light>> light_list; /**< シーン中の光源         */
+    std::vector<std::shared_ptr<Light>> light_list; /**< シーン中の光源     */
+    Vec3 bg_color; /**< 背景色 */
 };

@@ -13,10 +13,11 @@
 
 struct intersection;
 class Fresnel;
+class NDF;
 
 /**
-* @brief BxDFのフラグ
-* @note 使用例: if(frag & Specular)で材質が鏡面かどうか判定できる
+* @brief BxDFのフラグ(材質特性)
+* @note 使用例: if(frag & Specular)でfragの材質特性が完全鏡面かどうか判定できる
 */
 enum class BxDFType : uint8_t {
     Reflection   = 1 << 0,  /**< 反射   */
@@ -26,7 +27,6 @@ enum class BxDFType : uint8_t {
     Glossy       = 1 << 4,  /**< 光沢面 */
     All          = Reflection | Transmission | Specular | Diffuse | Glossy
 };
-
 
 /**
 * @brief 方向ベクトルと法線のなす角の余弦を計算する関数
@@ -47,7 +47,7 @@ inline float get_cos2(const Vec3& w) { return w.get_z() * w.get_z(); }
 * @param[in]  w :方向ベクトル
 * @return float :正弦の二乗
 */
-inline float get_sin2(const Vec3& w) { return std::max(0.0f, 1.0f - get_cos2(w)); }
+inline float get_sin2(const Vec3& w) { return std::max(0.f, 1.0f - get_cos2(w)); }
 
 /**
 * @brief 方向ベクトルと法線のなす角の正弦を計算する関数
@@ -71,7 +71,7 @@ inline float get_tan(const Vec3& w) { return get_sin(w) / get_cos(w); }
 inline float get_tan2(const Vec3& w) { return get_sin2(w) / get_cos2(w); }
 
 /**
-* @brief 入出射方向が同一半球内に存在するか判定
+* @brief 入射/出射方向が同一半球内に存在するか判定
 * @param[in]  wo :出射方向ベクトル
 * @param[in]  wi :入射方向ベクトル
 * @return float :同一半球内にあるならtrue
@@ -90,7 +90,7 @@ inline bool is_include_type(BxDFType a, BxDFType b) { return BxDFType((uint8_t)a
 
 /**
 * @brief スペキュラ材質特性であるか確認
-* @param t : チェックされる材質
+* @param t : チェックされる材質特性
 * @return スペキュラ材質ならtrue
 */
 inline bool is_spacular_type(BxDFType t) { return is_include_type(t, BxDFType::Specular); }
@@ -112,10 +112,10 @@ public:
     * @brief 出射方向に対して入射方向をサンプリングしてBxDFを評価する関数
     * @param[in]  wo   :入射方向ベクトル(正規化)
     * @param[in]  p    :物体表面の交差点情報
-    * @param[out] brdf :入射方向と出射方向に対するBRDFの値
+    * @param[out] brdf :BxDFの評価値
     * @param[out] wi   :出射方向ベクトル(正規化)
     * @param[out] pdf  :立体角に関する入射方向サンプリング確率密度
-    * @return Vec3     :入射方向と出射方向に対するBRDFの値
+    * @return Vec3     :BxDFの評価値
     */
     virtual Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const = 0;
 
@@ -123,34 +123,36 @@ public:
     * @brief BxDFを評価する関数
     * @param[in] wo :出射方向ベクトル
     * @param[in] wi :入射方向ベクトル
-    * @return Vec3  :BxDFの値
+    * @param[in] p  :物体表面の交差点情報
+    * @return Vec3  :BxDFの評価値
     */
     virtual Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const { return Vec3::zero; }
 
     /**
-    * @brief 散乱方向のサンプリング確率密度を評価する関数
+    * @brief 出射方向のサンプリング確率密度を評価する関数
     * @param[in] wo :出射方向ベクトル
     * @param[in] wi :入射方向ベクトル
+    * @param[in] p  :物体表面の交差点情報
     * @return float :サンプリング確率密度
     */
     virtual float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const = 0;
 
     /**
-    * @brief 材質の反射特性を取得する関数
-    * @return MaterialType :材質の反射特性
+    * @brief 材質特性を取得する関数
+    * @return MaterialType :材質特性
     */
     BxDFType get_type() const { return type; }
 
     /**
-    * @brief 材質の反射特性がtと一致するか判定
-    * @param t :チェックする反射特性
+    * @brief 材質特性がtと一致するか判定
+    * @param t :チェックする材質特性
     * @return 一致するならtrue
     */
     bool is_same_type(BxDFType t) const { return BxDFType((uint8_t)type & (uint8_t)t) == type; }
 
     /**
-    * @brief 材質の反射特性にtが含まれているか判定
-    * @param t :チェックする反射特性
+    * @brief 材質特性にtが含まれているか判定
+    * @param t :チェックする材質特性
     * @return 含まれるならtrue
     */
     bool is_include_type(BxDFType t) const { return BxDFType((uint8_t)type & (uint8_t)t) == t; }
@@ -242,7 +244,6 @@ public:
     */
     SpecularTransmission(Vec3 _scale, float _n_inside, float _n_outside=1.0f, std::shared_ptr<Fresnel> _fres=nullptr);
 
-
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
     Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
@@ -273,36 +274,17 @@ public:
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
-
 private:
+    /**
+    * @brief 正規化Phong分布から散乱方向をサンプリング
+    * @param[in] alpha :分布のパラメータ
+    * @return Vec3     :サンプリング値
+    * @note: [E.Lafortune and Y.Willems 1994]を基に実装
+    */
+    Vec3 phong_sample(float shine) const;
+
     Vec3 scale;  /**> 反射係数 */
     float shine; /**> 光沢度 */
-};
-
-
-/** v-cavityマイクロファセット反射 */
-class VcavityReflection : public BxDF {
-public:
-    /**
-    * @brief コンストラクタ
-    * @param[in] _scale :スケールファクター
-    * @param[in] _dist  :マイクロファセット分布
-    * @param[in] _fres  :フレネル式
-    */
-    VcavityReflection(Vec3 _scale, std::shared_ptr<class Vcavity> _dist,
-                      std::shared_ptr<Fresnel> _fres);
-
-    float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
-
-    Vec3 eval_f(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
-
-    Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
-
-
-private:
-    Vec3 scale; /**> スケールファクター */
-    std::shared_ptr<Fresnel> fres; /**> フレネル項 */
-    std::shared_ptr<class Vcavity> dist; /**> マイクロファセット分布(v-cavity用) */
 };
 
 
@@ -316,14 +298,14 @@ public:
     * @param[in] _dist  :マイクロファセット分布
     * @param[in] _fres  :フレネル式
     */
-    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, std::shared_ptr<Fresnel> _fres);
+    MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist, std::shared_ptr<Fresnel> _fres);
 
     /**
     * @brief 誘電体用コンストラクタ
     * @param[in] _scale :スケールファクター
     * @param[in] _n     :屈折率
     */
-    MicrofacetReflection(Vec3 _scale, std::shared_ptr<class NDF> _dist, float _ni, float _no = 1.0f);
+    MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist, float _ni, float _no = 1.0f);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
 
@@ -331,11 +313,10 @@ public:
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
-
 private:
     Vec3 scale; /**> スケールファクター */
     std::shared_ptr<Fresnel> fres; /**> フレネル項 */
-    std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
+    std::shared_ptr<NDF> dist; /**> マイクロファセット分布 */
 };
 
 
@@ -349,7 +330,7 @@ public:
     * @param[in] _dist  :マイクロファセット分布
     * @param[in] _fres  :フレネル式
     */
-    MicrofacetTransmission(Vec3 _scale, std::shared_ptr<class NDF> _dist, float _n_inside, 
+    MicrofacetTransmission(Vec3 _scale, std::shared_ptr<NDF> _dist, float _n_inside, 
                            float _n_outside = 1.0f, std::shared_ptr<Fresnel> _fres = nullptr);
 
     float eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p) const override;
@@ -358,11 +339,10 @@ public:
 
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
-
 private:
     Vec3 scale; /**> スケールファクター */
     float n_inside;  /**> 内側媒質の屈折率 */
     float n_outside; /**> 外側媒質の屈折率 */
-    std::shared_ptr<class NDF> dist; /**> マイクロファセット分布 */
+    std::shared_ptr<NDF> dist; /**> マイクロファセット分布 */
     std::shared_ptr<Fresnel> fres; /**> フレネル項 */
 };

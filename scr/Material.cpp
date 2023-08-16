@@ -3,9 +3,10 @@
 #include "Microfacet.h"
 #include "Shape.h"
 #include "Random.h"
-#include "Vcavity.h"
+
 
 // *** マテリアル ***
+
 Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf,
                         BxDFType& sampled_type, BxDFType acceptable_type) const {
     // 許容可能なBxDFの要素数をカウント
@@ -18,7 +19,7 @@ Vec3 Material::sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& 
         return Vec3::zero;
     }
     // 許容可能なBxDFからランダムにサンプリング
-    // note: bxdf_listに許容不可能なBxDFが含まれている場合があるのでforループで確認
+    // NOTE: bxdf_listに許容不可能なBxDFが含まれている場合があるのでforループで確認
     auto bxdf_count = Random::uniform_int(0, num_acceptable_bxdfs - 1); // 許容可能なBxDFの順番
     auto bxdf_list_index = 0; // bxdf_list上でのサンプリングBxDFのインデックス
     for (const auto& bxdf : bxdf_list) {
@@ -48,7 +49,7 @@ Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi, const intersection& p,
                       BxDFType acceptable_type) const {
     // すべてのBxDFの総和を計算
     auto f = Vec3::zero;
-    bool is_reflect = wo.get_z() * wi.get_z() > 0; // 方向が反射かどうか判定
+    bool is_reflect = wo.get_z() * wi.get_z() > 0; // 出射方向が反射方向ならtrue
     for (const auto& bxdf : bxdf_list) {
         if (bxdf->is_same_type(acceptable_type)) {
             if ((is_reflect && bxdf->is_reflection()) ||
@@ -62,7 +63,7 @@ Vec3 Material::eval_f(const Vec3& wo, const Vec3& wi, const intersection& p,
 
 float Material::eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p,
                          BxDFType acceptable_type) const {
-    auto pdf = 0.0f;
+    auto pdf = 0.f;
     int num_acceptable_bxdfs = 0;
     // 許容可能なBxDFの要素数をカウント
     for (const auto& bxdf : bxdf_list) {
@@ -72,15 +73,25 @@ float Material::eval_pdf(const Vec3& wo, const Vec3& wi, const intersection& p,
         }
     }
     if (num_acceptable_bxdfs == 0) {
-        return 0.0f;
+        return 0.f;
     }
     return pdf / num_acceptable_bxdfs;
+}
+
+bool Material::is_perfect_specular() const {
+    bool is_specular = true;
+    for (const auto& bxdf : bxdf_list) {
+        if (!bxdf->is_specular()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 
 // *** 拡散反射マテリアル ***
 Diffuse::Diffuse(Vec3 _base) 
-    : Material(), 
+    :  
       base(_base) 
 {
     // ランバートBRDFを追加
@@ -91,7 +102,7 @@ Diffuse::Diffuse(Vec3 _base)
 
 // *** 鏡マテリアル ***
 Mirror::Mirror(Vec3 _base)
-    : Material(),
+    : 
     base(_base)
 {
     auto fres = std::make_shared<FresnelConstant>(Vec3::one);
@@ -101,8 +112,9 @@ Mirror::Mirror(Vec3 _base)
 
 
 // *** ガラスマテリアル ***
-Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha)
-    : Material(),
+Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha, 
+    bool is_efficient_sampling)
+    : 
       base(_base),
       r(_r),
       t(_t),
@@ -120,11 +132,17 @@ Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha)
 
     }
     else { // 粗さが0の場合完全鏡面
-        if (!is_zero(r)) {
-            add(std::make_shared<SpecularReflection>(base * r, n));
+        if (is_efficient_sampling) {
+            // フレネル式に基づく効率的なサンプリング
+            //add(std::make_shared<SpecularFresnel>(base * r, base * t, n));
         }
-        if (!is_zero(t)) {
-            add(std::make_shared<SpecularTransmission>(base * t, n));
+        else {
+            if (!is_zero(r)) {
+                add(std::make_shared<SpecularReflection>(base * r, n));
+            }
+            if (!is_zero(t)) {
+                add(std::make_shared<SpecularTransmission>(base * t, n));
+            }
         }
     }
 }
@@ -132,12 +150,13 @@ Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha)
 
 // *** 金属マテリアル ***
 Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
-    : Material(),
+    : 
       base(_base),
       fr(_fr),
       alpha(_alpha)
 {
     auto fres = std::make_shared<FresnelSchlick>(fr);
+    //auto fres = std::make_shared<FresnelConstant>(fr);
     if (alpha == 0) {
         add(std::make_shared<SpecularReflection>(base, fres));
     }
@@ -149,27 +168,9 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
 }
 
 
-// *** 金属マテリアル(v-cavity) ***
-VcavityMetal::VcavityMetal(Vec3 _base, Vec3 _fr, float _alpha)
-    : Material(),
-    base(_base),
-    fr(_fr),
-    alpha(_alpha)
-{
-    auto fres = std::make_shared<FresnelSchlick>(fr);
-    if (alpha == 0) {
-        add(std::make_shared<SpecularReflection>(base, fres));
-    }
-    else {
-        auto dist = std::make_shared<Vcavity>(alpha, NDFType::Beckmann);
-        add(std::make_shared<VcavityReflection>(base, dist, fres));
-    }
-}
-
-
 // *** プラスチックマテリアル ***
 Plastic::Plastic(Vec3 _base, Vec3 _kd, Vec3 _ks, float _alpha)
-    : Material(),
+    : 
     base(_base),
     kd(_kd),
     ks(_ks),
@@ -189,7 +190,7 @@ Plastic::Plastic(Vec3 _base, Vec3 _kd, Vec3 _ks, float _alpha)
 
 // *** Phongマテリアル ***
 Phong::Phong(Vec3 _base, Vec3 _kd, Vec3 _ks, float _shine)
-    : Material(),
+    : 
       base(_base),
       kd(_kd),
       ks(_ks),
@@ -206,12 +207,11 @@ Phong::Phong(Vec3 _base, Vec3 _kd, Vec3 _ks, float _shine)
 
 // *** Thinfilmマテリアル ***
 Thinfilm::Thinfilm(Vec3 _base, float _thickness, float _n_inside, float _n_film, float _alpha, bool is_transmission)
-    : Material(),
-    base(_base),
-    thickness(_thickness),
-    n_inside(_n_inside),
-    n_film(_n_film),
-    alpha(_alpha)
+    : base(_base),
+     thickness(_thickness),
+     n_inside(_n_inside),
+     n_film(_n_film),
+     alpha(_alpha)
 {
     auto fres = std::make_shared<FresnelThinfilm>(thickness, n_inside, n_film);
     if (alpha == 0) {

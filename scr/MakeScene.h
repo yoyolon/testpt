@@ -6,26 +6,24 @@
 
 #pragma once
 
-/**
-* @brief シンプルな球のシーンを生成する関数
-* @param[out] world :シーンデータ
-* @param[out] cam   :カメラデータ
-*/
-void make_scene_simple(class Scene& world, class Camera& cam);
+
+class Camera;
+class Scene;
+
 
 /**
 * @brief シンプルな球のシーンを生成する関数
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 */
-void make_scene_simple2(class Scene& world, class Camera& cam);
+void make_scene_simple(Scene& world, Camera& cam);
 
 /**
-* @brief 円柱のシーンを生成する関数
+* @brief シンプルな球のシーンを生成する関数
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 */
-void make_scene_cylinder(class Scene& world, class Camera& cam);
+void make_scene_simple2(Scene& world, Camera& cam);
 
 
 /**
@@ -35,7 +33,7 @@ void make_scene_cylinder(class Scene& world, class Camera& cam);
 * @note モデル出典: https://pbrt.org/scenes-v3
 *       このソフトウェアに上記モデルは付属しておりません.
 */
-void make_scene_MIS(class Scene& world, class Camera& cam);
+void make_scene_MIS(Scene& world, Camera& cam);
 
 
 /**
@@ -44,7 +42,7 @@ void make_scene_MIS(class Scene& world, class Camera& cam);
 * @param[out] cam   :カメラデータ
 * @note 参考: http://www.graphics.cornell.edu/online/box/data.html
 */
-void make_scene_cornell_box(class Scene& world, class Camera& cam);
+void make_scene_cornell_box(Scene& world, Camera& cam);
 
 
 /**
@@ -53,7 +51,7 @@ void make_scene_cornell_box(class Scene& world, class Camera& cam);
 * @param[out] cam   :カメラデータ
 * @note 参考: http://www.graphics.cornell.edu/online/box/data.html
 */
-void make_scene_box_with_sphere(class Scene& world, class Camera& cam);
+void make_scene_box_with_sphere(Scene& world, Camera& cam);
 
 
 /**
@@ -63,7 +61,7 @@ void make_scene_box_with_sphere(class Scene& world, class Camera& cam);
 * @note モデル出典: https://polyhaven.com/a/ceramic_vase_01
 *       このソフトウェアに上記モデルは付属しておりません.
 */
-void make_scene_vase(class Scene& world, class Camera& cam);
+void make_scene_vase(Scene& world, Camera& cam);
 
 
 /**
@@ -71,4 +69,4 @@ void make_scene_vase(class Scene& world, class Camera& cam);
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 */
-void make_scene_thinfilm(class Scene& world, class Camera& cam);
+void make_scene_thinfilm(Scene& world, Camera& cam);

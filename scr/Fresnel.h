@@ -1,6 +1,6 @@
 /**
 * @file  Fresnel.h
-* @brief フレネル式を評価するクラス
+* @brief フレネル式
 */
 
 #pragma once
@@ -13,7 +13,7 @@ public:
     virtual ~Fresnel() {};
 
     /**
-    * @brief 入射角によるフレネル反射率を計算する関数
+    * @brief フレネル反射率を評価する関数
     * @param[in] cos_theta :入射角余弦
     * @return Vec          :フレネル反射率
     * @note: 入射角は法線ベクトルと入射方向ベクトルがなす角
@@ -87,7 +87,7 @@ public:
     Vec3 eval(float cos_theta, const struct intersection& p) const override;
 
 private:
-    float thickness; /**< 薄膜の膜厚   */
+    float thickness; /**< 薄膜の膜厚 */
     float n_inside, n_film, n_outside; /**< 屈折率 */
 };
 
@@ -97,18 +97,18 @@ class FresnelLUT : public Fresnel {
 public:
     /**
     * @brief コンストラクタ
-    * @param[in]  _filename :反射率テーブルのパス
+    * @param[in]  _filename :反射率テーブル(csv形式)のパス
     */
     FresnelLUT(std::string filename);
-
-    /**
-    * @brief コンストラクタ
-    * @param[in]  _filename :反射率テーブルのパス
-    */
-    void load_LUT(std::string filename);
 
     Vec3 eval(float cos_theta, const struct intersection& p) const override;
 
 private:
+    /**
+    * @brief 反射率テーブル(csv形式)を読み込む関数
+    * @param[in]  _filename :反射率テーブルのパス
+    */
+    void load_LUT(std::string filename);
+
     std::vector<Vec3> table; /**< フレネル反射率テーブル */
 };

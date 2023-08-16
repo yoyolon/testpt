@@ -91,19 +91,19 @@ static std::complex<float> composit_t(float r, float R, float t, float T, float 
 */
 Vec3 irid_reflectance(float cos0, float d, float n0, float n1, float n2) {
     // 透過角計算
-    float sin0 = std::sqrt(std::max(0.0f, 1.0f - cos0 * cos0));
+    float sin0 = std::sqrt(std::max(0.f, 1.0f - cos0 * cos0));
     float sin1 = n0 / n1 * sin0;
     if (sin1 >= 1.0) return  Vec3(1.0f, 1.0f, 1.0f); // 全反射
-    float cos1 = std::sqrt(std::max(0.0f, 1.0f - sin1 * sin1));
+    float cos1 = std::sqrt(std::max(0.f, 1.0f - sin1 * sin1));
     float sin2 = n0 / n2 * sin0;
     if (sin2 >= 1.0) return Vec3(1.0f, 1.0f, 1.0f);  // 全反射
-    float cos2 = std::sqrt(std::max(0.0f, 1 - sin2 * sin2));
+    float cos2 = std::sqrt(std::max(0.f, 1 - sin2 * sin2));
     // フレネル反射係数計算
     float r01s = fresnel_rs(n0, n1, cos0, cos1);
     float r12s = fresnel_rs(n1, n2, cos1, cos2);
     float r01p = fresnel_rp(n0, n1, cos0, cos1);
     float r12p = fresnel_rp(n1, n2, cos1, cos2);
-    // 合成反射率計算
+    // 反射率計算
     float lambda[3] = { 640.0, 540.0, 450.0 };
     float rgb[3] = { 0.0 };
     std::complex<float>r_s[3];
@@ -119,6 +119,7 @@ Vec3 irid_reflectance(float cos0, float d, float n0, float n1, float n2) {
 
 
 // *** 一定反射率 ***
+
 FresnelConstant::FresnelConstant(Vec3 _F0)
     : F0(_F0) {}
 
@@ -128,6 +129,7 @@ Vec3 FresnelConstant::eval(float cos_theta, const intersection& p) const {
 
 
 // *** Schlickフレネル ***
+
 FresnelSchlick::FresnelSchlick(Vec3 _F0)
     : F0(_F0) {}
 
@@ -137,6 +139,7 @@ Vec3 FresnelSchlick::eval(float cos_theta, const intersection& p) const {
 
 
 // *** 誘電体フレネル ***
+
 FresnelDielectric::FresnelDielectric(float _n_inside, float _n_outside) 
     : n_inside(_n_inside), n_outside(_n_outside) {}
 
@@ -145,12 +148,12 @@ Vec3 FresnelDielectric::eval(float cos_theta, const intersection& p) const {
     auto n_coming = is_inside ? n_inside : n_outside;
     auto n_going  = is_inside ? n_outside : n_inside;
     cos_theta = std::abs(cos_theta);
-    float sin_theta = std::sqrt(std::max(0.0f, 1.0f - cos_theta * cos_theta));
+    float sin_theta = std::sqrt(std::max(0.f, 1.0f - cos_theta * cos_theta));
     float sin_refract = n_coming / n_going * sin_theta;
     if (sin_refract >= 1.0f) { // 全反射
         return Vec3::one;
     }
-    float cos_refract = std::sqrt(std::max(0.0f, 1.0f - sin_refract * sin_refract));
+    float cos_refract = std::sqrt(std::max(0.f, 1.0f - sin_refract * sin_refract));
     float Rs = fresnel_rs(n_coming, n_going, cos_theta, cos_refract);
     float Rp = fresnel_rp(n_coming, n_going, cos_theta, cos_refract);
     float R =  (Rs * Rs + Rp * Rp) / 2;
@@ -159,6 +162,7 @@ Vec3 FresnelDielectric::eval(float cos_theta, const intersection& p) const {
 
 
 // *** 薄膜干渉フレネル ***
+
 FresnelThinfilm::FresnelThinfilm(float _thickness, float _n_inside, float _n_film, float _n_outside)
     : thickness(_thickness), n_inside(_n_inside), n_film(_n_film), n_outside(_n_outside) {}
 
@@ -172,23 +176,6 @@ Vec3 FresnelThinfilm::eval(float cos_theta, const intersection& p) const {
 }
 
 
-/**
-* @brief 文字列を指定した文字で区切る
-* @param[in]  line      :区切りたい文字列
-* @param[in]  delimiter :区切り文字
-* @return std::vector<std::string> 文字列配列
-* @note TODO: Triangle.cppと同じなので後で統一する
-*/
-std::vector<std::string> split_row(const std::string& line, char delimiter = ',') {
-    std::stringstream ss(line);
-    std::string temp;
-    std::vector<std::string> ret;
-    while (std::getline(ss, temp, delimiter)) {
-        ret.push_back(temp);
-    }
-    return ret;
-}
-
 // *** 反射率テーブルによるフレネル ***
 FresnelLUT::FresnelLUT(std::string filename) 
 {
@@ -199,19 +186,19 @@ void FresnelLUT::load_LUT(std::string filename) {
     // Read csv file
     std::ifstream ifs(filename, std::ios::in);
     if (!ifs) {
-        std::cerr << "failed to open " << filename << '\n';
+        std::cerr << "Failed to load " << filename << '\n';
         exit(1);
     }
     std::string line;
     while (std::getline(ifs, line)) {
-        std::vector<std::string> row = split_row(line);
+        std::vector<std::string> row = split_string(line, ',');
         Vec3 rgb(std::stof(row[0]), std::stof(row[1]), std::stof(row[2]));
         table.push_back(rgb);
     }
 }
 
 Vec3 FresnelLUT::eval(float cos_theta, const intersection& p) const {
-    auto theta_rad = std::acos(cos_theta);
-    auto theta = std::clamp(int(theta_rad / pi * 180), 0, 89);
-    return table[theta];
+    auto theta = std::acos(cos_theta);
+    int index = std::clamp(int(to_degree(theta)), 0, 89);
+    return table[index];
 }

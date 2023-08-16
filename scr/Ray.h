@@ -1,6 +1,6 @@
 /**
 * @file  Ray.h
-* @brief レイクラス
+* @brief レイ
 */
 
 #pragma once
@@ -10,11 +10,6 @@
 /** レイクラス */
 class Ray {
 public:
-    /**
-    * @brief デフォルトコンストラクタ
-    */
-    Ray() {}
-
     /**
     * @brief 原点と方向ベクトルからレイを初期化
     * @param[in] o :レイの原点
@@ -30,12 +25,12 @@ public:
 
     /**
     * @brief レイの方向を取得する関数
-    * @return Vec3 :レイの方向
+    * @return Vec3 :レイの方向ベクトル
     */
     Vec3 get_dir() const { return dir; }
 
     /**
-    * @brief レイの座標を計算する関数
+    * @brief パラメータtにおけるレイの座標を計算する関数
     * @param[in] t :レイのパラメータ
     * @return Vec3 :レイの座標
     */

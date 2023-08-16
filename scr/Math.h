@@ -10,8 +10,8 @@
 #include "utility.h"
 
 // *** 関数 ***
-inline float to_degree(float radian) { return 180.0f * radian / pi; }
-inline float to_radian(float degree) { return pi * degree / 180.0f; }
+inline float to_degree(float radian) { return 180.f * radian / pi; }
+inline float to_radian(float degree) { return pi * degree / 180.f; }
 inline float lerp(float a, float b, float t) { return (1 - t) * a + t * b; }
 
 
@@ -24,11 +24,11 @@ public:
     * @param[in] y :y成分
     * @param[in] z :z成分
     */
-    Vec3(float x=0.0f, float y=0.0f, float z=0.0f) : e{x, y, z} {};
+    Vec3(float x=0.f, float y=0.f, float z=0.f) : e{x, y, z} {};
 
     /**
     * @brief 配列でベクトルを初期化
-    * @param[in] e :各要素を格納した配列s
+    * @param[in] e :各要素を格納した配列
     */
     Vec3(float* _e) : e{_e[0], _e[1], _e[2]} {};
 
@@ -123,35 +123,13 @@ public:
     */
     float average() const { return (e[0] + e[1] + e[2]) / 3; }
 
-    /**
-     * @brief 2つのベクトルの内積を計算する関数
-     * @param[in]  a :ベクトル1
-     * @param[in]  b :ベクトル2
-     * @return float :ベクトルの内積
-     */
-    friend inline float dot(Vec3 a, Vec3 b) { 
-        return a.e[0] * b.e[0] + a.e[1] * b.e[1] + a.e[2] * b.e[2]; 
-    }
-
-     /**
-     * @brief 2つのベクトルの外積を計算する関数
-     * @param[in]  a :ベクトル1
-     * @param[in]  b :ベクトル2
-     * @return float :ベクトルの外積
-     */
-    friend inline Vec3 cross(Vec3 a, Vec3 b) {
-        return Vec3(a.e[1] * b.e[2] - a.e[2] * b.e[1],
-                    a.e[2] * b.e[0] - a.e[0] * b.e[2],
-                    a.e[0] * b.e[1] - a.e[1] * b.e[0]);
-    }
-
 private:
     float e[3]; /**< ベクトルの成分 */
 
 public:
     // 定数
-    static const Vec3 zero;  /**< ゼロベクトル      */
-    static const Vec3 one;   /**< 要素が1のベクトル */
+    static const Vec3 zero;  /**< ゼロベクトル        */
+    static const Vec3 one;   /**< 全要素が1のベクトル */
     static const Vec3 red;   /**< 赤色 */
     static const Vec3 green; /**< 緑色 */
     static const Vec3 blue;  /**< 青色 */
@@ -162,11 +140,47 @@ inline std::ostream& operator<<(std::ostream& s, const Vec3& a) {
 }
 
 /**
+ * @brief 2つのベクトルの内積を計算する関数
+ * @param[in]  a :ベクトル1
+ * @param[in]  b :ベクトル2
+ * @return float :ベクトルの内積
+ */
+inline float dot(Vec3 a, Vec3 b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+/**
+* @brief 2つのベクトルの外積を計算する関数
+* @param[in]  a :ベクトル1
+* @param[in]  b :ベクトル2
+* @return float :ベクトルの外積
+*/
+inline Vec3 cross(Vec3 a, Vec3 b) {
+    return Vec3(a[1] * b[2] - a[2] * b[1],
+                a[2] * b[0] - a[0] * b[2],
+                a[0] * b[1] - a[1] * b[0]);
+}
+
+/**
 * @brief 零ベクトルの判定
 * @param[in]  a :ベクトル
 * @return bool  :判定結果
 */
 inline bool is_zero(const Vec3& a) { return a.length2() > 0 ? false : true; }
+
+/**
+* @brief ベクトルの全要素の絶対値が指定した値より小さいか判定
+* @param[in]  a :ベクトル
+* @param[in]  t :閾値
+* @return bool  :判定結果
+*/
+inline bool is_smaller_abs(const Vec3& a, float t) { 
+    float t2 = t * t;
+    if (a[0] * a[0] > t2) return false;
+    if (a[1] * a[1] > t2) return false;
+    if (a[2] * a[2] > t2) return false;
+    return true;
+}
 
 /**
 * @brief 単位ベクトルを計算する関数
@@ -182,7 +196,7 @@ inline Vec3 unit_vector(const Vec3& a) { return a / a.length(); }
 * @param[in]  max :最大値
 * @return Vec3  :クランプされたベクトル
 */
-inline Vec3 clamp(const Vec3& a, float min=0.0f, float max=1.0f) {
+inline Vec3 clamp(const Vec3& a, float min=0.f, float max=1.0f) {
     auto x = std::clamp(a.get_x(), min, max);
     auto y = std::clamp(a.get_y(), min, max);
     auto z = std::clamp(a.get_z(), min, max);
@@ -210,7 +224,7 @@ inline Vec3 reflect(const Vec3& w, const Vec3& n) {
 */
 inline Vec3 refract(const Vec3& w, const Vec3& n, float eta) {
     auto cos_theta    = dot(w, n);
-    auto sin2_theta   = std::max(0.0f, 1.0f - cos_theta * cos_theta);
+    auto sin2_theta   = std::max(0.f, 1.0f - cos_theta * cos_theta);
     auto sin2_refract = eta * eta * sin2_theta;
     // 全反射判定
     if (sin2_refract >= 1.0f) {
@@ -229,7 +243,7 @@ public:
     * @param[in] x :x成分
     * @param[in] y :y成分
     */
-    Vec2(float x = 0.0f, float y = 0.0f) : e{ x, y} {};
+    Vec2(float x = 0.f, float y = 0.f) : e{ x, y} {};
 
     /**
     * @brief 配列でベクトルを初期化
@@ -319,16 +333,6 @@ public:
     */
     float average() const { return (e[0] + e[1]) / 2; }
 
-    /**
-     * @brief 2つのベクトルの内積を計算する関数
-     * @param[in]  a :ベクトル1
-     * @param[in]  b :ベクトル2
-     * @return float :ベクトルの内積
-     */
-    friend inline float dot(Vec2 a, Vec2 b) {
-        return a.e[0] * b.e[0] + a.e[1] * b.e[1];
-    }
-
 private:
     float e[2]; /**< ベクトルの成分 */
 
@@ -341,6 +345,16 @@ public:
 
 inline std::ostream& operator<<(std::ostream& s, const Vec2& a) {
     return s << '(' << a.get_x() << ' ' << a.get_y() << ')';
+}
+
+/**
+ * @brief 2つのベクトルの内積を計算する関数
+ * @param[in]  a :ベクトル1
+ * @param[in]  b :ベクトル2
+ * @return float :ベクトルの内積
+ */
+inline float dot(Vec2 a, Vec2 b) {
+    return a[0] * b[0] + a[1] * b[1];
 }
 
 /**
@@ -364,7 +378,7 @@ inline Vec2 unit_vector(const Vec2& a) { return a / a.length(); }
 * @param[in]  max :最大値
 * @return Vec2  :クランプされたベクトル
 */
-inline Vec2 clamp(const Vec2& a, float min = 0.0f, float max = 1.0f) {
+inline Vec2 clamp(const Vec2& a, float min = 0.f, float max = 1.0f) {
     auto x = std::clamp(a.get_x(), min, max);
     auto y = std::clamp(a.get_y(), min, max);
     return Vec2(x, y);

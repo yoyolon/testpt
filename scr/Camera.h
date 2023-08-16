@@ -1,6 +1,6 @@
 /**
 * @file  Camera.h
-* @brief カメラクラス
+* @brief カメラ
 */
 
 #pragma once
@@ -31,6 +31,7 @@ public:
     int get_w() const;
     int get_c() const;
     const char* get_filename() const;
+    Vec3 get_forward() const;
 
     /**
     * @brief カメラの原点からレイを生成
@@ -38,7 +39,7 @@ public:
     * @param[in] v :方向調整パラメータ(縦方向)
     * @return Ray  :レイ
     */
-    Ray generate_ray(float u, float v);
+    Ray generate_ray(float u, float v) const;
 
 private:
     float fd;         /**< 焦点距離             */

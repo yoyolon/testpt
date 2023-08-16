@@ -30,10 +30,10 @@
     <ClInclude Include="scr\ONB.h" />
     <ClInclude Include="scr\Random.h" />
     <ClInclude Include="scr\Ray.h" />
+    <ClInclude Include="scr\Renderer.h" />
     <ClInclude Include="scr\Scene.h" />
     <ClInclude Include="scr\Shape.h" />
     <ClInclude Include="scr\utility.h" />
-    <ClInclude Include="scr\Vcavity.h" />
     <ClInclude Include="scr\Math.h" />
   </ItemGroup>
   <ItemGroup>
@@ -48,9 +48,10 @@
     <ClCompile Include="scr\Microfacet.cpp" />
     <ClCompile Include="scr\ONB.cpp" />
     <ClCompile Include="scr\Random.cpp" />
+    <ClCompile Include="scr\Renderer.cpp" />
+    <ClCompile Include="scr\Scene.cpp" />
     <ClCompile Include="scr\Shape.cpp" />
     <ClCompile Include="scr\utility.cpp" />
-    <ClCompile Include="scr\Vcavity.cpp" />
     <ClCompile Include="scr\Math.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

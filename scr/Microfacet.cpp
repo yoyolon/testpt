@@ -78,7 +78,7 @@ Vec3 GGX::sample_halfvector(const Vec3& wo) const {
 
 float GGX::eval_pdf(const Vec3& h, const Vec3& wo) const {
     if (is_vsible_sampling) {
-        return D(h) * G1(wo) * std::max(0.f, dot(wo, h)) / get_cos(wo);
+        return D(h) * G1(wo) * std::max(0.f, dot(wo, h)) / std::abs(get_cos(wo));
     }
     return D(h) * std::abs(get_cos(h));
 }

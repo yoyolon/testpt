@@ -17,13 +17,13 @@ public:
     static void init();
 
     /**
-    * @brief 一様乱数[0, 1]を生成する関数
+    * @brief float型の一様乱数[0, 1]を生成する関数
     * @return float :サンプリング値
     */
     static float uniform_float();
 
     /**
-    * @brief 一様乱数[min, max]を生成する関数
+    * @brief float型の一様乱数[min, max]を生成する関数
     * @param[in] min :最小値
     * @param[in] max :最大値
     * @return float  :サンプリング値
@@ -31,7 +31,7 @@ public:
     static float uniform_float(float min, float max);
 
     /**
-    * @brief 整数一様乱数[min, max]を生成する関数
+    * @brief int型の一様乱数[min, max]を生成する関数
     * @param[in] min :最小値
     * @param[in] max :最大値
     * @return int    :サンプリング値
@@ -78,30 +78,6 @@ public:
     static Vec3 cosine_hemisphere_sample();
 
     /**
-    * @brief 正規化Phong分布から散乱方向をサンプリング
-    * @param[in] float :分布のパラメータ
-    * @return Vec3     :サンプリング値
-    * @note: [E.Lafortune and Y.Willems 1994]を基に実装
-    */
-    static Vec3 phong_sample(float shine);
-
-    /**
-    * @brief Trowbridge-Reitz(GGX)分布からハーブベクトルをサンプリング
-    * @param[in] float :分布のパラメータ
-    * @return Vec3     :サンプリング値
-    * @note: 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
-    */
-    static Vec3 ggx_sample(float alpha);
-
-    /**
-    * @brief Beckmann分布からハーブベクトルをサンプリング
-    * @param[in] float :分布のパラメータ
-    * @return Vec3     :サンプリング値
-    * @note: 参考: https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models
-    */
-    static Vec3 beckmann_sample(float alpha);
-
-    /**
     * @brief 多重重点的サンプリングの重みを計算する関数
     * @param[in] n1   :1つ目の関数のサンプル数
     * @param[in] pdf1 :1つ目の関数の確率密度
@@ -143,10 +119,10 @@ public:
     float get_integral_f() const { return integral_f; }
 
     /**
-    * @brief 逆関数法でf(x)からxをサンプルしてそのPDF(確率密度)を評価する関数
-    * @param[out] pdf   :サンプリングPDF
+    * @brief 逆関数法でf(x)からxをサンプルしてその確率密度を評価する関数
+    * @param[out] pdf   :サンプリング確率密度
     * @param[out] index :サンプリング値の配列インデックス
-    * @return float     :サンプルしたxの値(f(x)でなくxを返すので注意)
+    * @return float     :サンプルしたxの値(NOTE: f(x)でなくxを返す)
     */
     float sample(float& pdf, int& index) const;
 
@@ -164,7 +140,7 @@ class Piecewise2D {
 public:
     /**
     * @brief コンストラクタ
-    * @param[in] data :離散化かれた関数配列
+    * @param[in] data :離散化された関数の配列
     * @param[in] _nu :u方向の要素数
     * @param[in] _nv :v方向の要素数
     */
@@ -174,14 +150,14 @@ public:
     int get_nv() const { return nv; }
 
     /**
-    * @brief 逆関数法でf(u, v)から(u, v)をサンプルしてそのPDF(確率密度)を評価する関数
-    * @param[out] pdf :サンプリングPDF
-    * @return float   :サンプルした(u,v)の値(f(u,v)でなく(u,v)を返すので注意)
+    * @brief 逆関数法でf(u, v)から(u, v)をサンプルしてその確率密度を評価する関数
+    * @param[out] pdf :サンプリング確率密度
+    * @return float   :サンプルした(u,v)の値(NOTE: f(u,v)でなく(u,v)を返す)
     */
     Vec2 sample(float& pdf) const;
 
     /**
-    * @brief (u, v)をサンプリングするPDF(確率密度)を評価する関数
+    * @brief (u, v)をサンプリングする確率密度を評価する関数
     * @param[out] uv:(u,v)座標
     * @return float   :サンプルしたPDFを返す
     */

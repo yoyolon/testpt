@@ -5,11 +5,11 @@
 void Random::init() {
     //std::random_device rd;
     //mt.seed(rd()); 
-    mt.seed(1); // シードを固定
+    mt.seed(0); // シードを固定
 }
 
 float Random::uniform_float() {
-    return uniform_float(0.0f, 1.0f);
+    return uniform_float(0.f, 1.0f);
 }
 
 float Random::uniform_float(float min, float max) {
@@ -28,7 +28,7 @@ Vec2 Random::uniform_disk_sample() {
     auto r = std::sqrt(u);
     auto phi = 2 * pi * v;
     auto x = std::cos(phi) * r;
-    auto y = std::cos(phi) * r;
+    auto y = std::sin(phi) * r;
     return Vec2(x, y);
 }
 
@@ -65,7 +65,7 @@ Vec3 Random::uniform_sphere_sample() {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();
     auto z = 1 - 2 * u;
-    auto r = std::sqrt(std::max(1.0f - z*z, 0.0f));
+    auto r = std::sqrt(std::max(1.0f - z*z, 0.f));
     auto phi = 2 * pi * v;
     auto x = std::cos(phi) * r;
     auto y = std::sin(phi) * r;
@@ -76,7 +76,7 @@ Vec3 Random::uniform_hemisphere_sample() {
     auto u = Random::uniform_float();
     auto v = Random::uniform_float();
     auto z = u;
-    auto r = std::sqrt(std::max(1.0f - z*z, 0.0f));
+    auto r = std::sqrt(std::max(1.0f - z*z, 0.f));
     auto phi = 2 * pi * v;
     auto x = std::cos(phi) * r;
     auto y = std::sin(phi) * r;
@@ -87,52 +87,10 @@ Vec3 Random::cosine_hemisphere_sample() {
     auto d = Random::concentric_disk_sample();
     auto x = d.get_x();
     auto y = d.get_y();
-    auto z = std::sqrt(std::max(1.0f - x*x - y*y, 0.0f));
+    auto z = std::sqrt(std::max(1.0f - x*x - y*y, 0.f));
     return Vec3(x, y, z);
 }
 
-
-Vec3 Random::phong_sample(float shine) {
-    auto u = Random::uniform_float();
-    auto v = Random::uniform_float();
-    auto z = std::pow(u, 1/(shine + 1.0f));
-    auto r = std::sqrt(std::max(1.0f - z*z, 0.0f));
-    auto phi = 2 * pi * v;
-    auto x = std::cos(phi) * r;
-    auto y = std::sin(phi) * r;
-    return Vec3(x, y, z);
-}
-
-
-Vec3 Random::ggx_sample(float alpha) {
-    auto u = Random::uniform_float();
-    auto v = Random::uniform_float();
-    auto tan2_theta = alpha * alpha * u / (1.0f - u); // atan2は遅いので未使用
-    auto cos2_theta = 1 / (1 + tan2_theta);
-    auto sin2_theta = 1 - cos2_theta;
-    auto sin_theta = std::sqrt(std::max(sin2_theta, 0.0f));
-    auto phi = 2 * pi * v;
-    auto z = std::sqrt(std::max(cos2_theta, 0.0f));
-    auto x = std::cos(phi) * sin_theta;
-    auto y = std::sin(phi) * sin_theta;
-    return Vec3(x, y, z);
-}
-
-Vec3 Random::beckmann_sample(float alpha) {
-    auto u = Random::uniform_float();
-    auto v = Random::uniform_float();
-    auto logs = std::log(1.0f - u);
-    if (std::isinf(logs)) logs = 0.0f;
-    auto tan2_theta = -alpha * alpha * logs;
-    auto cos2_theta = 1 / (1 + tan2_theta);
-    auto sin2_theta = 1 - cos2_theta;
-    auto sin_theta = std::sqrt(std::max(sin2_theta, 0.0f));
-    auto phi = 2 * pi * v;
-    auto z = std::sqrt(std::max(cos2_theta, 0.0f));
-    auto x = std::cos(phi) * sin_theta;
-    auto y = std::sin(phi) * sin_theta;
-    return Vec3(x, y, z);
-}
 
 float Random::balance_heuristic(int n1, float pdf1, int n2, float pdf2) {
     return (n1 * pdf1) / (n1 * pdf1 + n2 * pdf2);

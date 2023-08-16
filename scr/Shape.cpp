@@ -247,9 +247,9 @@ TriangleMesh::TriangleMesh(std::string filename, std::shared_ptr<Material> m, bo
     }
     // 頂点インデックスから三角形を構成
     for (const auto& index : Indices) {
-        int x = std::max((int)index.get_x(), 0);
-        int y = std::max((int)index.get_y(), 0);
-        int z = std::max((int)index.get_z(), 0);
+        int x = std::max((int)index.get_x()-1, 0);
+        int y = std::max((int)index.get_y()-1, 0);
+        int z = std::max((int)index.get_z()-1, 0);
         Vec3 V0 = Vertices[x];
         Vec3 V1 = Vertices[y];
         Vec3 V2 = Vertices[z];

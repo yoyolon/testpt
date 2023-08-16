@@ -11,6 +11,7 @@
 #include "Shape.h"
 
 // *** 光源 ***
+
 bool Light::is_visible(const intersection& p1, const intersection& p2, const Scene& world) {
     Ray r = Ray(p1.pos, unit_vector(p2.pos - p1.pos));
     intersection isect;
@@ -18,8 +19,55 @@ bool Light::is_visible(const intersection& p1, const intersection& p2, const Sce
 }
 
 
+// *** 平行光線 ***
+
+ParallelLight::ParallelLight(const Vec3& _intensity, const Vec3& _wi_light)
+    : Light(LightType::Parallel), intensity(_intensity), wi_light(_wi_light)
+{
+    wi_light = unit_vector(wi_light); // 方向を正規化しておく
+}
+
+Vec3 ParallelLight::evel_light(const Vec3& w) const {
+    return Vec3::zero; // w = wi_light以外では放射輝度がゼロになるため
+}
+
+Vec3 ParallelLight::power() const {
+    float radius = 100;
+    return pi * radius * radius * intensity;
+}
+
+Vec3 ParallelLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {
+    wi = wi_light; // 物体表面から離れる方向が正
+    pdf = 1.f; // デルタ関数のサンプリングなのでPDFは1
+    return intensity;
+}
+
+float ParallelLight::eval_pdf(const intersection& ref, const Vec3& wi) const {
+    return 0.f;  // wi = wi_light以外では放射輝度がゼロになるため
+}
+
+bool ParallelLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
+    // 平行光線とレイの方向が一致する場合
+    Vec3 diff = unit_vector(r.get_dir()) - wi_light;
+    if (diff.length() > 0.001) {
+        return false;
+    }
+    // 他に交差したオブジェクトがあるなら交差しない(無限遠光源のため)
+    if (std::isinf(t_max) == false) {
+        return false;
+    }
+    // 交差点情報の更新
+    p.t = t_max;
+    p.pos = Vec3::zero;
+    p.normal = Vec3::zero;
+    p.is_front = true;
+    return true;
+}
+
+
 // *** 面光源 ***
-AreaLight::AreaLight(Vec3 _intensity, std::shared_ptr<class Shape> _shape)
+
+AreaLight::AreaLight(const Vec3& _intensity, std::shared_ptr<class Shape> _shape)
     : Light(LightType::Area), intensity(_intensity), shape(_shape)
 {
     area = shape->area();
@@ -34,20 +82,22 @@ Vec3 AreaLight::power() const {
 }
 
 Vec3 AreaLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {
-    auto isect = shape->sample(ref);
-    wi = unit_vector(isect.pos - ref.pos);
+    auto isect = shape->sample(ref); // 光源のサンプリング交差点
+    wi = unit_vector(isect.pos - ref.pos); // 光源に向かう方向が正
     pdf = shape->eval_pdf(ref, wi);
     return evel_light(wi);
 }
 
-float AreaLight::eval_pdf(const intersection& ref, const Vec3& w) const {
-    return shape->eval_pdf(ref, w);
+float AreaLight::eval_pdf(const intersection& ref, const Vec3& wi) const {
+    return shape->eval_pdf(ref, wi);
 }
 
 bool AreaLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
     return shape->intersect(r, t_min, t_max, p);
 }
 
+
+// *** 環境光源(IBL) ***
 
 EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation) 
     : Light(LightType::IBL), nw(1), nh(1), nc(3), luminance(0.f)
@@ -77,7 +127,7 @@ EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation)
         dist = std::make_unique<Piecewise2D>(luminance_map.get(), nw, nh);
     }
     else {
-        std::cerr << "failed to load" << filename << '\n';
+        std::cerr << "Failed to load" << filename << '\n';
     }
     //// サンプリングテスト
     //std::vector<uint8_t> img(nw * nh * nc, 0);  // 画像データ
@@ -95,11 +145,11 @@ EnvironmentLight::EnvironmentLight(const std::string& filename, float rotation)
 
 Vec3 EnvironmentLight::evel_light(const Vec3& w) const {
     if (envmap == nullptr) {
-        return Vec3(0.0f, 0.0f, 0.0f);
+        return Vec3(0.f, 0.f, 0.f);
     }
     // 方向からuv座標を計算
     Vec3 dir = unit_vector(w);
-    float u = std::atan2(dir.get_z(), dir.get_x()) + pi; // +piは右手座標を考慮
+    float u = std::atan2(dir.get_z(), dir.get_x()) + pi; // piの加算は右手座標系を考慮
     u *= invpi * 0.5;
     float v = std::acos(std::clamp(dir.get_y(), -1.0f, 1.0f)) * invpi;
     // 環境マップから放射輝度をサンプリング
@@ -113,33 +163,32 @@ Vec3 EnvironmentLight::power() const {
 
 Vec3 EnvironmentLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {
     if (envmap == nullptr) {
-        return Vec3(0.0f, 0.0f, 0.0f);
+        return Vec3(0.f, 0.f, 0.f);
     }
     // uv座標をサンプリング
     float sample_pdf;
     Vec2 uv = dist->sample(sample_pdf);
     if (sample_pdf == 0) return Vec3::zero;
-
     // uv座標から方向を計算
-    float phi = 2 * pi * uv[0] + pi; // +piは右手座標を考慮
+    float phi = 2 * pi * uv[0] + pi; // piの加算は右手座標系を考慮
     float theta = pi * uv[1];
     float sin_theta = std::sin(theta);
-    wi = Vec3(sin_theta * std::cos(phi), std::cos(theta), sin_theta * std::sin(phi));
-    // 方向に関するサンプリングPDFを計算し放射輝度を返す
     if (sin_theta == 0) {
-        pdf = 0.0f;
+        pdf = 0.f;
         return Vec3::zero;
     }
+    wi = Vec3(sin_theta * std::cos(phi), std::cos(theta), sin_theta * std::sin(phi));
+    // サンプリング確率密度と放射輝度を評価
     pdf = sample_pdf / (2 * pi * pi * sin_theta);
     return evel_light_uv(uv);
 }
 
 float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
     if (envmap == nullptr) {
-        return 0.0f;
+        return 0.f;
     }
     float theta = std::acos(w.get_y());
-    float phi = std::atan2f(w.get_z(), w.get_x()) + pi; // +piは右手座標を考慮
+    float phi = std::atan2f(w.get_z(), w.get_x()) + pi; // piの加算は右手座標系を考慮
     if (phi < 0) phi += 2 * pi;
     float sin_theta = std::sin(theta);
     if (sin_theta == 0) return 0;
@@ -147,7 +196,7 @@ float EnvironmentLight::eval_pdf(const intersection& ref, const Vec3& w) const {
 }
 
 bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, intersection& p) const {
-    // 他に交差したオブジェクトがあるなら交差しない
+    // 他に交差したオブジェクトがあるなら交差しない(無限遠光源のため)
     if (std::isinf(t_max) == false) {
         return false;
     }
@@ -161,14 +210,14 @@ bool EnvironmentLight::intersect(const Ray& r, float t_min, float t_max, interse
 
 Vec3 EnvironmentLight::evel_light_uv(const Vec2& uv) const {
     if (envmap == nullptr) {
-        return Vec3(0.0f, 0.0f, 0.0f);
+        return Vec3(0.f, 0.f, 0.f);
     }
     // 環境マップから放射輝度をサンプリング
     int index_u = std::clamp((int)(nw * uv[0]), 0, nw - 1);
     int index_v = std::clamp((int)(nh * uv[1]), 0, nh - 1);
     float t_u = nw * uv[0] - (float)index_u;
     float t_v = nh * uv[1] - (float)index_v;
-    // バイリニア補間
+    // 放射輝度をバイリニア補間(NOTE: この手法は正しくないかも)
     return   (1-t_u) * (1-t_v) * evel_envmap(index_u,   index_v  )
            + (1-t_u) * (t_v)   * evel_envmap(index_u,   index_v+1)
            + (t_u)   * (1-t_v) * evel_envmap(index_u+1, index_v  )
@@ -177,7 +226,7 @@ Vec3 EnvironmentLight::evel_light_uv(const Vec2& uv) const {
 
 Vec3 EnvironmentLight::evel_envmap(int x, int y) const {
     if (envmap == nullptr) {
-        return Vec3(0.0f, 0.0f, 0.0f);
+        return Vec3(0.f, 0.f, 0.f);
     }
     // 環境マップから放射輝度をサンプリング
     x = std::clamp(x, 0, nw - 1);

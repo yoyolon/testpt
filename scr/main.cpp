@@ -26,12 +26,13 @@
 * @brief mainä÷êî
 */
 int main(int argc, char** argv) {
-    Renderer renderer(4, Sampling::MIS);
+    Renderer renderer(128, Sampling::MIS);
     // ÉVÅ[Éì
     Scene world;
     Camera cam;
     //make_scene_simple(world, cam);
     //make_scene_simple2(world, cam);
+    //make_scene_MIS(world, cam);
     make_scene_cornell_box(world, cam);
     //make_scene_box_with_sphere(world, cam);
     //make_scene_vase(world, cam);

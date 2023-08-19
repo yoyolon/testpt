@@ -20,13 +20,13 @@ void make_scene_simple(Scene& world, Camera& cam) {
     // マテリアル
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
     auto copper = Vec3(0.95f, 0.64f, 0.54f);
-    auto mat_smith = std::make_shared<Metal>(Vec3::one, gold, 0.05f);
+    auto mat_gold = std::make_shared<Metal>(Vec3::one, gold, 0.2f);
     auto mat_diff = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
     auto mat_irid = std::make_shared<Thinfilm>(Vec3::one, 500.f, 1.0f, 1.34f, 0.1f, false);
     auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.05f);
 
     // シェイプ
-    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.f,2.0f,0.f), 2.0f, mat_smith);
+    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.f,2.0f,0.f), 2.0f, mat_gold);
     // Floor
     auto obj_plane = std::make_shared<TriangleMesh>(
         std::vector<Vec3>{
@@ -152,7 +152,7 @@ void make_scene_MIS(Scene& world, Camera& cam) {
     world.add(light_L);
     world.add(light_M);
     world.add(light_S);
-    world.add(light);
+    //world.add(light);
     world.add(floor);
     world.add(plate1);
     world.add(plate2);
@@ -335,7 +335,7 @@ void make_scene_cornell_box(Scene& world, Camera& cam) {
     world.add(tall_bck);
     world.add(light);
     //// カメラ設定
-    auto film = std::make_shared<Film>(400, 400, 3, "cornell_box.png"); // フィルム
+    auto film = std::make_shared<Film>(1000, 1000, 3, "cornell_box.png"); // フィルム
     auto deg_to_rad = [](float deg) { return deg * pi / 180; };
     auto fov = deg_to_rad(35.0f);
     auto fd = 2.0f * std::cos(fov) / std::sin(fov); // 焦点距離
@@ -453,7 +453,7 @@ void make_scene_vase(Scene& world, Camera& cam) {
     auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 180.f);
     world.add(light_env);
     // カメラの設定
-    auto film = std::make_shared<Film>(200, 200, 3, "vase.png");
+    auto film = std::make_shared<Film>(600, 600, 3, "vase.png");
     auto fd = 2.5f; // 焦点距離
     Vec3 cam_pos(0.f,2.0f,7.5f);
     Vec3 cam_target(0.f,2.0f,0.f);

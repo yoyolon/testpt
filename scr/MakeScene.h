@@ -19,11 +19,19 @@ class Scene;
 void make_scene_simple(Scene& world, Camera& cam);
 
 /**
-* @brief シンプルな球のシーンを生成する関数
+* @brief シンプルな複数の球のシーンを生成する関数
 * @param[out] world :シーンデータ
 * @param[out] cam   :カメラデータ
 */
 void make_scene_simple2(Scene& world, Camera& cam);
+
+
+/**
+* @brief シンプルな球と壁のシーンを生成する関数
+* @param[out] world :シーンデータ
+* @param[out] cam   :カメラデータ
+*/
+void make_scene_simple3(Scene& world, Camera& cam);
 
 
 /**

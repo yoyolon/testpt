@@ -38,11 +38,11 @@ SpecularReflection::SpecularReflection(Vec3 _scale, std::shared_ptr<Fresnel> _fr
     fres(_fres)
 {}
 
-SpecularReflection::SpecularReflection(Vec3 _scale, float _ni, float _no)
+SpecularReflection::SpecularReflection(Vec3 _scale, float _n_inside, float _n_outside)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Specular)),
     scale(_scale)
 {
-    fres = std::make_shared<FresnelDielectric>(_ni, _no);
+    fres = std::make_shared<FresnelDielectric>(_n_inside, _n_outside);
 }
 
 float SpecularReflection::eval_pdf(const Vec3& wo, const Vec3& wi,
@@ -60,10 +60,10 @@ Vec3 SpecularReflection::sample_f(const Vec3& wo, const intersection& p,
     // 正反射方向を明示的に重点的サンプリングするのでevalメソッドは使わない
     wi = Vec3(-wo.get_x(), -wo.get_y(), wo.get_z()); // 正反射方向
     pdf = 1.0f;
-    auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wo)は等しい
+    auto cos_term = get_cos(wi); // 完全鏡面なのでcos(wi)とcos(wos)は等しい
     auto F = fres->eval(cos_term, p);
-    auto brdf = scale * F / std::abs(cos_term);
-    return brdf;
+    auto brdf = F / std::abs(cos_term);
+    return scale * brdf;
 }
 
 
@@ -98,7 +98,7 @@ Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p,
     // note: woを入射方向としたBTDFを計算してwiが入射方向になるように変換
     auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // 相対屈折
     wi = refract(wo, Vec3(0.f, 0.f, 1.0f), eta); // 屈折方向
-    // 全反射の場合
+    // 全反射の場合(note: refract()は全反射の場合ゼロベクトルを返すが修正すべき)
     if (is_zero(wi)) {
         pdf = 0.f;
         return Vec3::zero;
@@ -106,8 +106,9 @@ Vec3 SpecularTransmission::sample_f(const Vec3& wo, const intersection& p,
     pdf = 1.0f;
     auto cos_term = get_cos(wo);
     auto F = Vec3::one - fres->eval(cos_term, p); // フレネル透過率
-    auto btdf = scale * eta * eta * F / std::abs(cos_term);
-    return btdf;
+    // note: eta^2の乗算は屈折率の違いによるエネルギー密度の変化を考慮
+    auto btdf = eta * eta * F / std::abs(cos_term);
+    return scale * btdf;
 }
 
 
@@ -125,8 +126,8 @@ float PhongReflection::eval_pdf(const Vec3& wo, const Vec3& wi,
     if (!is_same_hemisphere(specular, wi)) {
         return 0.f;
     }
-    auto cos_term = std::pow(dot(specular, wi), shine);
-    return (shine + 1.0f) / 2 * invpi * std::max(cos_term, epsilon);
+    auto lobe = std::pow(dot(specular, wi), shine); // Phongローブ
+    return (shine + 1.0f) / 2 * invpi * std::max(lobe, epsilon);
 }
 
 Vec3 PhongReflection::eval_f(const Vec3& wo, const Vec3& wi,
@@ -135,9 +136,9 @@ Vec3 PhongReflection::eval_f(const Vec3& wo, const Vec3& wi,
     if (!is_same_hemisphere(specular, wi)) {
         return Vec3::zero;
     }
-    auto cos_term = std::pow(dot(specular, wi), shine);
-    auto f = (shine + 2.0f) / (2 * pi) * cos_term;
-    return scale * f;
+    auto lobe = std::pow(dot(specular, wi), shine); // Phongローブ
+    auto brdf = (shine + 2.0f) / (2 * pi) * lobe;
+    return scale * brdf;
 }
 
 Vec3 PhongReflection::sample_f(const Vec3& wo, const intersection& p,
@@ -169,12 +170,12 @@ MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _di
 {}
 
 MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist,
-    float _ni, float _no)
+    float _n_inside, float _n_outside)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)),
     scale(_scale),
     dist(_dist)
 {
-    fres = std::make_shared<FresnelDielectric>(_ni, _no);
+    fres = std::make_shared<FresnelDielectric>(_n_inside, _n_outside);
 }
 
 float MicrofacetReflection::eval_pdf(const Vec3& wo, const Vec3& wi,
@@ -183,13 +184,14 @@ float MicrofacetReflection::eval_pdf(const Vec3& wo, const Vec3& wi,
         return 0.f;
     }
     auto h = unit_vector(wo + wi);
-    return dist->eval_pdf(h, wo) / (4 * dot(wo, h)); // 確率密度の変換
+    // ハーブベクトルの確率密度をサンプリング方向の確率密度に変換
+    return dist->eval_pdf(h, wo) / (4 * dot(wo, h));
 }
 
 Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
     const intersection& p) const {
     if (!is_same_hemisphere(wo, wi)) {
-        return Vec3::zero; // 同一半球内に存在するなら透過しない(単散乱仮定のため)
+        return Vec3::zero;
     }
     float cos_wo = std::abs(get_cos(wo));
     float cos_wi = std::abs(get_cos(wi));
@@ -204,11 +206,13 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
     float D = dist->D(h);
     float G = dist->G(wo, wi);
     Vec3 F = fres->eval(dot(wo, h), p);
-    return scale * (D * G * F) / (4 * cos_wo * cos_wi);
+    auto brdf = (D * G * F) / (4 * cos_wo * cos_wi);
+    return scale * brdf;
 }
 
 Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p,
     Vec3& wi, float& pdf) const {
+    // ハーブベクトルをサンプリングして入射方向に変換する
     Vec3 h = dist->sample_halfvector(wo);
     wi = unit_vector(reflect(wo, h)); // reflect()では正規化しないので明示的に正規化
     pdf = eval_pdf(wo, wi, p);
@@ -247,7 +251,8 @@ float MicrofacetTransmission::eval_pdf(const Vec3& wo, const Vec3& wi,
     float cos_ho = std::abs(dot(wo, h));
     float cos_factor = eta * eta * cos_hi;
     float eta_factor = 1 / (cos_ho + eta * cos_hi);
-    return dist->eval_pdf(h, wo) * cos_factor * eta_factor * eta_factor; // 確率密度の変換
+    // ハーブベクトルの確率密度をサンプリング方向の確率密度に変換
+    return dist->eval_pdf(h, wo) * cos_factor * eta_factor * eta_factor;
 }
 
 Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi,
@@ -269,23 +274,24 @@ Vec3 MicrofacetTransmission::eval_f(const Vec3& wo, const Vec3& wi,
     }
     // 全反射の場合
     if (is_zero(refract(wo, h, eta))) {
-        return Vec3::green;
+        return Vec3::zero;
     }
     float cos_hi = std::abs(dot(wi, h));
     float cos_ho = std::abs(dot(wo, h));
     float D = dist->D(h);
     float G = dist->G(wo, wi);
-    Vec3 F = Vec3::one - fres->eval(cos_ho, p);
+    Vec3 F = Vec3::one - fres->eval(cos_ho, p); // 透過率
     float cos_factor = cos_hi * cos_ho / cos_wi / cos_wo;
     float eta_factor = 1 / (cos_ho + eta * cos_hi);
-    return scale * cos_factor * (D * G * F) * eta_factor * eta_factor;
+    auto btdf = cos_factor * (D * G * F) * eta_factor * eta_factor;
+    return scale * btdf;
 }
 
 Vec3 MicrofacetTransmission::sample_f(const Vec3& wo, const intersection& p,
     Vec3& wi, float& pdf) const {
     Vec3 h = dist->sample_halfvector(wo);
     auto eta = p.is_front ? n_outside / n_inside : n_inside / n_outside; // 相対屈折
-    wi = unit_vector(refract(wo, h, eta)); // reflect()では正規化しないので明示的に正規化
+    wi = unit_vector(refract(wo, h, eta)); // refract()では正規化しないので明示的に正規化
     // 全反射の場合
     if (is_zero(wi)) {
         pdf = 0.f;

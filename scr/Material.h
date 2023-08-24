@@ -3,7 +3,7 @@
 * @brief マテリアル
 * @note: シェーディング規則
 *        1.法線をz軸正の方向としたシェーディング座標系で行う
-*        2.z軸とベクトルがなす角をthetaとする．
+*        2.z軸と方向ベクトルがなす角をthetaとする．
 *        3.入射/出射方向は物体表面から離れる方向を正とする
 *        4.入射/出射方向は正規化されている
 */
@@ -22,12 +22,11 @@ public:
     * @brief 出射方向から入射方向をサンプリングしてBSDFを評価する関数
     * @param[in]  wo              :出射方向ベクトル(ローカル座標)
     * @param[in]  p               :物体表面の交差点情報
-    * @param[out] brdf            :BSDFの評価値
     * @param[out] wi              :入射方向ベクトル(ローカル座標)
     * @param[out] pdf             :入射方向のサンプリング確率密度(立体角測度)
     * @oaram[out] sampled_type    :サンプリングしたBxDFの種類
     * @oaram[in]  acceptable_type :サンプリング可能なBxDFの種類
-    * @return Vec3                :入射方向と出射方向に対するBRDFの値
+    * @return Vec3                :BRDFの評価値
     */
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf,
                   BxDFType& sampled_type, BxDFType acceptable_type=BxDFType::All) const;
@@ -43,7 +42,7 @@ public:
                 BxDFType acceptable_type=BxDFType::All) const;
 
     /**
-    * @brief 入射方向のサンプリング確率密度を計算する関数
+    * @brief 入射方向のサンプリング確率密度を評価する関数
     * @param[in] wo              :出射方向ベクトル(ローカル座標)
     * @param[in] wi              :入射方向ベクトル(ローカル座標)
     * @oaram[in] acceptable_type :サンプリング可能なBxDFの種類
@@ -115,7 +114,7 @@ public:
     * @param[in] _t     :透過係数
     * @param[in] _n     :屈折率
     * @param[in] _alpha :表面粗さ
-    * @param[in] _is_efficient_sampling :フレネル式に基づく効率的なサンプリングを行うならtrue
+    * @param[in] _is_efficient_sampling :ロシアンルーレット行うならtrue(完全鏡面のみ有効)
     */
     Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha=0.f, 
           bool is_efficient_sampling=false);

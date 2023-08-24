@@ -55,6 +55,7 @@ void make_scene_simple(Scene& world, Camera& cam) {
     cam = Camera(film, fd, cam_pos, cam_forward);
 }
 
+
 void make_scene_simple2(Scene& world, Camera& cam) {
     world.clear();
     // マテリアル
@@ -114,6 +115,66 @@ void make_scene_simple2(Scene& world, Camera& cam) {
     auto fd = 2.0f * std::cos(fov) / std::sin(fov); // 焦点距離
     Vec3 cam_pos(0.f, 5.0f, 25.0f);
     Vec3 cam_target(0.f, 2.0f, 0.f);
+    Vec3 cam_forward = unit_vector(cam_target - cam_pos);
+    cam = Camera(film, fd, cam_pos, cam_forward);
+}
+
+
+void make_scene_simple3(Scene& world, Camera& cam) {
+    world.clear();
+    // マテリアル
+    auto gold = Vec3(1.00f, 0.71f, 0.29f);
+    auto copper = Vec3(0.95f, 0.64f, 0.54f);
+    auto mat_gold = std::make_shared<Metal>(Vec3::one, gold, 0.2f);
+    auto mat_diff = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
+    auto mat_irid = std::make_shared<Thinfilm>(Vec3::one, 500.f, 1.0f, 1.34f, 0.1f, false);
+    auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.5f, 0.2f);
+
+    // シェイプ
+    auto obj_sphere = std::make_shared<Sphere>(Vec3(0.f,2.0f,3.f), 2.0f, mat_glass);
+    // Floor
+    auto obj_floor = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3( 10.f, 0.f, -10.f),
+            Vec3(-10.f, 0.f, -10.f),
+            Vec3(-10.f, 0.f,  10.f),
+            Vec3( 10.f, 0.f,  10.f)},
+            std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_diff);
+    // Back wall
+    auto obj_back = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3( 10.f,  0.f, -10.f),
+            Vec3(-10.f,  0.f, -10.f),
+            Vec3(-10.f, 10.f, -10.f),
+            Vec3( 10.f, 10.f, -10.f)},
+            std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_diff);
+    world.add(obj_sphere);
+    world.add(obj_floor);
+    world.add(obj_back);
+    // 光源
+    auto obj_light = std::make_shared<TriangleMesh>(
+        std::vector<Vec3>{
+            Vec3(-7.f, 0.f,  3.f),
+            Vec3(-7.f, 0.f, -3.f),
+            Vec3(-7.f, 3.f, -3.f),
+            Vec3(-7.f, 3.f,  3.f)},
+            std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
+            mat_diff);
+    auto light_area = std::make_shared<AreaLight>(10*Vec3::one, obj_light);
+    world.add(light_area);
+
+    //auto light_parallel = std::make_shared<ParallelLight>(Vec3::one, Vec3(0.f, 2.f, 10.f));
+    //world.add(light_parallel);
+    // カメラ設定
+    auto film = std::make_shared<Film>(600, 600, 3, "simple3.png");
+    //auto fd = 2.5f; // 焦点距離
+    auto deg_to_rad = [](float deg) { return deg * pi / 180; };
+    auto fov = deg_to_rad(30.f);
+    auto fd = 2.0f * std::cos(fov) / std::sin(fov); // 焦点距離
+    Vec3 cam_pos(5.f,10.0f,20.f);
+    Vec3 cam_target(0.f, 0.f,0.f);
     Vec3 cam_forward = unit_vector(cam_target - cam_pos);
     cam = Camera(film, fd, cam_pos, cam_forward);
 }

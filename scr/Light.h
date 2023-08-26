@@ -2,6 +2,7 @@
 * @file  Light.h
 * @brief 光源
 * @note  MaterialはShapeに"所有される"がAreaLightはShapeを"所有する"
+* @note  光源は基本的にワールド座標系を利用
 */
 
 #pragma once
@@ -50,7 +51,6 @@ public:
     * @param[out] wi  :ワールド座標系での光源への入射方向(光源へ向かう方向が正)
     * @param[out] pdf :サンプリング確率密度(立体角測度)
     * @return Vec3    :放射輝度の評価値
-    * @note: 視線方向から追跡するため光源へ向かう方向が正になる
     */
     virtual Vec3 sample_light(const intersection& ref, Vec3& wi, float& pdf) const = 0;
 
@@ -77,7 +77,7 @@ public:
     * @brief 二つの交差点の可視判定を行う関数
     * @param[in]  p1    :交差点1
     * @param[in]  p2    :交差点2
-    * @param[in]  world :シーン
+    * @param[in]  world :シーン情報
     * @return bool      :可視判定の結果(可視ならtrue)
     */
     bool is_visible(const intersection& p1, const intersection& p2, const Scene& world);
@@ -91,7 +91,6 @@ public:
 
     LightType get_type() const { return type; }
 
-
 private:
     const LightType type;
 };
@@ -101,8 +100,9 @@ private:
 class ParallelLight : public Light {
 public:
     /**
-    * @brief 面光源の初期化
+    * @brief 平行光線の初期化
     * @param[in] _intensity :光源の放射輝度
+    * @param[in] _wi_light  :光線の入射方向(ワールド座標系)
     */
     ParallelLight(const Vec3& _intensity, const Vec3& _wi_light);
 
@@ -118,7 +118,7 @@ public:
 
 private:
     Vec3 intensity; /**< 光源の放射輝度  */
-    Vec3 wi_light;  /**< ワールド座標系での光源の入射方向 */
+    Vec3 wi_light;  /**< 光線の入射方向(ワールド座標系) */
 };
 
 
@@ -153,11 +153,17 @@ private:
 class EnvironmentLight : public Light {
 public:
     /**
-    * @brief 面光源の初期化
+    * @brief 環境光源の初期化(環境マップ)
     * @param[in] filename :環境マップのパス
     * @param[in] rotation :環境マップのz軸に関する回転角(度数法)
     */
     EnvironmentLight(const std::string& filename, float rotation=0);
+
+    /**
+    * @brief 環境光源の初期化(一定の放射輝度)
+    * @param[in] intensity :光源の放射輝度
+    */
+    EnvironmentLight(const Vec3& intensity);
 
     Vec3 evel_light(const Vec3& wi) const override;
 
@@ -186,16 +192,15 @@ private:
     Vec3 evel_envmap(int x, int y) const;
 
     /**
-    * @brief 環境マップを回転する関数関数
+    * @brief 環境マップを回転する関数
     * @param[in] deg :回転角(度数法)
     */
     void rotate_envmap(float deg);
 
-
-    float* envmap;    /**< 環境マップ   */
     int nw;           /**< 幅           */
     int nh;           /**< 高さ         */
     int nc;           /**< チャンネル数 */
     float luminance;  /**< 明るさ       */
-    std::unique_ptr<Piecewise2D> dist;  /**< 環境マップの輝度分布 */
+    std::unique_ptr<float[]> envmap;   /**< 環境マップ */
+    std::unique_ptr<Piecewise2D> dist; /**< 輝度分布   */
 };

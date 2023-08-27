@@ -4,6 +4,9 @@
 #include "Shape.h"
 #include "Random.h"
 
+#include "external/stb_image_write.h"
+#include "external/stb_image.h"
+
 
 // *** Lambert反射 ***
 
@@ -159,6 +162,7 @@ Vec3 PhongReflection::phong_sample(float shine) const {
     return Vec3(x, y, z);
 }
 
+
 // *** マイクロファセットBRDF ***
 
 MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist,
@@ -167,7 +171,9 @@ MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _di
     scale(_scale),
     dist(_dist),
     fres(_fres)
-{}
+{
+    create_multiple_scattering_table(); // 多重散乱テーブルの生成
+}
 
 MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist,
     float _n_inside, float _n_outside)
@@ -207,6 +213,17 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
     float G = dist->G(wo, wi);
     Vec3 F = fres->eval(dot(wo, h), p);
     auto brdf = (D * G * F) / (4 * cos_wo * cos_wi);
+    // 多重散乱を考慮する場合補填する
+    if (is_multiple_scattering) {
+        //int index = std::clamp(int(t*(table_size-1)), 0, table_size-2);
+        //auto E = t * table[index] + (1-t) * table[index+1];
+        int index_wo = int(cos_wo * (table_size - 1));
+        int index_wi = int(cos_wi * (table_size - 1));
+        auto E_wo = E[index_wo];
+        auto E_wi = E[index_wi];
+        auto f_ms = F * (1.f - E_wo) * (1.f - E_wi) / (1.f - E_ave) * invpi;
+        brdf += f_ms;
+    }
     return scale * brdf;
 }
 
@@ -217,6 +234,83 @@ Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p,
     wi = unit_vector(reflect(wo, h)); // reflect()では正規化しないので明示的に正規化
     pdf = eval_pdf(wo, wi, p);
     return eval_f(wo, wi, p);
+}
+
+float MicrofacetReflection::weight(float cos_theta, float phi, 
+    const std::shared_ptr<NDF>& dist_alpha) const {
+    auto sin_theta = std::sqrt(1.f - cos_theta * cos_theta);
+    Vec3 wo(sin_theta * std::cos(phi), sin_theta * std::sin(phi), cos_theta);
+    // 入射角をサンプリング
+    Vec3 h = dist_alpha->sample_halfvector(wo);
+    auto wi = unit_vector(reflect(wo, h));
+    // 入射方向と出射方向が半球内にない場合は無効
+    if (!is_same_hemisphere(wo, wi)) {
+        return 0.f;
+    }
+    // 危険なケースを除外
+    if (std::abs(get_cos(wo)) == 0 || std::abs(get_cos(wi)) == 0) {
+        return 0.f;
+    }
+    // 重み計算(dist_alphaがVNDFサンプリング可能と仮定)
+    auto weight =  dist_alpha->G(wo, wi) / dist_alpha->G1(wo);
+    if (!isfinite(weight)) weight = 0.f; // 無効な値を除外
+    return weight;
+
+    //// 重みを計算(TODO: 式の最適化)
+    //auto pdf = dist_alpha->eval_pdf(h, wo) / (4 * dot(wo, h));
+    //if (pdf <= 0.f) {
+    //    return 0.f;
+    //}
+    //float D = dist_alpha->D(h);
+    //float G = dist_alpha->G(wo, wi);
+    //auto brdf = (D * G) / (4 * cos_wo * cos_wi);
+    //auto weight = brdf * cos_wi / pdf;
+    //if (!isfinite(weight)) weight = 0.f; // 無効な値を除外
+    //return weight;
+}
+
+void MicrofacetReflection::create_multiple_scattering_table() {
+    int nsamples = 1e4;
+    E_ave = 0.f;
+    for (int i = 0; i < table_size; i++) {
+        auto cos_theta = (i+1.f) / table_size; // 入射角余弦
+        E[i] = 0.f;
+        for (int j= 0; j < nsamples; j++) {
+            auto phi = Random::uniform_float(0.f, 2*pi);
+            E[i] += weight(cos_theta, phi, dist);
+        }
+        E[i] /= nsamples;
+        E_ave += E[i] * cos_theta;
+    }
+    E_ave = 2 * E_ave / table_size;
+    // 多重散乱テーブルの出力
+    bool is_write_table = true;
+    if (is_write_table) {
+        std::vector<uint8_t> img(table_size * table_size * 3, 0);  // 画像データ
+        for (int h = 0; h < table_size; h++) {
+            auto alpha = (h + 1.f) / table_size; // 表面粗さ
+            alpha = alpha * alpha;
+            auto dist_alpha = std::make_shared<GGX>(alpha, true);
+            for (int w = 0; w < table_size; w++) {
+                auto cos_theta = (w + 1.f) / table_size; // 入射角余弦
+                // 寄与を計算
+                float e = 0.f;
+                for (int k = 0; k < nsamples; k++) {
+                    auto phi = Random::uniform_float(0.f, 2 * pi);
+                    e += weight(cos_theta, phi, dist_alpha);
+                }
+                e = e / nsamples;
+                int e_int = static_cast<int>((1.f - e) * 255);
+                int index = h * table_size * 3 + w * 3;
+                img[index]     = std::clamp(e_int, 0, 255);
+                img[index + 1] = std::clamp(e_int, 0, 255);
+                img[index + 2] = std::clamp(e_int, 0, 255);
+            }
+        }
+        // 画像の出力
+        stbi_write_png("table.png", table_size, table_size, 3, img.data(),
+            table_size * 3 * sizeof(uint8_t));
+    }
 }
 
 

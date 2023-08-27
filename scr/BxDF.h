@@ -316,9 +316,26 @@ public:
     Vec3 sample_f(const Vec3& wo, const intersection& p, Vec3& wi, float& pdf) const override;
 
 private:
+    /**
+    * @brief 多重散乱テーブルを計算する関数
+    */
+    void create_multiple_scattering_table();
+    /**
+    * @brief モンテカルロ推定の重みを計算する関数(多重散乱テーブルの計算に利用)
+    * @param[in] theta      :仰角の余弦
+    * @param[in] phi        :方位角
+    * @param[in] dist_alpha :マイクロファセットNDF
+    * @note: VNDFサンプリングに基づき重みを計算しているので注意(TODO: 修正)
+    */
+    float weight(float cos_theta, float phi, const std::shared_ptr<NDF>& dist_alpha) const;
+
     Vec3 scale; /**> スケールファクター */
     std::shared_ptr<Fresnel> fres; /**> フレネル式 */
     std::shared_ptr<NDF> dist; /**> マイクロファセット分布 */
+    bool is_multiple_scattering=true; /**> 多重散乱の考慮 */
+    float E[100] = { 0.f }; /**> 多重散乱テーブル */
+    float E_ave; /**> 平均アルベド */
+    int table_size = sizeof(E) / sizeof(float);
 };
 
 

@@ -62,9 +62,10 @@ inline float fresnel_tp(float ni, float nj, float cosi, float cosj) {
 * @note: [H.Hirayama et al. 2001]を基に実装
 */
 static std::complex<float> composit_r(float r, float R, float phi) {
-    std::complex<float>i(0.f, 1.f);
+    std::complex<float>i(0.f, 1.0f);
     return (r + R * exp(i * 2.0f * phi)) / (1.0f + r * R * exp(i * 2.0f * phi));
 }
+
 /**
 * @brief 干渉を考慮したフレネル透過係数を計算する関数
 * @param[in] r            :フレネル反射係数
@@ -76,7 +77,7 @@ static std::complex<float> composit_r(float r, float R, float phi) {
 * @note: [H.Hirayama et al. 2001]を基に実装
 */
 static std::complex<float> composit_t(float r, float R, float t, float T, float phi) {
-    std::complex<float>i(0.f, 1.f);
+    std::complex<float>i(0.f, 1.0f);
     return (t * T * exp(i * phi)) / (1.0f + r * R * exp(i * 2.0f * phi));
 }
 

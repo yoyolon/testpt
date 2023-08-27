@@ -38,7 +38,7 @@ Vec3 ParallelLight::power() const {
 
 Vec3 ParallelLight::sample_light(const intersection& ref, Vec3& wi, float& pdf) const {
     wi = wi_light; // 物体表面から離れる(光源に向かう)方向が正
-    pdf = 1.f; // デルタ関数のサンプリングなのでPDFは1
+    pdf = 1.0f; // デルタ関数のサンプリングなのでPDFは1
     return intensity;
 }
 

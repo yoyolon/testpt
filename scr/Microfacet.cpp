@@ -64,7 +64,7 @@ float GGX::D(const Vec3& h) const {
 }
 
 float GGX::lambda(const Vec3& w) const {
-    float tan_theta = get_tan(w);
+    float tan_theta = std::abs(get_tan(w));
     if (std::isinf(tan_theta)) return 0;
     return 0.5f * (-1.0f + std::sqrt(1.0f + alpha * alpha * tan_theta * tan_theta));
 }
@@ -102,16 +102,16 @@ Vec3 GGX::visible_ggx_sample(const Vec3& wo, float alpha) const {
     Vec3 wo_hemi = unit_vector(Vec3(alpha * wo[0], alpha * wo[1], wo[2]));
     // 正規直交基底を構築
     float denominator_squared = wo_hemi[0] * wo_hemi[0] + wo_hemi[1] * wo_hemi[1];
-    Vec3 T1(1.f, 0.f, 0.f);
+    Vec3 T1(1.0f, 0.f, 0.f);
     if (denominator_squared > 0) {
         T1 = Vec3(-wo_hemi[1], wo_hemi[0], 0.f) / std::sqrt(denominator_squared);
     }
     Vec3 T2 = cross(wo_hemi, T1);
     // 半球での法線をサンプリング
     Vec2 uv = Random::uniform_disk_sample();
-    float s = 0.5f * (1.f + wo_hemi[2]);
+    float s = 0.5f * (1.0f + wo_hemi[2]);
     float t1 = uv[0];
-    float t2 = (1.f - s) * std::sqrt(1.f - t1 * t1) + s * uv[1];
+    float t2 = (1.0f - s) * std::sqrt(1.0f - t1 * t1) + s * uv[1];
     Vec3 wh_hemi = t1 * T1 + t2 * T2 + std::sqrt(std::max(0.f, 1 - t1 * t1 - t2 * t2)) * wo_hemi;
     // 半球での法線を楕円体での法線に変換
     Vec3 wh = Vec3(alpha * wh_hemi[0], alpha * wh_hemi[1], wh_hemi[2]);

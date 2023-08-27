@@ -221,7 +221,7 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
         int index_wi = int(cos_wi * (table_size - 1));
         auto E_wo = E[index_wo];
         auto E_wi = E[index_wi];
-        auto f_ms = F * (1.f - E_wo) * (1.f - E_wi) / (1.f - E_ave) * invpi;
+        auto f_ms = F * (1.0f - E_wo) * (1.0f - E_wi) / (1.0f - E_ave) * invpi;
         brdf += f_ms;
     }
     return scale * brdf;
@@ -238,7 +238,7 @@ Vec3 MicrofacetReflection::sample_f(const Vec3& wo, const intersection& p,
 
 float MicrofacetReflection::weight(float cos_theta, float phi, 
     const std::shared_ptr<NDF>& dist_alpha) const {
-    auto sin_theta = std::sqrt(1.f - cos_theta * cos_theta);
+    auto sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
     Vec3 wo(sin_theta * std::cos(phi), sin_theta * std::sin(phi), cos_theta);
     // ì¸éÀäpÇÉTÉìÉvÉäÉìÉO
     Vec3 h = dist_alpha->sample_halfvector(wo);
@@ -273,7 +273,7 @@ void MicrofacetReflection::create_multiple_scattering_table() {
     int nsamples = 1e4;
     E_ave = 0.f;
     for (int i = 0; i < table_size; i++) {
-        auto cos_theta = (i+1.f) / table_size; // ì¸éÀäpó]å∑
+        auto cos_theta = (i+1.0f) / table_size; // ì¸éÀäpó]å∑
         E[i] = 0.f;
         for (int j= 0; j < nsamples; j++) {
             auto phi = Random::uniform_float(0.f, 2*pi);
@@ -288,11 +288,11 @@ void MicrofacetReflection::create_multiple_scattering_table() {
     if (is_write_table) {
         std::vector<uint8_t> img(table_size * table_size * 3, 0);  // âÊëúÉfÅ[É^
         for (int h = 0; h < table_size; h++) {
-            auto alpha = (h + 1.f) / table_size; // ï\ñ ëeÇ≥
+            auto alpha = (h + 1.0f) / table_size; // ï\ñ ëeÇ≥
             alpha = alpha * alpha;
             auto dist_alpha = std::make_shared<GGX>(alpha, true);
             for (int w = 0; w < table_size; w++) {
-                auto cos_theta = (w + 1.f) / table_size; // ì¸éÀäpó]å∑
+                auto cos_theta = (w + 1.0f) / table_size; // ì¸éÀäpó]å∑
                 // äÒó^ÇåvéZ
                 float e = 0.f;
                 for (int k = 0; k < nsamples; k++) {
@@ -300,7 +300,7 @@ void MicrofacetReflection::create_multiple_scattering_table() {
                     e += weight(cos_theta, phi, dist_alpha);
                 }
                 e = e / nsamples;
-                int e_int = static_cast<int>((1.f - e) * 255);
+                int e_int = static_cast<int>((1.0f - e) * 255);
                 int index = h * table_size * 3 + w * 3;
                 img[index]     = std::clamp(e_int, 0, 255);
                 img[index + 1] = std::clamp(e_int, 0, 255);

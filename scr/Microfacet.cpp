@@ -5,7 +5,7 @@
 
 // *** ベックマン分布 ***
 Beckmann::Beckmann(float _alpha)
-    : alpha(_alpha) {}
+    : NDF(true), alpha(_alpha) {}
 
 float Beckmann::D(const Vec3& h) const {
     float tan2_theta = get_tan2(h);
@@ -38,13 +38,12 @@ Vec3 Beckmann::beckmann_sample(float alpha) const {
     auto logs = std::log(1.0f - u);
     if (std::isinf(logs)) logs = 0.f;
     auto tan2_theta = -alpha * alpha * logs;
-    auto cos2_theta = 1 / (1 + tan2_theta);
-    auto sin2_theta = 1 - cos2_theta;
-    auto sin_theta = std::sqrt(std::max(sin2_theta, 0.f));
+    auto cos_theta = 1 / std::sqrt(1 + tan2_theta);
+    auto sin_theta = std::sqrt(std::max(1 - cos_theta * cos_theta, 0.f));
     auto phi = 2 * pi * v;
-    auto z = std::sqrt(std::max(cos2_theta, 0.f));
     auto x = std::cos(phi) * sin_theta;
     auto y = std::sin(phi) * sin_theta;
+    auto z = cos_theta;
     return Vec3(x, y, z);
 }
 
@@ -52,7 +51,7 @@ Vec3 Beckmann::beckmann_sample(float alpha) const {
 // *** Trowbridge-Reitz(GGX)分布 ***
 
 GGX::GGX(float _alpha, bool _is_vsible_sampling)
-    : alpha(_alpha), is_vsible_sampling(_is_vsible_sampling) {}
+    : NDF(_is_vsible_sampling), alpha(_alpha) {}
 
 float GGX::D(const Vec3& h) const {
     float tan2_theta = get_tan2(h);
@@ -70,14 +69,14 @@ float GGX::lambda(const Vec3& w) const {
 }
 
 Vec3 GGX::sample_halfvector(const Vec3& wo) const {
-    if (is_vsible_sampling) {
+    if (is_visible_sampling) {
         return visible_ggx_sample(wo, alpha);
     }
     return ggx_sample(alpha);
 }
 
 float GGX::eval_pdf(const Vec3& h, const Vec3& wo) const {
-    if (is_vsible_sampling) {
+    if (is_visible_sampling) {
         return D(h) * G1(wo) * std::max(0.f, dot(wo, h)) / std::abs(get_cos(wo));
     }
     return D(h) * std::abs(get_cos(h));

@@ -11,6 +11,10 @@
 /** マイクロファセット分布クラス(Smithモデル用) */
 class NDF {
 public:
+    NDF(bool _is_visible_smpling)
+        : is_visible_sampling(_is_visible_smpling)
+    {}
+
     virtual ~NDF() {};
 
     /**
@@ -60,6 +64,12 @@ public:
     * @return float :サンプリング確率密度
     */
     virtual float eval_pdf(const Vec3& h, const Vec3& wo) const = 0;
+
+    bool get_is_visible_sampling() { return is_visible_sampling; }
+
+protected:
+    // note: 現時点ではTrowbridge-Reitz(GGX)分布でのみ有効
+    bool is_visible_sampling;  /**< 可視法線分布からサンプリングするならtrue */
 };
 
 
@@ -113,5 +123,4 @@ private:
     Vec3 visible_ggx_sample(const Vec3& wo, float alpha) const;
 
     float alpha; /**< 分布のスロープパラメータ(表面粗さ) */
-    bool is_vsible_sampling;  /**< 可視法線分布からサンプリングするならtrue */
 };

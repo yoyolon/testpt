@@ -251,22 +251,17 @@ float MicrofacetReflection::weight(float cos_theta, float phi,
     if (std::abs(get_cos(wo)) == 0 || std::abs(get_cos(wi)) == 0) {
         return 0.f;
     }
-    // 重み計算(dist_alphaがVNDFサンプリング可能と仮定)
-    auto weight =  dist_alpha->G(wo, wi) / dist_alpha->G1(wo);
+    float weight = 0.f;
+    // VNDFの重み計算
+    if (dist_alpha->get_is_visible_sampling()) {
+        weight = dist_alpha->G(wo, wi) / dist_alpha->G1(wo);
+    }
+    // NDFの重み計算
+    else {
+        weight = dist_alpha->G(wo, wi) * std::abs(dot(wo, h)) / std::abs(get_cos(wo)) / std::abs(get_cos(h));
+    }
     if (!isfinite(weight)) weight = 0.f; // 無効な値を除外
     return weight;
-
-    //// 重みを計算(TODO: 式の最適化)
-    //auto pdf = dist_alpha->eval_pdf(h, wo) / (4 * dot(wo, h));
-    //if (pdf <= 0.f) {
-    //    return 0.f;
-    //}
-    //float D = dist_alpha->D(h);
-    //float G = dist_alpha->G(wo, wi);
-    //auto brdf = (D * G) / (4 * cos_wo * cos_wi);
-    //auto weight = brdf * cos_wi / pdf;
-    //if (!isfinite(weight)) weight = 0.f; // 無効な値を除外
-    //return weight;
 }
 
 void MicrofacetReflection::create_multiple_scattering_table() {

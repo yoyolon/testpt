@@ -5,7 +5,7 @@
 
 // *** ベックマン分布 ***
 Beckmann::Beckmann(float _alpha)
-    : NDF(true), alpha(_alpha) {}
+    : NDF(false), alpha(_alpha) {}
 
 float Beckmann::D(const Vec3& h) const {
     float tan2_theta = get_tan2(h);

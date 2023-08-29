@@ -136,8 +136,9 @@ public:
     * @param[in] _base  :ベースカラー
     * @param[in] _fr    :垂直入射でのフレネル反射率
     * @param[in] _alpha :表面粗さ
+    * @param[in] is_multiple_scattering :多重散乱を考慮するならtrue
     */
-    Metal(Vec3 _base, Vec3 fr, float _alpha);
+    Metal(Vec3 _base, Vec3 fr, float _alpha, bool is_multiple_scattering=false);
 
 private:
     Vec3  base;  /**> ベースカラー */

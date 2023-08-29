@@ -149,7 +149,7 @@ Glass::Glass(Vec3 _base, Vec3 _r, Vec3 _t, float _n, float _alpha,
 
 
 // *** ‹à‘®ƒ}ƒeƒŠƒAƒ‹ ***
-Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
+Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha, bool is_multiple_scattering)
     : 
       base(_base),
       fr(_fr),
@@ -162,7 +162,8 @@ Metal::Metal(Vec3 _base, Vec3 _fr, float _alpha)
     }
     else {
         auto dist = std::make_shared<GGX>(alpha);
-        add(std::make_shared<MicrofacetReflection>(base, dist, fres));
+        //auto dist = std::make_shared<Beckmann>(alpha);
+        add(std::make_shared<MicrofacetReflection>(base, dist, fres, is_multiple_scattering));
     }
 }
 

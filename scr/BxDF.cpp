@@ -166,20 +166,24 @@ Vec3 PhongReflection::phong_sample(float shine) const {
 // *** マイクロファセットBRDF ***
 
 MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist,
-    std::shared_ptr<Fresnel> _fres)
+    std::shared_ptr<Fresnel> _fres, bool _is_multiple_scattering)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)),
     scale(_scale),
     dist(_dist),
-    fres(_fres)
+    fres(_fres),
+    is_multiple_scattering(_is_multiple_scattering)
 {
-    create_multiple_scattering_table(); // 多重散乱テーブルの生成
+    if (is_multiple_scattering) {
+        create_multiple_scattering_table(); // 多重散乱テーブルの生成
+    }
 }
 
 MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist,
     float _n_inside, float _n_outside)
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)),
     scale(_scale),
-    dist(_dist)
+    dist(_dist),
+    is_multiple_scattering(false)
 {
     fres = std::make_shared<FresnelDielectric>(_n_inside, _n_outside);
 }
@@ -215,8 +219,6 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
     auto brdf = (D * G * F) / (4 * cos_wo * cos_wi);
     // 多重散乱を考慮する場合補填する
     if (is_multiple_scattering) {
-        //int index = std::clamp(int(t*(table_size-1)), 0, table_size-2);
-        //auto E = t * table[index] + (1-t) * table[index+1];
         int index_wo = int(cos_wo * (table_size - 1));
         int index_wi = int(cos_wi * (table_size - 1));
         auto E_wo = E[index_wo];
@@ -279,7 +281,7 @@ void MicrofacetReflection::create_multiple_scattering_table() {
     }
     E_ave = 2 * E_ave / table_size;
     // 多重散乱テーブルの出力
-    bool is_write_table = true;
+    bool is_write_table = false;
     if (is_write_table) {
         std::vector<uint8_t> img(table_size * table_size * 3, 0);  // 画像データ
         for (int h = 0; h < table_size; h++) {

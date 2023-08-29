@@ -298,7 +298,8 @@ public:
     * @param[in] _dist  :マイクロファセット分布
     * @param[in] _fres  :フレネル式
     */
-    MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist, std::shared_ptr<Fresnel> _fres);
+    MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _dist, std::shared_ptr<Fresnel> _fres,
+                         bool _is_multiple_scattering=false);
 
     /**
     * @brief 誘電体用コンストラクタ
@@ -332,7 +333,7 @@ private:
     Vec3 scale; /**> スケールファクター */
     std::shared_ptr<Fresnel> fres; /**> フレネル式 */
     std::shared_ptr<NDF> dist; /**> マイクロファセット分布 */
-    bool is_multiple_scattering=true; /**> 多重散乱の考慮 */
+    bool is_multiple_scattering; /**> 多重散乱の考慮するならtrue */
     float E[100] = { 0.f }; /**> 多重散乱テーブル */
     float E_ave; /**> 平均アルベド */
     int table_size = sizeof(E) / sizeof(float);

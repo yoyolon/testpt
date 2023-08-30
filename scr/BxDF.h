@@ -334,8 +334,9 @@ private:
     std::shared_ptr<Fresnel> fres; /**> フレネル式 */
     std::shared_ptr<NDF> dist; /**> マイクロファセット分布 */
     bool is_multiple_scattering; /**> 多重散乱の考慮するならtrue */
-    float E[100] = { 0.f }; /**> 多重散乱テーブル */
     float E_ave; /**> 平均アルベド */
+    Vec3 F_ave;  /**> 平均フレネル*/
+    float E[100] = { 0.f }; /**> Directionalアルベド */
     int table_size = sizeof(E) / sizeof(float);
 };
 

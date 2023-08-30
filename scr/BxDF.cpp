@@ -171,7 +171,9 @@ MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _di
     scale(_scale),
     dist(_dist),
     fres(_fres),
-    is_multiple_scattering(_is_multiple_scattering)
+    is_multiple_scattering(_is_multiple_scattering),
+    E_ave(0.f),
+    F_ave(Vec3::zero)
 {
     if (is_multiple_scattering) {
         create_multiple_scattering_table(); // 多重散乱テーブルの生成
@@ -183,7 +185,9 @@ MicrofacetReflection::MicrofacetReflection(Vec3 _scale, std::shared_ptr<NDF> _di
     : BxDF(BxDFType((uint8_t)BxDFType::Reflection | (uint8_t)BxDFType::Glossy)),
     scale(_scale),
     dist(_dist),
-    is_multiple_scattering(false)
+    is_multiple_scattering(false),
+    E_ave(0.f),
+    F_ave(Vec3::zero)
 {
     fres = std::make_shared<FresnelDielectric>(_n_inside, _n_outside);
 }
@@ -217,13 +221,24 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
     float G = dist->G(wo, wi);
     Vec3 F = fres->eval(dot(wo, h), p);
     auto brdf = (D * G * F) / (4 * cos_wo * cos_wi);
-    // 多重散乱を考慮する場合補填する
+    // 多重散乱を考慮する場合はエネルギー損失を補填する[Kulla and Conty 2017]
     if (is_multiple_scattering) {
-        int index_wo = int(cos_wo * (table_size - 1));
-        int index_wi = int(cos_wi * (table_size - 1));
-        auto E_wo = E[index_wo];
-        auto E_wi = E[index_wi];
-        auto f_ms = F * (1.0f - E_wo) * (1.0f - E_wi) / (1.0f - E_ave) * invpi;
+        int index_wo = int(cos_wo * table_size - 1.f); // cos = (index + 1) / table_sizeより
+        int index_wi = int(cos_wi * table_size - 1.f);
+        // Note: インデックスがtable_size-1になることは稀(cos=1の場合のみ)
+        index_wo = std::clamp(index_wo, 0, table_size - 2);
+        index_wi = std::clamp(index_wi, 0, table_size - 2);
+        // 方向アルベドの取得
+        auto t_wo = cos_wo * table_size - 1.f - index_wo;
+        auto t_wi = cos_wi * table_size - 1.f - index_wi;
+        auto E_wo = (1.f - t_wo) * E[index_wo] + t_wo * E[index_wo+1];
+        auto E_wi = (1.f - t_wi) * E[index_wi] + t_wi * E[index_wi+1];
+        // F_msの計算(参考: https://blog.selfshadow.com/2018/06/04/multi-faceted-part-2/)
+        Vec3 F_ms = Vec3::one;
+        for (int i = 0; i < 3; i++) {
+            F_ms[i] = F_ave[i] * F_ave[i] * E_ave / (1.f - F_ave[i] * (1.f - E_ave));
+        }
+        auto f_ms = F_ms * (1.0f - E_wo) * (1.0f - E_wi) / (1.0f - E_ave) * invpi;
         brdf += f_ms;
     }
     return scale * brdf;
@@ -267,8 +282,8 @@ float MicrofacetReflection::weight(float cos_theta, float phi,
 }
 
 void MicrofacetReflection::create_multiple_scattering_table() {
-    int nsamples = 1e4;
-    E_ave = 0.f;
+    int nsamples = 10000;
+    // Directionalアルベドと平均アルベドを計算
     for (int i = 0; i < table_size; i++) {
         auto cos_theta = (i+1.0f) / table_size; // 入射角余弦
         E[i] = 0.f;
@@ -280,6 +295,19 @@ void MicrofacetReflection::create_multiple_scattering_table() {
         E_ave += E[i] * cos_theta;
     }
     E_ave = 2 * E_ave / table_size;
+
+    // 平均フレネルを計算
+    for (int i = 0; i < table_size; i++) {
+        auto cos_theta = (i + 1.0f) / table_size; // 入射角余弦
+        intersection p;
+        F_ave += fres->eval(cos_theta, p) * cos_theta;
+    }
+    F_ave = 2.f * F_ave / (float)table_size;
+    // 誤差等によるエネルギー超過を防止
+    for (int i = 0; i < 3; i++) {
+        F_ave[i] = std::clamp(F_ave[i], 0.f, 1.f);
+    }
+
     // 多重散乱テーブルの出力
     bool is_write_table = false;
     if (is_write_table) {

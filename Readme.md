@@ -24,7 +24,8 @@ C++17
 - 明示的な光源サンプリング
 - 重点的サンプリング
 - 3Dモデル(.obj)の読み込み
-- マイクロファセット理論に基づくマテリアル
+- マイクロファセットモデルに基づくマテリアル
+- マイクロファセットBRDFのエネルギー補填
 - 薄膜干渉マテリアル
 - イメージベーストライティング(IBL)
 
@@ -73,6 +74,7 @@ testptでは，明示的な光源サンプリングでMISを，経路構築に�
 ### 様々な材質
 
 レンダリング品質の向上以外にも表現の幅を広げるために，様々な材質やイメージベーストライティング(IBL)を実装しています．図6に示す通り，プラスチック，金属，ガラス，シャボン玉などの幅広い材質が環境照明に照らされたシーンをレンダリング可能です．
+金属などの表面粗さを持つ材質は物体表面を微小面の集合でモデル化したマイクロファセットBRDFに基づいています．
 
 <div align="center">
   <img src="imgs/fig5_model.png" width=30%/>
@@ -81,11 +83,33 @@ testptでは，明示的な光源サンプリングでMISを，経路構築に�
   <p>図6 様々な材質の表示結果(モデル/環境マップ: https://polyhaven.com/) </p>
 </div>
 
+### マイクロファセットBRDFのエネルギー補填
+
+通常のマイクロファセットBRDFは微小面の多重散乱を考慮していないため，粗い物体表面ではエネルギーの損失が生じます．
+testptでは，損失エネルギーを補填する手法を実装しています．  
+図7に単散乱の場合(上段)と多重散乱エネルギーを補填した場合(下段)の球のレンダリング結果を示します．
+上段ではエネルギーの損失により薄暗い表示結果になっていますが，下段では損失エネルギーを補填しているため球が背景に溶け込んでいます．
+
+<div align="center">
+  <img src="imgs/fig6_ss_0.1.png" width=22.5%/>
+  <img src="imgs/fig6_ss_0.3.png" width=22.5%/>
+  <img src="imgs/fig6_ss_0.5.png" width=22.5%/>
+  <img src="imgs/fig6_ss_1.0.png" width=22.5%/>  
+  <br>
+  <img src="imgs/fig6_ms_0.1.png" width=22.5%/>
+  <img src="imgs/fig6_ms_0.3.png" width=22.5%/>
+  <img src="imgs/fig6_ms_0.5.png" width=22.5%/>
+  <img src="imgs/fig6_ms_1.0.png" width=22.5%/>
+  <p>図7 マクロファセットBRDFの単散乱(上段)と多重散乱(下段)の比較(左から右に向かうほど表面粗さが大きくなる) </p>
+</div>
+
 ## 主要参考文献
 
 - [Moller and Trumbore 1997] "Fast, minimum storage ray-triangle intersection" JGT. 1997.
 - [Walter et al. 2007] "Microfacet Models for Refraction through Rough Surfaces". EGSR 2007.
 - [Shirley and Morley 2008] "Realistic Ray Tracing". 2008.
-- [Heitz. 2014] "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs". JCGT 2014.
-- [Pharr et al. 2016] "Physically Based Rendering: From Theory To Implementation" 2016.
-- [Shirley 2020]. "Raytracing in one weekend" 2020.
+- [Heitz 2014] "Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs". JCGT 2014.
+- [Pharr et al. 2016] "Physically Based Rendering: From Theory To Implementation". 2016.
+- [Kulla and Conty 2017] "Revisiting Physically Based Shading at Imageworks". 2017.
+- [Heitz 2018] "Sampling the GGX Distribution of Visible Normals". JCGT 2018.
+- [Shirley 2020] "Raytracing in one weekend" 2020.

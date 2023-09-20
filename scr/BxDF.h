@@ -336,7 +336,7 @@ private:
     bool is_multiple_scattering; /**> 多重散乱の考慮するならtrue */
     float E_ave; /**> 平均アルベド */
     Vec3 F_ave;  /**> 平均フレネル*/
-    float E[100] = { 0.f }; /**> Directionalアルベド */
+    float E[1000] = { 0.f }; /**> Directionalアルベド */
     int table_size = sizeof(E) / sizeof(float);
 };
 

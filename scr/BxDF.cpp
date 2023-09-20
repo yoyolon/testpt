@@ -213,10 +213,11 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
         return Vec3::zero;
     }
     // ハーフ方向の取得
-    auto h = unit_vector(wo + wi);
+    auto h = wo + wi;
     if (is_zero(h)) {
         return Vec3::zero;
     }
+    h = unit_vector(h);
     float D = dist->D(h);
     float G = dist->G(wo, wi);
     Vec3 F = fres->eval(dot(wo, h), p);
@@ -231,8 +232,8 @@ Vec3 MicrofacetReflection::eval_f(const Vec3& wo, const Vec3& wi,
         // 方向アルベドの取得
         auto t_wo = cos_wo * table_size - 1.f - index_wo;
         auto t_wi = cos_wi * table_size - 1.f - index_wi;
-        auto E_wo = (1.f - t_wo) * E[index_wo] + t_wo * E[index_wo+1];
-        auto E_wi = (1.f - t_wi) * E[index_wi] + t_wi * E[index_wi+1];
+        auto E_wo = t_wo * E[index_wo] + (1.f - t_wo) * E[index_wo + 1];
+        auto E_wi = t_wi * E[index_wi] + (1.f - t_wi) * E[index_wi + 1];
         // F_msの計算(参考: https://blog.selfshadow.com/2018/06/04/multi-faceted-part-2/)
         Vec3 F_ms = Vec3::one;
         for (int i = 0; i < 3; i++) {

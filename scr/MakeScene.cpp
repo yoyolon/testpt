@@ -20,29 +20,20 @@ void make_scene_simple(Scene& world, Camera& cam) {
     // マテリアル
     auto gold = Vec3(1.00f, 0.71f, 0.29f);
     auto copper = Vec3(0.95f, 0.64f, 0.54f);
-    auto mat_gold = std::make_shared<Metal>(Vec3::one, gold, 0.2f);
-    auto mat_diff = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
-    auto mat_irid = std::make_shared<Thinfilm>(Vec3::one, 500.f, 1.0f, 1.34f, 0.1f, false);
-    auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.05f);
+    auto mat_gold = std::make_shared<Metal>(Vec3::one, gold, 1.0f, true);
+    //auto mat_white = std::make_shared<Metal>(Vec3::one, Vec3::one, 0.1f, true);
+    //auto mat_diff = std::make_shared<Diffuse>(Vec3(0.1f,0.1f,0.1f));
+    //auto mat_irid = std::make_shared<Thinfilm>(Vec3::one, 500.f, 1.0f, 1.34f, 0.1f, false);
+    //auto mat_glass = std::make_shared<Glass>(Vec3::one, Vec3::one, Vec3::one, 1.4f, 0.05f);
 
     // シェイプ
     auto obj_sphere = std::make_shared<Sphere>(Vec3(0.f,2.0f,0.f), 2.0f, mat_gold);
-    // Floor
-    auto obj_plane = std::make_shared<TriangleMesh>(
-        std::vector<Vec3>{
-            Vec3( 10.f, 0.f, -10.f),
-            Vec3(-10.f, 0.f, -10.f),
-            Vec3(-10.f, 0.f,  10.f),
-            Vec3( 10.f, 0.f,  10.f)},
-            std::vector<Vec3>{Vec3(0, 1, 2), Vec3(0, 2, 3)},
-            mat_diff);
     world.add(obj_sphere);
-    //world.add(obj_plane);
     // 光源
     auto light_env = std::make_shared<EnvironmentLight>("asset/envmap.hdr", 270.f);
+    //auto radiance = 0.5f;
+    //auto light_env = std::make_shared<EnvironmentLight>(Vec3(radiance, radiance, radiance));
     world.add(light_env);
-    //auto light_parallel = std::make_shared<ParallelLight>(Vec3::one, Vec3(0.f, 2.f, 10.f));
-    //world.add(light_parallel);
     // カメラ設定
     auto film = std::make_shared<Film>(600, 600, 3, "simple.png");
     //auto fd = 2.5f; // 焦点距離
